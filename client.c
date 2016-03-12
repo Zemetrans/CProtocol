@@ -12,9 +12,15 @@
 #include <linux/can/raw.h>
 #include <linux/can/error.h>
 
-#define AJ_CAN_SIGNATURE			0xCO
+#include <linux/types.h>
+#include <inttypes.h>
+
+#define AJ_CAN_SIGNATURE			0xC0
+#define AJ_CAN_SERIAL_START			0x0B
 #define AJ_CAN_RESTART				0x8
 #define AJ_CAN_SERIAL_TERMINATION	0x6
+#define AJ_SERIES_SUCCESS			1
+#define AJ_SERIES_FAILURE			0
 
 int main() {
 
@@ -72,18 +78,48 @@ int main() {
 	strcpy(ifr.ifr_name, "vcan0");
     ioctl(s, SIOCGIFINDEX, &ifr);
 	//Количество кусков данных
-	frame.can_dlc = 1;
+	frame.can_dlc = 3;
 	//Сами данные
-	frame.data[0] = 0x11;
+	frame.data[0] = 0 | AJ_CAN_SIGNATURE | AJ_CAN_SERIAL_START;
+	frame.data[1] = 2; 
+	frame.data[2] = 0;
 	/*frame.data[1] = 0x22;
 	frame.data[2] = 0xAA;
 	frame.data[3] = 0xA5;*/
 	//Собственно пишем
 	nbytes = sendto(s, &frame, sizeof(struct can_frame),
                     0, (struct sockaddr*)&addr, sizeof(addr));
+	printf("wrote %d bytes\n", nbytes);
+	frame.can_dlc = 8;
+	frame.data[0] = 0;
+	frame.data[1] = 0x11;
+	frame.data[2] = 0x22;
+	frame.data[3] = 0x33;
+	frame.data[4] = 0x44;
+	frame.data[5] = 0x55;
+	frame.data[6] = 0x55;
+	frame.data[7] = 0x66;
+	nbytes = sendto(s, &frame, sizeof(struct can_frame),
+                    0, (struct sockaddr*)&addr, sizeof(addr));
+	printf("wrote %d bytes\n", nbytes);
+
+	frame.can_dlc = 8;
+	frame.data[0] = 1;
+	frame.data[1] = 0x11;
+	frame.data[2] = 0x22;
+	frame.data[3] = 0x33;
+	frame.data[4] = 0x44;
+	frame.data[5] = 0x55;
+	frame.data[6] = 0x55;
+	frame.data[7] = 0x66;
+	nbytes = sendto(s, &frame, sizeof(struct can_frame),
+                    0, (struct sockaddr*)&addr, sizeof(addr));
+	printf("wrote %d bytes\n", nbytes);
+
+
 	//nbytes = write(s, &frame, sizeof(struct can_frame));
 
-	printf("Wrote %d bytes\n", nbytes);
-	
+	//printf("Wrote %d bytes\n", nbytes);
+	close(s);
 	return 0;
 }
