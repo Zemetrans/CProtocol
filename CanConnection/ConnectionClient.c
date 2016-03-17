@@ -25,6 +25,7 @@
 int main() {
 	int s;
 	int nbytes;
+	canid_t client_id = 0x4BA;
 	struct sockaddr_can addr;
 	struct can_frame frame;
 	struct ifreq ifr;
@@ -50,35 +51,38 @@ int main() {
 	}
 	//Верхняя граница стандартного ID 0x7FF
 	//Опознаёмся на сервере
-	frame.can_id  = 0x800004BA | (0x3FF << 11);
-	frame.can_dlc = 1;
-	frame.data[0] = 0x0B;
-	nbytes = write(s, &frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket write");
-	} else {
-		printf("Wrote %d bytes\n", nbytes);
-	}
-	//Ждём ответного сообщения
-	nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket read");
-	} else {
-		printf("Wrote %d bytes\n", nbytes);
-	}
-	//Получаем свой новый Айди
-	frame.can_id = (((frame.data[0] | (frame.data[1] << 8)) << 11) | 0x4BA) | 0x80000000 ;
-	//А дальше просто для проверки пишем
-	frame.can_dlc = 1;
-	frame.data[0] = 0xFF;
+	int i;
+	for (i = 0; i < 3; i++) {
+		frame.can_id  = 0x8000000 | (0x3FF << 11) | client_id;
+		frame.can_dlc = 1;
+		frame.data[0] = 0x0B;
+		nbytes = write(s, &frame, sizeof(struct can_frame));
+		if (nbytes <= 0) {
+			perror("Error in socket write");
+		} else {
+			printf("Wrote %d bytes\n", nbytes);
+		}
+		//Ждём ответного сообщения
+		nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
+		if (nbytes <= 0) {
+			perror("Error in socket read");
+		} else {
+			printf("Wrote %d bytes\n", nbytes);
+		}
+		//Получаем свой новый Айди
+		frame.can_id = (((frame.data[0] | (frame.data[1] << 8)) << 11) | 0x4BA) | 0x80000000 ;
+		printf("Session ID: %x\n", frame.data[0] | (frame.data[1] << 8));
+		//А дальше просто для проверки пишем
+		frame.can_dlc = 1;
+		frame.data[0] = 0xFF;
 
-	nbytes = write(s, &frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket write");
-	} else {
-		printf("Wrote %d bytes\n", nbytes);
+		nbytes = write(s, &frame, sizeof(struct can_frame));
+		if (nbytes <= 0) {
+			perror("Error in socket write");
+		} else {
+			printf("Wrote %d bytes\n", nbytes);
+		}
 	}
-
 	close(s);
 	
 	return 0;

@@ -26,6 +26,8 @@
 int main() {
 	int s;
 	int nbytes;
+	int SessionID = 0x200;
+	canid_t server_id = 0x112;
 	struct sockaddr_can addr;
 	struct can_frame frame;
 	struct ifreq ifr;
@@ -50,29 +52,31 @@ int main() {
 		perror("Error in socket bind");
 		return -2;
 	}
-
-	nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket read");
-	} else {
-		printf("Read %d bytes\n", nbytes);
-	}
-	if (((frame.can_id & AJ_NEW_CLIENT_MASK) == AJ_NEW_CLIENT_MASK) & (frame.data[0] == 0x0B)) {
-		printf("Have new AJ Client!\n");
-		//должен быть нормальный пул
-		frame.can_id = ((frame.can_id & 0x7FF)<<11) | 0x112 | 0x80000000;
-		int SessionID = 0x200;
-		frame.can_dlc = 2;
-		frame.data[0] = (__u8)SessionID & 0xFF;
-		frame.data[1] = (__u8)(SessionID >> 8) & 0x3F;
-		nbytes = write(s, &frame, sizeof(struct can_frame));
+	while(1) {
+		nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
 		if (nbytes <= 0) {
-			perror("Error in socket write");
+			perror("Error in socket read");
 		} else {
-			printf("Wrote %d bytes\n", nbytes);
+			printf("Read %d bytes\n", nbytes);
 		}
-	} else {
-		printf("Not AJ frame\n");
+		if (((frame.can_id & AJ_NEW_CLIENT_MASK) == AJ_NEW_CLIENT_MASK) & (frame.data[0] == 0x0B)) {
+			printf("Have new AJ Client!\n");
+			//должен быть нормальный пул + выдавать разным клиентам разный SessionID
+			frame.can_id = ((frame.can_id & 0x7FF)<<11) | server_id | 0x80000000;
+			frame.can_dlc = 2;
+			frame.data[0] = (__u8)SessionID & 0xFF;
+			frame.data[1] = (__u8)(SessionID >> 8) & 0x3F;
+			printf("Gave SessionID: %x\n", SessionID);
+			SessionID++;
+			nbytes = write(s, &frame, sizeof(struct can_frame));
+			if (nbytes <= 0) {
+				perror("Error in socket write");
+			} else {
+				printf("Wrote %d bytes\n", nbytes);
+			}
+		} else {
+			printf("Not initial AJ frame\n");
+		}
 	}
 	//printf("frame.can_id & mask: %x\n",(frame.can_id & AJ_NEW_CLIENT_MASK) == AJ_NEW_CLIENT_MASK) ;
 	//printf("frame.data: %x\n", frame.data[0]);
