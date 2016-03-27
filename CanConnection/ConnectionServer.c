@@ -23,6 +23,15 @@
 #define AJ_SERIES_FAILURE			0
 #define AJ_NEW_CLIENT_MASK			0x3ff << 11
 
+/*
+ * Controller Area Network Identifier structure
+ *
+ * bit 0-28	: CAN identifier (11/29 bit)
+ * bit 29	: error message frame flag (0 = data frame, 1 = error message)
+ * bit 30	: remote transmission request flag (1 = rtr frame)
+ * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
+ */
+
 int main() {
 	int s;
 	int nbytes;
@@ -59,7 +68,27 @@ int main() {
 		} else {
 			printf("Read %d bytes\n", nbytes);
 		}
-		if (((frame.can_id & AJ_NEW_CLIENT_MASK) == AJ_NEW_CLIENT_MASK) & (frame.data[0] == 0x0B)) {
+		if (((frame.can_id & AJ_NEW_CLIENT_MASK) == AJ_NEW_CLIENT_MASK)) {
+			//Нужно проверить data часть кадра
+			int Err = 0; 
+			if (frame.can_dlc == 8) {
+				int i;
+				for (i = 0; i < 8; i++) {
+					if (frame.data[i] != 0xFF) {
+						printf("Not intial AJ Frame. (frame_data != 0xFF)\n");
+						//Если в нагрузке не AJ_MAGIC, то переходим на следующую итерацию цикла
+						Err = 1;
+						break;
+					}
+				}
+			} else {
+				printf("Not initial AJ frame. (frame_dlc < 8) \n");
+				Err = 1;
+			}
+			if (Err) {
+				printf("Not init AJ\n");
+				continue;
+			}
 			printf("Have new AJ Client!\n");
 			//должен быть нормальный пул + выдавать разным клиентам разный SessionID
 			frame.can_id = ((frame.can_id & 0x7FF)<<11) | server_id | 0x80000000;

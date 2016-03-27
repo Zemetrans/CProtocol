@@ -21,6 +21,16 @@
 #define AJ_CAN_SERIAL_TERMINATION	0x6
 #define AJ_SERIES_SUCCESS			1
 #define AJ_SERIES_FAILURE			0
+#define AJ_NEW_CLIENT_MASK			0x3ff << 11
+
+/*
+ * Controller Area Network Identifier structure
+ *
+ * bit 0-28	: CAN identifier (11/29 bit)
+ * bit 29	: error message frame flag (0 = data frame, 1 = error message)
+ * bit 30	: remote transmission request flag (1 = rtr frame)
+ * bit 31	: frame format flag (0 = standard 11 bit, 1 = extended 29 bit)
+ */
 
 int main() {
 	int s;
@@ -53,9 +63,16 @@ int main() {
 	//Опознаёмся на сервере
 	int i;
 	for (i = 0; i < 3; i++) {
-		frame.can_id  = 0x8000000 | (0x3FF << 11) | client_id;
-		frame.can_dlc = 1;
-		frame.data[0] = 0x0B;
+		frame.can_id  = 0x8000000 | AJ_NEW_CLIENT_MASK | client_id;
+		frame.can_dlc = 4;
+		frame.data[0] = 0xFF;
+		frame.data[1] = 0xFF;
+		frame.data[2] = 0xFF;
+		frame.data[3] = 0xFF;
+		frame.data[4] = 0xFF;
+		frame.data[5] = 0xFF;
+		frame.data[6] = 0xFF;
+		frame.data[7] = 0xFF;
 		nbytes = write(s, &frame, sizeof(struct can_frame));
 		if (nbytes <= 0) {
 			perror("Error in socket write");
@@ -72,7 +89,7 @@ int main() {
 		//Получаем свой новый Айди
 		frame.can_id = (((frame.data[0] | (frame.data[1] << 8)) << 11) | 0x4BA) | 0x80000000 ;
 		printf("Session ID: %x\n", frame.data[0] | (frame.data[1] << 8));
-		//А дальше просто для проверки пишем
+		//А дальше просто для проверки пишем в CAN сеть
 		frame.can_dlc = 1;
 		frame.data[0] = 0xFF;
 
