@@ -23,6 +23,12 @@
 #define AJ_SERIES_FAILURE			0
 #define AJ_NEW_CLIENT_MASK			0x3ff << 11
 
+struct session_data {
+	canid_t CID;
+	canid_t SessionID;
+	char buf[64];
+	//reserver for descr
+} sData;
 /*
  * Controller Area Network Identifier structure
  *
@@ -76,6 +82,8 @@ int main() {
 			(frame.data[7] == 0xB0)) {
 				frame.can_dlc = 6;
 				printf("Have new AJ Client!\n");
+				sData.CID = frame.can_id & 0x7FF;
+				sData.SessionID = SessionID;
 				int i;
 				//Заносим новые данные 4 байта MAGIC_AJ
 				for (i = 0; i < 4; i++) {
@@ -97,6 +105,7 @@ int main() {
 			} else {
 				printf("Wrote %d bytes\n", nbytes);
 			}
+			printf("Struct. CID: %x\n SessionID: %x\n", sData.CID, sData.SessionID);
 		} else {
 			printf("Not initial AJ frame\n");
 		}
