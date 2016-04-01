@@ -70,33 +70,27 @@ int main() {
 		}
 		if (((frame.can_id & AJ_NEW_CLIENT_MASK) == AJ_NEW_CLIENT_MASK)) {
 			//Нужно проверить data часть кадра
-			int Err = 0; 
-			if (frame.can_dlc == 8) {
+			printf("IF AJ_NEW_CLIENT_MASK\n");
+			if ((frame.can_dlc == 8)  & (frame.data[0] == 0xFF) & (frame.data[1] == 0xFF) & (frame.data[2] == 0xFF) &
+			(frame.data[3] == 0xFF) & (frame.data[4] == 0xCA) & (frame.data[5] == 0xF3) & (frame.data[6] == 0x04) &
+			(frame.data[7] == 0xB0)) {
+				frame.can_dlc = 6;
+				printf("Have new AJ Client!\n");
 				int i;
-				for (i = 0; i < 8; i++) {
-					if (frame.data[i] != 0xFF) {
-						printf("Not intial AJ Frame. (frame_data != 0xFF)\n");
-						//Если в нагрузке не AJ_MAGIC, то переходим на следующую итерацию цикла
-						Err = 1;
-						break;
-					}
+				//Заносим новые данные 4 байта MAGIC_AJ
+				for (i = 0; i < 4; i++) {
+					frame.data[i] = 0xFF;
 				}
-			} else {
-				printf("Not initial AJ frame. (frame_dlc < 8) \n");
-				Err = 1;
+				//CLI_ID в двух байтах
+				frame.data[4] = (frame.can_id & 0x700) >> 8;
+				frame.data[5] = frame.can_id & 0xFF;
+				//делаем в кадре новый ID
+				frame.can_id = 0x80000000 | server_id | ((SessionID) << 11);
+				printf("Gave SessionID: %x\n", SessionID);
+				//Эмулируем Пул
+				SessionID++;
+
 			}
-			if (Err) {
-				printf("Not init AJ\n");
-				continue;
-			}
-			printf("Have new AJ Client!\n");
-			//должен быть нормальный пул + выдавать разным клиентам разный SessionID
-			frame.can_id = ((frame.can_id & 0x7FF)<<11) | server_id | 0x80000000;
-			frame.can_dlc = 2;
-			frame.data[0] = (__u8)SessionID & 0xFF;
-			frame.data[1] = (__u8)(SessionID >> 8) & 0x3F;
-			printf("Gave SessionID: %x\n", SessionID);
-			SessionID++;
 			nbytes = write(s, &frame, sizeof(struct can_frame));
 			if (nbytes <= 0) {
 				perror("Error in socket write");
@@ -107,8 +101,6 @@ int main() {
 			printf("Not initial AJ frame\n");
 		}
 	}
-	//printf("frame.can_id & mask: %x\n",(frame.can_id & AJ_NEW_CLIENT_MASK) == AJ_NEW_CLIENT_MASK) ;
-	//printf("frame.data: %x\n", frame.data[0]);
 	close(s);
 	return 0;
 }

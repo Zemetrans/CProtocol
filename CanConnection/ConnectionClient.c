@@ -62,17 +62,16 @@ int main() {
 	//Верхняя граница стандартного ID 0x7FF
 	//Опознаёмся на сервере
 	int i;
-	//for (i = 0; i < 3; i++) {
 	frame.can_id  = 0x8000000 | AJ_NEW_CLIENT_MASK | client_id;
 	frame.can_dlc = 8;
 	frame.data[0] = 0xFF;
 	frame.data[1] = 0xFF;
 	frame.data[2] = 0xFF;
 	frame.data[3] = 0xFF;
-	frame.data[4] = 0xFF;
-	frame.data[5] = 0xFF;
-	frame.data[6] = 0xFF;
-	frame.data[7] = 0xFF;
+	frame.data[4] = 0xCA;
+	frame.data[5] = 0xF3;
+	frame.data[6] = 0x04;
+	frame.data[7] = 0xB0;
 	nbytes = write(s, &frame, sizeof(struct can_frame));
 	if (nbytes <= 0) {
 		perror("Error in socket write");
@@ -86,20 +85,22 @@ int main() {
 	} else {
 		printf("Wrote %d bytes\n", nbytes);
 	}
-	//Получаем свой новый Айди
-	frame.can_id = (((frame.data[0] | (frame.data[1] << 8)) << 11) | 0x4BA) | 0x80000000 ;
-	printf("Session ID: %x\n", frame.data[0] | (frame.data[1] << 8));
-	//А дальше просто для проверки пишем в CAN сеть
-	frame.can_dlc = 1;
-	frame.data[0] = 0xFF;
-
-	nbytes = write(s, &frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket write");
+	//Разбираем кадр, проверяем его
+	if ((frame.can_dlc == 6) & (frame.data[0] == 0xFF) & (frame.data[1] == 0xFF) & (frame.data[2] == 0xFF) &
+		(frame.data[3] == 0xFF)) {
+		canid_t tmp = ((frame.data[4] & 0x7) << 8) | frame.data[5];
+		if (tmp == client_id) {
+			printf("Get Server session acknowledge frame!\n");
+			client_id = 0x80000000 | client_id | (frame.can_id & 0x1FFFF800) ;
+		}
+		//получаем свой новый CAN_ID
 	} else {
-		printf("Wrote %d bytes\n", nbytes);
+		printf("Get not server acknowledge frame!\n");
 	}
+	printf("Client Session ID: %x\n", client_id);
 	//}
+	//frame.can_id = client_id;
+	//nbytes = write(s, &frame, sizeof(struct can_frame));
 	close(s);
 	
 	return 0;
