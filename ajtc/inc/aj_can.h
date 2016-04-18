@@ -75,7 +75,7 @@ struct _AJ_IOBuffer;
  *         AJ_OK - all is good, connection transitioned to SYN_SENT state;
  *         fail error code otherwise
  */
-AJ_Status AJ_ARDP_Connect(uint8_t* data, uint16_t dataLen, void* context, AJ_NetSocket* netSock);
+AJ_Status AJ_CAN_Connect(uint8_t* data, uint16_t dataLen, void* context, AJ_NetSocket* netSock);
 
 /*
  *      Disconnect is used to actively close the connection.
@@ -83,7 +83,7 @@ AJ_Status AJ_ARDP_Connect(uint8_t* data, uint16_t dataLen, void* context, AJ_Net
  *                        of whether there are pending data retransmits. Otherwise, the
  *                        callee should check the value of returned error code.
  */
-void AJ_ARDP_Disconnect(uint8_t forced);
+void AJ_CAN_Disconnect(uint8_t forced);
 
 /*
  *      StartMsgSend informs the ARDP protocol that next chunk of data to be sent
@@ -154,12 +154,12 @@ typedef AJ_Status (*ReceiveFunction)(void* context, uint8_t** buf, uint32_t* rec
  */
 typedef AJ_Status (*SendFunction)(void* context, uint8_t* buf, size_t len, size_t* sent, uint8_t confirm);
 
-void AJ_ARDP_InitFunctions(ReceiveFunction recv, SendFunction send);
+void AJ_CAN_InitFunctions(ReceiveFunction recv, SendFunction send);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // AJ_ARDP
+#endif // AJ_CAN
 
 #endif // _ALLJOYN_ARDP_PROTOCOL_H

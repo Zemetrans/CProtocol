@@ -269,12 +269,12 @@ static SendFunction sendFunction;
  * End of definitions
  */
 
-void AJ_ARDP_InitFunctions(ReceiveFunction rcvFunc, SendFunction sndFunc)
+void AJ_CAN_InitFunctions(ReceiveFunction rcvFunc, SendFunction sndFunc)
 {
-    printf("Enter AJ_ARDP_InitFunctions(ReceiveFunction rcvFunc, SendFunction sndFunc)\n");
+    printf("Enter AJ_CAN_InitFunctions(ReceiveFunction rcvFunc, SendFunction sndFunc)\n");
     recvFunction = rcvFunc;
     sendFunction = sndFunc;
-    printf("Exit AJ_ARDP_InitFunctions(ReceiveFunction rcvFunc, SendFunction sndFunc)\n");
+    printf("Exit AJ_CAN_InitFunctions(ReceiveFunction rcvFunc, SendFunction sndFunc)\n");
 }
 
 static AJ_Status InitConnection()
@@ -1187,9 +1187,9 @@ static AJ_Status ARDP_Send(uint8_t* txBuf, uint16_t len)
     return AJ_OK;
 }
 
-AJ_Status AJ_ARDP_Connect(uint8_t* data, uint16_t dataLen, void* context, AJ_NetSocket* netSock)
+AJ_Status AJ_CAN_Connect(uint8_t* data, uint16_t dataLen, void* context, AJ_NetSocket* netSock)
 {
-    printf("Enter AJ_ARDP_Connect\n");
+    printf("Enter AJ_CAN_Connect");
     AJ_Status status;
 
     memset(&UDP_Recv_State, 0, sizeof(UDP_Recv_State));
@@ -1197,7 +1197,7 @@ AJ_Status AJ_ARDP_Connect(uint8_t* data, uint16_t dataLen, void* context, AJ_Net
     status = InitConnection();
 
     if (status != AJ_OK) {
-    	printf("Exit AJ_ARDP_Connect. Return status: %d\n", status);
+    	printf("Exit AJ_CAN_Connect. Return status: %d\n", status);
         return status;
     }
     AJ_ASSERT(dataLen < (UDP_SEGBMAX - ARDP_SYN_HEADER_SIZE));
@@ -1207,7 +1207,7 @@ AJ_Status AJ_ARDP_Connect(uint8_t* data, uint16_t dataLen, void* context, AJ_Net
     conn->context = context;
     conn->netSock = netSock;
 
-    status = SendSyn(dataLen);
+    //status = SendSyn(dataLen);
 
     if (status != AJ_OK) {
         AJ_Free(conn);
@@ -1216,38 +1216,38 @@ AJ_Status AJ_ARDP_Connect(uint8_t* data, uint16_t dataLen, void* context, AJ_Net
         conn->state = SYN_SENT;
     }
 
-    printf("Exit AJ_ARDP_Connect. Return status: %d\n", status);
+    printf("Exit AJ_CAN_Connect. Return status: %d\n", status);
     return status;
 }
 
-void AJ_ARDP_Disconnect(uint8_t forced)
+void AJ_CAN_Disconnect(uint8_t forced)
 {
-    printf("Enter AJ_ARDP_Disconnect\n");
-    AJ_WarnPrintf(("ARDP Disconnect Request (local)\n"));
+    printf("Enter AJ_CAN_Disconnect\n");
+    AJ_WarnPrintf(("CAN Disconnect Request (local)\n"));
     if (conn == NULL) {
         return;
     }
 
-    if ((forced == FALSE) && (conn->snd.pending != 0)) {
-        AJ_InfoPrintf(("ARDP_Disconnect: wait for tx queue to drain\n"));
+    /*if ((forced == FALSE) && (conn->snd.pending != 0)) {
+        AJ_InfoPrintf(("CAN_Disconnect: wait for tx queue to drain\n"));
         conn->state = CLOSE_WAIT;
         /* Block here  to give data retransmits a chance to go through */
-        AJ_ARDP_Recv(&conn->netSock->rx, 0, UDP_DISCONNECT_TIMEOUT);
+        //AJ_ARDP_Recv(&conn->netSock->rx, 0, UDP_DISCONNECT_TIMEOUT);
         /*
          * If, while we are waiting, the remote disconnected, the connection is torn down at this point.
          * Nothing to do, just return.
          */
-        if (conn == NULL) {
+     /*   if (conn == NULL) {
             return;
         }
-    }
+    }*/
 
-    AJ_WarnPrintf(("ARDP_Disconnect: Send RST\n"));
-    SendHeader(ARDP_FLAG_RST | ARDP_FLAG_ACK | ARDP_FLAG_VER);
+    //AJ_WarnPrintf(("CAN_Disconnect: Send RST\n"));
+    //SendHeader(ARDP_FLAG_RST | ARDP_FLAG_ACK | ARDP_FLAG_VER);
 
-    AJ_Free(conn);
+    //AJ_Free(conn);
     conn = NULL;
-    printf("Exit AJ_ARDP_Disconnect\n");
+    printf("Exit AJ_CAN_Disconnect\n");
 }
 
 AJ_Status AJ_ARDP_Send(AJ_IOBuffer* buf)
@@ -1432,7 +1432,7 @@ AJ_Status AJ_ARDP_Recv(AJ_IOBuffer* rxBuf, uint32_t len, uint32_t timeout)
                 break;
             } else if ((status != AJ_ERR_ARDP_REMOTE_CONNECTION_RESET) && (conn->state != CLOSE_WAIT)) {
                 AJ_WarnPrintf(("AJ_ARDP_Recv: received bad data, disconnecting\n"));
-                AJ_ARDP_Disconnect(TRUE);
+                AJ_CAN_Disconnect(TRUE);
             }
             status = AJ_ERR_READ;
 

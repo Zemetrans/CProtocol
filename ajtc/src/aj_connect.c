@@ -43,34 +43,8 @@
 #include <ajtcl/aj_security.h>
 
 #ifdef AJ_CAN
-/*Временный костыль */
 #include <ajtcl/aj_can.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-
-#include <net/if.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-
-#include <linux/can.h>
-#include <linux/can/raw.h>
-#include <linux/can/error.h>
-
-#include <linux/types.h>
-#include <inttypes.h>
-
-#define AJ_CAN_SIGNATURE			0xC0
-#define AJ_CAN_SERIAL_START			0x0B
-#define AJ_CAN_RESTART				0x8
-#define AJ_CAN_SERIAL_TERMINATION	0x6
-#define AJ_SERIES_SUCCESS			1
-#define AJ_SERIES_FAILURE			0
-#define AJ_NEW_CLIENT_MASK			0x3ff << 11
 #endif
-
 #ifdef AJ_ARDP
 #include <ajtcl/aj_ardp.h>
 #endif
@@ -310,9 +284,7 @@ AJ_Status AJ_Authenticate(AJ_BusAttachment* bus)
         // *before* AJ_Authenticate is called.
         return AJ_OK;
     }
-#ifdef AJ_CAN
-	return AJ_OK;
-#endif
+
 #ifdef AJ_TCP
     /*
      * Send initial NUL byte
@@ -440,75 +412,6 @@ AJ_Status AJ_Connect(AJ_BusAttachment* bus, const char* serviceName, uint32_t ti
     if (status != AJ_OK) {
         AJ_InfoPrintf(("AJ_Connect(): AJ_Serial_Up status=%s\n", AJ_StatusText(status)));
     }
-#elif defined(AJ_CAN)
-	// Discover and Can-Protocol handshake
-	int s;
-	int nbytes;
-	canid_t client_id = 0x4BA;
-	struct sockaddr_can addr;
-	struct can_frame frame;
-	struct ifreq ifr;
-
-	char *ifname = "vcan0";
-
-	if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		perror("Error while opening socket");
-		return -1;
-	}
-
-	strcpy(ifr.ifr_name, ifname);
-	ioctl(s, SIOCGIFINDEX, &ifr);
-	
-	addr.can_family  = AF_CAN;
-	addr.can_ifindex = ifr.ifr_ifindex; 
-
-	printf("%s at index %d\n", ifname, ifr.ifr_ifindex);
-
-	if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		perror("Error in socket bind");
-		return -2;
-	}
-	//Верхняя граница стандартного ID 0x7FF
-	//Опознаёмся на сервере
-	int i;
-	frame.can_id  = 0x8000000 | AJ_NEW_CLIENT_MASK | client_id;
-	frame.can_dlc = 8;
-	frame.data[0] = 0xFF;
-	frame.data[1] = 0xFF;
-	frame.data[2] = 0xFF;
-	frame.data[3] = 0xFF;
-	frame.data[4] = 0xCA;
-	frame.data[5] = 0xF3;
-	frame.data[6] = 0x04;
-	frame.data[7] = 0xB0;
-	nbytes = write(s, &frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket write");
-	} else {
-		printf("Wrote %d bytes\n", nbytes);
-	}
-	//Ждём ответного сообщения
-	nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket read");
-	} else {
-		printf("Wrote %d bytes\n", nbytes);
-	}
-	//Разбираем кадр, проверяем его
-	if ((frame.can_dlc == 6) & (frame.data[0] == 0xFF) & (frame.data[1] == 0xFF) & (frame.data[2] == 0xFF) &
-		(frame.data[3] == 0xFF)) {
-		canid_t tmp = ((frame.data[4] & 0x7) << 8) | frame.data[5];
-		if (tmp == client_id) {
-			printf("Get Server session acknowledge frame!\n");
-			client_id = 0x80000000 | client_id | (frame.can_id & 0x1FFFF800) ;
-		}
-		//получаем свой новый CAN_ID
-	} else {
-		printf("Get not server acknowledge frame!\n");
-	}
-	printf("Client Session ID: %x\n", client_id);
-	//Куда-то должны сохранить открытый сокет?
-	
 #else
     status = AJ_Discover(serviceName, &service, timeout, selectionTimeout);
     if (status != AJ_OK) {
@@ -516,7 +419,7 @@ AJ_Status AJ_Connect(AJ_BusAttachment* bus, const char* serviceName, uint32_t ti
         goto ExitConnect;
     }
 #endif
-    status = AJ_Net_Connect(bus, &service); //Коннектимся к CAN
+    status = AJ_Net_Connect(bus, &service);
     if (status != AJ_OK) {
         AJ_InfoPrintf(("AJ_Connect(): AJ_Net_Connect status=%s\n", AJ_StatusText(status)));
         goto ExitConnect;
@@ -583,7 +486,7 @@ AJ_Status AJ_FindBusAndConnect(AJ_BusAttachment* bus, const char* serviceName, u
     bus->isProbeRequired = TRUE;
 
     /*
-     * Clear stale name->GUID mappings (статистически уникальный 128-битный идентификатор)
+     * Clear stale name->GUID mappings
      */
     AJ_GUID_ClearNameMap();
 
@@ -626,74 +529,13 @@ AJ_Status AJ_FindBusAndConnect(AJ_BusAttachment* bus, const char* serviceName, u
             AJ_InfoPrintf(("AJ_FindBusAndConnect(): AJ_Serial_Up status=%s\n", AJ_StatusText(status)));
         }
 #elif defined(AJ_CAN)
-	// Discover and Can-Protocol handshake
-	int s;
-	int nbytes;
-	canid_t client_id = 0x4BA;
-	struct sockaddr_can addr;
-	struct can_frame frame;
-	struct ifreq ifr;
-
-	char *ifname = "vcan0";
-
-	if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
-		perror("Error while opening socket");
-		return -1;
-	}
-
-	strcpy(ifr.ifr_name, ifname);
-	ioctl(s, SIOCGIFINDEX, &ifr);
-	
-	addr.can_family  = AF_CAN;
-	addr.can_ifindex = ifr.ifr_ifindex; 
-
-	printf("%s at index %d\n", ifname, ifr.ifr_ifindex);
-
-	if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		perror("Error in socket bind");
-		return -2;
-	}
-	//Верхняя граница стандартного ID 0x7FF
-	//Опознаёмся на сервере
-	int i;
-	frame.can_id  = 0x8000000 | AJ_NEW_CLIENT_MASK | client_id;
-	frame.can_dlc = 8;
-	frame.data[0] = 0xFF;
-	frame.data[1] = 0xFF;
-	frame.data[2] = 0xFF;
-	frame.data[3] = 0xFF;
-	frame.data[4] = 0xCA;
-	frame.data[5] = 0xF3;
-	frame.data[6] = 0x04;
-	frame.data[7] = 0xB0;
-	nbytes = write(s, &frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket write");
-	} else {
-		printf("Wrote %d bytes\n", nbytes);
-	}
-	//Ждём ответного сообщения
-	nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket read");
-	} else {
-		printf("Wrote %d bytes\n", nbytes);
-	}
-	//Разбираем кадр, проверяем его
-	if ((frame.can_dlc == 6) & (frame.data[0] == 0xFF) & (frame.data[1] == 0xFF) & (frame.data[2] == 0xFF) &
-		(frame.data[3] == 0xFF)) {
-		canid_t tmp = ((frame.data[4] & 0x7) << 8) | frame.data[5];
-		if (tmp == client_id) {
-			printf("Get Server session acknowledge frame!\n");
-			client_id = 0x80000000 | client_id | (frame.can_id & 0x1FFFF800) ;
-		}
-		//получаем свой новый CAN_ID
-	} else {
-		printf("Get not server acknowledge frame!\n");
-	}
-	printf("Client Session ID: %x\n", client_id);
-	status = AJ_OK;
-		//Куда-то должны сохранить открытый сокет?		
+        // use our handshake-discover
+        //don`t need this implementation of dicover
+        /*status = AJ_Can_Discover();
+        if (status != AJ_OK) {
+            AJ_InfoPrintf(("AJ_FindBusAndConnect(): AJ_Serial_Up status=%s\n", AJ_StatusText(status)));
+        }*/
+       	
 #else
         AJ_InitTimer(&connectionTimer);
         AJ_InfoPrintf(("AJ_FindBusAndConnect(): Connection timer started\n"));
@@ -727,9 +569,8 @@ AJ_Status AJ_FindBusAndConnect(AJ_BusAttachment* bus, const char* serviceName, u
 
         status = AJ_Authenticate(bus);
         if (status != AJ_OK) {
-            printf("AJ_FindBusAndConnect Authenticate not OK!\n");
             AJ_InfoPrintf(("AJ_FindBusAndConnect(): AJ_Authenticate status=%s\n", AJ_StatusText(status)));
-#if !AJ_CONNECT_LOCALHOST && !defined(ARDUINO) && !defined(AJ_SERIAL_CONNECTION) && !defined(AJ_CAN)
+#if !AJ_CONNECT_LOCALHOST && !defined(ARDUINO) && !defined(AJ_SERIAL_CONNECTION)
             if ((status == AJ_ERR_ACCESS_ROUTING_NODE) || (status == AJ_ERR_OLD_VERSION)) {
                 AJ_InfoPrintf(("AJ_FindBusAndConnect(): Blacklisting routing node\n"));
                 AddRoutingNodeToBlacklist(&service, AJ_ADDR_TCP4);
@@ -795,10 +636,9 @@ ExitConnect:
 
 #ifdef AJ_CAN
 
-AJ_Status AJ_ARDP_UDP_Connect(AJ_BusAttachment* bus, void* context, const AJ_Service* service, AJ_NetSocket* netSock)
+AJ_Status AJ_ARDP_UDP_CAN_Connect(AJ_BusAttachment* bus, void* context, const AJ_Service* service, AJ_NetSocket* netSock)
 {
-    AJ_Status status;
-    /*AJ_Message hello;
+    AJ_Message hello;
     AJ_GUID localGuid;
     char guid_buf[33];
     AJ_Status status;
@@ -811,7 +651,7 @@ AJ_Status AJ_ARDP_UDP_Connect(AJ_BusAttachment* bus, void* context, const AJ_Ser
     AJ_MarshalArgs(&hello, "su", guid_buf, 10);
     hello.hdr->bodyLen = hello.bodyBytes;
 
-    status = AJ_ARDP_Connect(bus->sock.tx.readPtr, AJ_IO_BUF_AVAIL(&bus->sock.tx), context, netSock);
+    status = AJ_CAN_Connect(bus->sock.tx.readPtr, AJ_IO_BUF_AVAIL(&bus->sock.tx), context, netSock);
     if (status != AJ_OK) {
         return status;
     }
@@ -830,11 +670,10 @@ AJ_Status AJ_ARDP_UDP_Connect(AJ_BusAttachment* bus, void* context, const AJ_Ser
              * The two most-significant bits are reserved for the nameType,
              * which we don't currently care about in the thin client
              */
-             /*
             routingProtoVersion = (uint8_t) ((*protoVersion.val.v_uint32) & 0x3FFFFFFF);
 
             if (uniqueName.len >= (sizeof(bus->uniqueName) - 1)) {
-                AJ_ErrPrintf(("AJ_ARDP_Connect(): Blacklisting routing node, uniqueName.len = %d\n", uniqueName.len));
+                AJ_ErrPrintf(("AJ_CAN_Connect(): Blacklisting routing node, uniqueName.len = %d\n", uniqueName.len));
                 AddRoutingNodeToBlacklist(service, AJ_ADDR_UDP4);
                 status = AJ_ERR_ACCESS_ROUTING_NODE;
             } else {
@@ -844,7 +683,7 @@ AJ_Status AJ_ARDP_UDP_Connect(AJ_BusAttachment* bus, void* context, const AJ_Ser
 
             AJ_InfoPrintf(("Received name: %s and version %u\n", bus->uniqueName, routingProtoVersion));
             if (routingProtoVersion < AJ_GetMinProtoVersion()) {
-                AJ_InfoPrintf(("AJ_ARDP_Connect(): Blacklisting routing node, found %u but require >= %u\n",
+                AJ_InfoPrintf(("AJ_CAN_Connect(): Blacklisting routing node, found %u but require >= %u\n",
                                routingProtoVersion, AJ_GetMinProtoVersion()));
                 // add to blacklist because of invalid version
                 AddRoutingNodeToBlacklist(service, AJ_ADDR_UDP4);
@@ -866,10 +705,7 @@ AJ_Status AJ_ARDP_UDP_Connect(AJ_BusAttachment* bus, void* context, const AJ_Ser
         // ARDP does not require ProbeReq/ProbeAck
         bus->isProbeRequired = FALSE;
     }
-    */
-    status = AJ_OK;
-    bus->isAuthenticated = TRUE;
-    bus->isProbeRequired = FALSE;
+
     return status;
 }
 

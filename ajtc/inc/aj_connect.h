@@ -105,7 +105,7 @@ AJ_Status AJ_Connect(AJ_BusAttachment* bus, const char* serviceName, uint32_t ti
  *         - AJ_ERR_TIMEOUT if the connection attempt timed out
  */
 AJ_EXPORT
-AJ_Status AJ_ARDP_UDP_Connect(AJ_BusAttachment* bus, void* context, const AJ_Service* service, AJ_NetSocket* netSock);
+AJ_Status AJ_ARDP_UDP_CAN_Connect(AJ_BusAttachment* bus, void* context, const AJ_Service* service, AJ_NetSocket* netSock);
 
 #endif
 
