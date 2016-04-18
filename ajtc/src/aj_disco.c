@@ -977,16 +977,6 @@ static AJ_Status ParseMDNSResp(AJ_IOBuffer* rxBuf, const char* prefix, AJ_Servic
 #endif
 
         // similarly, check ARDP only if we care about it.
-#ifdef AJ_CAN
-        if (alljoyn_ptr_record_udp && service_port_udp) {
-            service->ipv4portUdp = service_port_udp;
-            memcpy(&service->ipv4Udp, bus_addr, sizeof(service->ipv4Udp));
-            service->addrTypes |= AJ_ADDR_UDP4;
-            service->pv = protocol_version;
-            service->priority = service_priority;
-            status = AJ_OK;
-        }
-#endif
 
         return status;
     } else {
