@@ -67,6 +67,10 @@ int main() {
 	frame.data[0] = (AJ_CONTROL_FRAME << 4) | 1;
 
 	write(s, &frame, sizeof(struct can_frame));
+	frame.can_dlc = 2;
+	frame.data[0] = (AJ_DATA_FRAME << 4) | 0;
+	frame.data[1] = 0xCA;
+	write(s, &frame, sizeof(struct can_frame));
 
 	close(s);
 }

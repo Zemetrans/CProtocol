@@ -83,11 +83,20 @@ int main() {
 	}
 	if (((frame.data[0] & (AJ_CONTROL_FRAME << 4)) >> 4) == AJ_CONTROL_FRAME) {
 		printf("Have Control Frame!\nКоличество кадров в серии = %d\n", frame.data[0] & 0xf);
+		session_struct.numberOfFrames = frame.data[0] & 0xf;
+		int i;
+		for (i = 0; i < session_struct.numberOfFrames; ++i) {
+			nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
+			if (nbytes <= 0) {
+				perror("Socket Read");
+			}
+			session_struct.buffer[i] = frame;
+		}
 	} else {
 		printf("-_-\n%x\n", frame.data[0] & (AJ_CONTROL_FRAME << 4));
 	}
 	
-
+	printf("Struct data:\nNumber of frames: %d\ndata: %x\n", session_struct.numberOfFrames, session_struct.buffer[0].data[1]); 
 	close(s);
 	return 0;
  }
