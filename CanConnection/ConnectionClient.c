@@ -21,7 +21,7 @@
 #define AJ_CAN_SERIAL_TERMINATION	0x6
 #define AJ_SERIES_SUCCESS			1
 #define AJ_SERIES_FAILURE			0
-#define AJ_NEW_CLIENT_MASK			0x3ff << 11
+#define AJ_NEW_CLIENT_MASK			0x3ff
 
 /*
  * Controller Area Network Identifier structure
@@ -39,6 +39,7 @@ int main() {
 	struct sockaddr_can addr;
 	struct can_frame frame;
 	struct ifreq ifr;
+	int done = 0;
 
 	char *ifname = "vcan0";
 
@@ -62,7 +63,7 @@ int main() {
 	//Верхняя граница стандартного ID 0x7FF
 	//Опознаёмся на сервере
 	int i;
-	frame.can_id  = 0x8000000 | AJ_NEW_CLIENT_MASK | client_id;
+	frame.can_id  = 0x80000000 | (client_id  << 18)| AJ_NEW_CLIENT_MASK;
 	frame.can_dlc = 8;
 	frame.data[0] = 0xFF;
 	frame.data[1] = 0xFF;
@@ -79,25 +80,30 @@ int main() {
 		printf("Wrote %d bytes\n", nbytes);
 	}
 	//Ждём ответного сообщения
-	nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket read");
-	} else {
-		printf("Wrote %d bytes\n", nbytes);
-	}
-	//Разбираем кадр, проверяем его
-	if ((frame.can_dlc == 6) & (frame.data[0] == 0xFF) & (frame.data[1] == 0xFF) & (frame.data[2] == 0xFF) &
-		(frame.data[3] == 0xFF)) {
-		canid_t tmp = ((frame.data[4] & 0x7) << 8) | frame.data[5];
-		if (tmp == client_id) {
-			printf("Get Server session acknowledge frame!\n");
-			client_id = 0x80000000 | client_id | (frame.can_id & 0x1FFFF800) ;
+	while (!done) {
+		nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
+		if (nbytes <= 0) {
+			perror("Error in socket read");
+		} else {
+			printf("Wrote %d bytes\n", nbytes);
 		}
-		//получаем свой новый CAN_ID
-	} else {
-		printf("Get not server acknowledge frame!\n");
+		//Разбираем кадр, проверяем его
+		if ((frame.can_dlc == 6) & (frame.data[0] == 0xFF) & (frame.data[1] == 0xFF) & 
+			(frame.data[2] == 0xFF) & (frame.data[3] == 0xFF)) {
+			//Собираем ID из нагрузки и сверяем его с нашим
+			canid_t tmp = ((frame.data[4] & 0x7) << 8) | frame.data[5];
+			printf("tmp = %x\n", tmp);
+			if (tmp == client_id) {
+				printf("Get Server session acknowledge frame!\n");
+				//получаем свой новый CAN_ID
+				client_id = 0x80000000 | client_id << 18 | (frame.can_id & 0x3FFFF) ;
+				++done; //Кадр наш, можно выйти из циула.
+			}
+		} else {
+			printf("Get not server acknowledge frame!\n");
+		}
+		printf("Client Session ID: %x\n", client_id);
 	}
-	printf("Client Session ID: %x\n", client_id);
 	//}
 	//frame.can_id = client_id;
 	//nbytes = write(s, &frame, sizeof(struct can_frame));

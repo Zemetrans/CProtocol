@@ -21,7 +21,7 @@
 #define AJ_CAN_SERIAL_TERMINATION	0x6
 #define AJ_SERIES_SUCCESS			1
 #define AJ_SERIES_FAILURE			0
-#define AJ_NEW_CLIENT_MASK			0x3ff << 11
+#define AJ_NEW_CLIENT_MASK			0x3ff
 
 struct session_data {
 	canid_t CID;
@@ -82,7 +82,7 @@ int main() {
 			(frame.data[7] == 0xB0)) {
 				frame.can_dlc = 6;
 				printf("Have new AJ Client!\n");
-				sData.CID = frame.can_id & 0x7FF;
+				sData.CID = (frame.can_id & (0x7FF << 18)) >> 18;
 				sData.SessionID = SessionID;
 				int i;
 				//Заносим новые данные 4 байта MAGIC_AJ
@@ -90,10 +90,10 @@ int main() {
 					frame.data[i] = 0xFF;
 				}
 				//CLI_ID в двух байтах
-				frame.data[4] = (frame.can_id & 0x700) >> 8;
-				frame.data[5] = frame.can_id & 0xFF;
+				frame.data[4] = (frame.can_id & (0x700 << 18)) >> 26;
+				frame.data[5] = (frame.can_id & (0xFF << 18)) >> 18;
 				//делаем в кадре новый ID
-				frame.can_id = 0x80000000 | server_id | ((SessionID) << 11);
+				frame.can_id = 0x80000000 | server_id << 18| SessionID;
 				printf("Gave SessionID: %x\n", SessionID);
 				//Эмулируем Пул
 				SessionID++;
