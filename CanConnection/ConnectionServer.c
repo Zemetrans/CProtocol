@@ -27,7 +27,7 @@ struct session_data {
 	canid_t CID;
 	canid_t SessionID;
 	char buf[64];
-	//reserver for descr
+	//reserved for descr
 } sData;
 /*
  * Controller Area Network Identifier structure
