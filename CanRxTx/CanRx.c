@@ -21,7 +21,7 @@
 #define AJ_CAN_SERIAL_TERMINATION	0x6
 #define AJ_SERIES_SUCCESS			1
 #define AJ_SERIES_FAILURE			0
-#define AJ_NEW_CLIENT_MASK			0x3ff << 11
+#define AJ_NEW_CLIENT_MASK			0x3ff
 #define AJ_CONTROL_FRAME			0xf
 #define AJ_DATA_FRAME				0xC
 #define AJ_ERROR_FRAME				0x7
@@ -84,6 +84,8 @@ int main() {
 	if (((frame.data[0] & (AJ_CONTROL_FRAME << 4)) >> 4) == AJ_CONTROL_FRAME) {
 		printf("Have Control Frame!\nКоличество кадров в серии = %d\n", frame.data[0] & 0xf);
 		session_struct.numberOfFrames = frame.data[0] & 0xf;
+		session_struct.ID = (frame.can_id & (0x7FF << 18)) >> 18;
+		session_struct.SID = frame.can_id & 0x3FFFF;
 		int i;
 		for (i = 0; i < session_struct.numberOfFrames; ++i) {
 			nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
@@ -96,7 +98,8 @@ int main() {
 		printf("-_-\n%x\n", frame.data[0] & (AJ_CONTROL_FRAME << 4));
 	}
 	
-	printf("Struct data:\nNumber of frames: %d\ndata: %x\n", session_struct.numberOfFrames, session_struct.buffer[0].data[1]); 
+	printf("Struct data:\nNumber of frames: %d\ndata: %x\nCID: %x\nSID: %x\n", session_struct.numberOfFrames, session_struct.buffer[0].data[1], 
+		session_struct.ID, session_struct.SID); 
 	close(s);
 	return 0;
  }

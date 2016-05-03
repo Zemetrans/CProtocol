@@ -21,7 +21,7 @@
 #define AJ_CAN_SERIAL_TERMINATION	0x6
 #define AJ_SERIES_SUCCESS			1
 #define AJ_SERIES_FAILURE			0
-#define AJ_NEW_CLIENT_MASK			0x3ff << 11
+#define AJ_NEW_CLIENT_MASK			0x3ff
 #define AJ_CONTROL_FRAME			0xf
 #define AJ_DATA_FRAME				0xC
 #define AJ_ERROR_FRAME				0x7
@@ -37,7 +37,7 @@
 int main() {
 	int s;
 	int nbytes;
-	canid_t client_id = 0x4BA;
+	canid_t client_id = 0x92e80200;
 	struct sockaddr_can addr;
 	struct can_frame frame;
 	struct ifreq ifr;
@@ -61,8 +61,7 @@ int main() {
 		perror("Error in socket bind");
 		return -2;
 	}
-
-	frame.can_id  = 0x8000000 | AJ_NEW_CLIENT_MASK | client_id;
+	frame.can_id = client_id;
 	frame.can_dlc = 1;
 	frame.data[0] = (AJ_CONTROL_FRAME << 4) | 1;
 
