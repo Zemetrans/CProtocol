@@ -1204,7 +1204,7 @@ static AJ_Status AJ_Net_CAN_Connect(AJ_BusAttachment* bus, const AJ_Service* ser
     // simply use send() rather than sendto().  See: man 7 udp
     //ret = connect(udpSock, (struct sockaddr*) &addrBuf, addrSize);
 	/* вместо этого будет то, что ниже */
-	int s;
+	//int s;
 	int nbytes;
 	canid_t client_id = 0x4BA;
 	struct sockaddr_can addr;
@@ -1214,20 +1214,20 @@ static AJ_Status AJ_Net_CAN_Connect(AJ_BusAttachment* bus, const AJ_Service* ser
 
 	char *ifname = "vcan0";
 
-	if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
+	if((canSock = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		perror("Error while opening socket");
 		return -1;
 	}
 
 	strcpy(ifr.ifr_name, ifname);
-	ioctl(s, SIOCGIFINDEX, &ifr);
+	ioctl(canSock, SIOCGIFINDEX, &ifr);
 	
 	addr.can_family  = AF_CAN;
 	addr.can_ifindex = ifr.ifr_ifindex; 
 
 	printf("%s at index %d\n", ifname, ifr.ifr_ifindex);
 
-	if(bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+	if(bind(canSock, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
 		perror("Error in socket bind");
 		return -2;
 	}
@@ -1244,7 +1244,7 @@ static AJ_Status AJ_Net_CAN_Connect(AJ_BusAttachment* bus, const AJ_Service* ser
 	frame.data[5] = 0xF3;
 	frame.data[6] = 0x04;
 	frame.data[7] = 0xB0;
-	nbytes = write(s, &frame, sizeof(struct can_frame));
+	nbytes = write(canSock, &frame, sizeof(struct can_frame));
 	if (nbytes <= 0) {
 		perror("Error in socket write");
 	} else {
@@ -1252,7 +1252,7 @@ static AJ_Status AJ_Net_CAN_Connect(AJ_BusAttachment* bus, const AJ_Service* ser
 	}
 	//Ждём ответного сообщения
 	while (!done) {
-		nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
+		nbytes = read(canSock, (char *)&frame, sizeof(struct can_frame));
 		if (nbytes <= 0) {
 			perror("Error in socket read");
 		} else {
