@@ -74,7 +74,6 @@ int main() {
 	if (count > 15) {
 		printf("Houston, we have a problem\n");
 	}
-	//Нужна проверка, уместим ли всё в один кадр, будет ли последний кадр полным.
 
 	frame.can_id = client_id;
 	frame.can_dlc = 1;
