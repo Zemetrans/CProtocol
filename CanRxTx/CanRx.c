@@ -54,6 +54,8 @@ int main() {
 	struct can_frame frame;
 	struct ifreq ifr;
 
+	char buf[21];
+
 	char *ifname = "vcan0";
 	printf("AJ_NEW_CLIENT_MASK: %x\n", AJ_NEW_CLIENT_MASK);
 
@@ -99,7 +101,14 @@ int main() {
 	}
 	
 	printf("Struct data:\nNumber of frames: %d\ndata: %x\nCID: %x\nSID: %x\n", session_struct.numberOfFrames, session_struct.buffer[0].data[1], 
-		session_struct.ID, session_struct.SID); 
+		session_struct.ID, session_struct.SID);
+	int i;
+	int offset = 0;
+	for (i = 0; i < session_struct.numberOfFrames; ++i) {
+		memcpy(buf, session_struct.buffer[i].data + 1, session_struct.buffer[i].can_dlc - 1);
+		offset += 7;
+	}
+	printf("%s\n", buf);
 	close(s);
 	return 0;
  }

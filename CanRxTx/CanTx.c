@@ -43,7 +43,9 @@ int main() {
 	struct ifreq ifr;
 
 	char *ifname = "vcan0";
-
+	char testString[21] = "This is test string__";
+	char cutTest[21];
+	int stringDone = 0;
 	if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		perror("Error while opening socket");
 		return -1;
@@ -61,15 +63,53 @@ int main() {
 		perror("Error in socket bind");
 		return -2;
 	}
+	int count; //Определяем, сколько информационных кадров будет
+	int lastFrameDataNumber = 21 % 7; //21 потом заменить на sizeof(ARDP frame)
+	if (lastFrameDataNumber) {
+		count = 21 / 7 + 1;
+	} else {
+		count = 21 / 7;
+	}
+	printf("count = %d\n", count);
+	if (count > 15) {
+		printf("Houston, we have a problem\n");
+	}
+	//Нужна проверка, уместим ли всё в один кадр, будет ли последний кадр полным.
+
 	frame.can_id = client_id;
 	frame.can_dlc = 1;
-	frame.data[0] = (AJ_CONTROL_FRAME << 4) | 1;
+	frame.data[0] = (AJ_CONTROL_FRAME << 4) | count;
 
 	write(s, &frame, sizeof(struct can_frame));
-	frame.can_dlc = 2;
-	frame.data[0] = (AJ_DATA_FRAME << 4) | 0;
-	frame.data[1] = 0xCA;
-	write(s, &frame, sizeof(struct can_frame));
-
+	//frame.can_dlc = 8;
+	//frame.data[0] = (AJ_DATA_FRAME << 4) | 0;
+	//frame.data[1] = 0xCA;
+	//write(s, &frame, sizeof(struct can_frame));
+	
+	int iter;
+	int offset = 0;
+	int bytesToCopy = 0;
+	int testOffCp = 0;
+	for (iter = 0; iter < count; ++iter) {
+		if ((iter + 1) == count & lastFrameDataNumber != 0) {
+			frame.can_dlc = lastFrameDataNumber + 1;
+			bytesToCopy = lastFrameDataNumber;
+		} else {
+			frame.can_dlc = 8;
+			bytesToCopy = 7;
+			//testOffCp++;
+		}
+		/*if (iter + 1 == count) {
+			bytesToCopy = 8;
+		}*/
+		frame.data[0] = (AJ_DATA_FRAME << 4) | iter;
+		memcpy(frame.data + 1, testString + offset, bytesToCopy);
+		memcpy(cutTest + offset, testString + offset, bytesToCopy);
+		offset += 7;
+		//testOffCp += 7;
+		write(s, &frame, sizeof(struct can_frame));
+		printf("wrote, iter: %d\n", iter);
+	}
+	printf("String after cuttng:\n%s\n", cutTest);
 	close(s);
 }
