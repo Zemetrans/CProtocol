@@ -102,6 +102,7 @@ int main() {
 			bytesToCopy = 8;
 		}*/
 		frame.data[0] = (AJ_DATA_FRAME << 4) | iter;
+		
 		memcpy(frame.data + 1, testString + offset, bytesToCopy);
 		memcpy(cutTest + offset, testString + offset, bytesToCopy);
 		offset += 7;
@@ -112,7 +113,7 @@ int main() {
 	/* Test Error Frame */
 	//frame.can_dlc = 8;
 	//frame.data[0] = AJ_ERROR_FRAME << 4;
-	write(s, &frame, sizeof(struct can_frame));
+	//write(s, &frame, sizeof(struct can_frame));
 	//printf("String after cuttng:\n%s\n", cutTest);
 	close(s);
 }

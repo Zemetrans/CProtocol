@@ -57,6 +57,8 @@ int waitAndReceiveSession(struct Session *session, int s) {
 		while (!done) {
 		if (!restart) { //Если во время получения серии началась новая серия
 			nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
+		} else {
+			restart--;
 		}
 		if (nbytes <= 0) {
 			perror("Error in socket read");
@@ -101,11 +103,15 @@ int getSeries(struct Session *session, int s) {
 		}
 		if ((frame.data[0] & 0xF) != i) {
 			printf("It`s trap!\nПорядок получения кадров нарушен\n");
-			break;
+			return AJ_SERIES_FAILURE;
 		}
 		if (((frame.data[0] & 0xF0) >> 4) == AJ_ERROR_FRAME) {
 			printf("getSeries got AJ_ERROR_FRAME!");
-			break;
+			return AJ_SERIES_FAILURE;
+		}
+		if (((frame.data[0] & 0xF0) >> 4) == AJ_CONTROL_FRAME) {
+			printf("getSeries got AJ_CONTROL_FRAME!");
+			return AJ_SERIES_RESTART;
 		}
 		session->buffer[i] = frame;
 	}
@@ -144,34 +150,6 @@ int main() {
 		return -2;
 	}
 	waitAndReceiveSession(&session_struct, s);
-	/*nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
-	if (nbytes <= 0) {
-		perror("Error in socket read");
-	} else {
-		printf("Read %d bytes\n", nbytes);
-	}
-	if (((frame.data[0] & (AJ_CONTROL_FRAME << 4)) >> 4) == AJ_CONTROL_FRAME) {
-		printf("Have Control Frame!\nКоличество кадров в серии = %d\n", frame.data[0] & 0xf);
-		session_struct.numberOfFrames = frame.data[0] & 0xf;
-		session_struct.ID = (frame.can_id & (0x7FF << 18)) >> 18;
-		session_struct.SID = frame.can_id & 0x3FFFF;
-		getSeries(&session_struct, s);
-		/*int i;
-		for (i = 0; i < session_struct.numberOfFrames; ++i) {
-			nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
-			if (nbytes <= 0) {
-				perror("Socket Read");
-			}
-			if ((frame.data[0] & 0xF) != i) {
-				printf("It`s trap!\nПорядок получения кадров нарушен\n");
-				break;
-			}
-			session_struct.buffer[i] = frame;
-		}*/
-	/*} else {
-		printf("-_-\n%x\n", frame.data[0] & (AJ_CONTROL_FRAME << 4));
-	}*/
-	
 	printf("Struct data:\nNumber of frames: %d\ndata: %x\nCID: %x\nSID: %x\n", session_struct.numberOfFrames, session_struct.buffer[0].data[1], 
 		session_struct.ID, session_struct.SID);
 	//printf("Test: \n");
@@ -189,7 +167,8 @@ int main() {
  /* TODO на завтра:
  * 1. Придумать Error Frame + (уже было)
  * 2. Вынести приём серии в функцию, дабы упростить свою жизнь +
- * 3. Ввести обработку Error Frame (+) и ситуации, когда приходит новый Control Frame
- * 4. Ввести дескриптер передачи серии. Хотя бы int числом. Потом обрабатывать это при выдаче данных, мол если всё плохо, то ничего и не собираем.
+ * 3. Ввести обработку Error Frame (+) и ситуации, когда приходит новый Control Frame+
+ * 4. Ввести дескриптер передачи серии. Хотя бы int числом. Потом обрабатывать это при выдаче данных, мол если всё плохо, то ничего и не собираем. (реализую позже, 
+ *                                                                                                                           когда будет n клиентов к 1 серверу)
  * Пока всё
  */
