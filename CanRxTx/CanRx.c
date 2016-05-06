@@ -21,6 +21,7 @@
 #define AJ_CAN_SERIAL_TERMINATION	0x6
 #define AJ_SERIES_SUCCESS			0xFF
 #define AJ_SERIES_FAILURE			0x0
+#define AJ_SERIES_RESTART			0xfb
 #define AJ_NEW_CLIENT_MASK			0x3ff
 #define AJ_CONTROL_FRAME			0xf
 #define AJ_DATA_FRAME				0xC
@@ -47,8 +48,45 @@ struct Session {
  	//SDesc - Session Descripter. Показывает состояние сессии. TODO
 } session_struct;
 
-int waitSession (struct Session *session, int s) {
+int waitAndReceiveSession(struct Session *session, int s) {
+	int nbytes;
+	int restart = 0;
+	int done = 0;
+	int getSeriesResult;
+	struct can_frame frame;
+		while (!done) {
+		if (!restart) { //Если во время получения серии началась новая серия
+			nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
+		}
+		if (nbytes <= 0) {
+			perror("Error in socket read");
+		} else {
+			printf("Read %d bytes\n", nbytes);
+		}
+		if (((frame.data[0] & (AJ_CONTROL_FRAME << 4)) >> 4) == AJ_CONTROL_FRAME) {
+			printf("Have Control Frame!\nКоличество кадров в серии = %d\n", frame.data[0] & 0xf);
+			session -> numberOfFrames = frame.data[0] & 0xf;
+			session -> ID = (frame.can_id & (0x7FF << 18)) >> 18;
+			session ->SID = frame.can_id & 0x3FFFF;
+			getSeriesResult = getSeries(session, s);
+			if (getSeriesResult == AJ_SERIES_RESTART) { //TODO переделать на switch case
+				++restart;
+			}
+			if (getSeriesResult == AJ_SERIES_SUCCESS) {
+				++done;
+			}
+			if (getSeriesResult == AJ_SERIES_FAILURE) {
+				printf("AJ_SERIES_FAILURE\n");
+				exit(1); //пока так, в AJTC скорее всего просто будет пропуск
+			}
+		} else {
+			printf("-_-\n%x\n", frame.data[0] & (AJ_CONTROL_FRAME << 4));
+		}
+	}
 	
+	printf("Struct data:\nNumber of frames: %d\ndata: %x\nCID: %x\nSID: %x\n", session -> numberOfFrames, session -> buffer[0].data[1], 
+		session -> ID, session -> SID);
+	return AJ_SERIES_SUCCESS;
 }
 int getSeries(struct Session *session, int s) {
 	int i;
@@ -105,8 +143,8 @@ int main() {
 		perror("Error in socket bind");
 		return -2;
 	}
-	
-	nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
+	waitAndReceiveSession(&session_struct, s);
+	/*nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
 	if (nbytes <= 0) {
 		perror("Error in socket read");
 	} else {
@@ -130,14 +168,14 @@ int main() {
 			}
 			session_struct.buffer[i] = frame;
 		}*/
-	} else {
+	/*} else {
 		printf("-_-\n%x\n", frame.data[0] & (AJ_CONTROL_FRAME << 4));
-	}
+	}*/
 	
 	printf("Struct data:\nNumber of frames: %d\ndata: %x\nCID: %x\nSID: %x\n", session_struct.numberOfFrames, session_struct.buffer[0].data[1], 
 		session_struct.ID, session_struct.SID);
-	printf("Test: \n");
-	printf("frame 0 in series, frame.data[1]: %x\n", session_struct.buffer[3].data[3]);
+	//printf("Test: \n");
+	//printf("frame 0 in series, frame.data[1]: %x\n", session_struct.buffer[3].data[3]);
 	int i;
 	int offset = 0;
 	for (i = 0; i < session_struct.numberOfFrames; ++i) {
