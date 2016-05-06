@@ -89,7 +89,7 @@ int main() {
 	int offset = 0;
 	int bytesToCopy = 0;
 	int testOffCp = 0;
-	for (iter = 0; iter < count; ++iter) {
+	/*for (iter = 0; iter < count; ++iter) {
 		if ((iter + 1) == count & lastFrameDataNumber != 0) {
 			frame.can_dlc = lastFrameDataNumber + 1;
 			bytesToCopy = lastFrameDataNumber;
@@ -101,14 +101,18 @@ int main() {
 		/*if (iter + 1 == count) {
 			bytesToCopy = 8;
 		}*/
-		frame.data[0] = (AJ_DATA_FRAME << 4) | iter;
+		/*frame.data[0] = (AJ_DATA_FRAME << 4) | iter;
 		memcpy(frame.data + 1, testString + offset, bytesToCopy);
 		memcpy(cutTest + offset, testString + offset, bytesToCopy);
 		offset += 7;
 		//testOffCp += 7;
 		write(s, &frame, sizeof(struct can_frame));
 		printf("wrote, iter: %d\n", iter);
-	}
-	printf("String after cuttng:\n%s\n", cutTest);
+	}*/
+	/* Test Error Frame */
+	frame.can_dlc = 8;
+	frame.data[0] = AJ_ERROR_FRAME << 4;
+	write(s, &frame, sizeof(struct can_frame));
+	//printf("String after cuttng:\n%s\n", cutTest);
 	close(s);
 }

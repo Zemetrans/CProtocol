@@ -43,9 +43,13 @@ struct Session {
  	canid_t SID;
  	struct can_frame buffer[10];
  	int numberOfFrames;
+ 	int src; //todo
  	//SDesc - Session Descripter. Показывает состояние сессии. TODO
 } session_struct;
 
+int waitSession (struct Session *session, int s) {
+	
+}
 int getSeries(struct Session *session, int s) {
 	int i;
 	int nbytes;
@@ -59,6 +63,10 @@ int getSeries(struct Session *session, int s) {
 		}
 		if ((frame.data[0] & 0xF) != i) {
 			printf("It`s trap!\nПорядок получения кадров нарушен\n");
+			break;
+		}
+		if (((frame.data[0] & 0xF0) >> 4) == AJ_ERROR_FRAME) {
+			printf("getSeries got AJ_ERROR_FRAME!");
 			break;
 		}
 		session->buffer[i] = frame;
@@ -141,9 +149,9 @@ int main() {
 	return 0;
  }
  /* TODO на завтра:
- * 1. Придумать Error Frame
+ * 1. Придумать Error Frame + (уже было)
  * 2. Вынести приём серии в функцию, дабы упростить свою жизнь +
- * 3. Ввести обработку Error Frame и ситуации, когда приходит новый Control Frame
+ * 3. Ввести обработку Error Frame (+) и ситуации, когда приходит новый Control Frame
  * 4. Ввести дескриптер передачи серии. Хотя бы int числом. Потом обрабатывать это при выдаче данных, мол если всё плохо, то ничего и не собираем.
  * Пока всё
  */
