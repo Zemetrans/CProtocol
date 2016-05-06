@@ -105,7 +105,7 @@ int main() {
 	int i;
 	int offset = 0;
 	for (i = 0; i < session_struct.numberOfFrames; ++i) {
-		memcpy(buf, session_struct.buffer[i].data + 1, session_struct.buffer[i].can_dlc - 1);
+		memcpy(buf + offset, session_struct.buffer[i].data + 1, session_struct.buffer[i].can_dlc - 1);
 		offset += 7;
 	}
 	printf("%s\n", buf);

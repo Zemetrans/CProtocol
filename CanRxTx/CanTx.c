@@ -43,8 +43,8 @@ int main() {
 	struct ifreq ifr;
 
 	char *ifname = "vcan0";
-	char testString[21] = "This is test string__";
-	char cutTest[21];
+	char testString[46] = "This is test string__!!This is test string__!!";
+	char cutTest[46];
 	int stringDone = 0;
 	if((s = socket(PF_CAN, SOCK_RAW, CAN_RAW)) < 0) {
 		perror("Error while opening socket");
@@ -64,11 +64,11 @@ int main() {
 		return -2;
 	}
 	int count; //Определяем, сколько информационных кадров будет
-	int lastFrameDataNumber = 21 % 7; //21 потом заменить на sizeof(ARDP frame)
+	int lastFrameDataNumber = 46 % 7; //46 потом заменить на sizeof(ARDP frame)
 	if (lastFrameDataNumber) {
-		count = 21 / 7 + 1;
+		count = 46 / 7 + 1;
 	} else {
-		count = 21 / 7;
+		count = 46 / 7;
 	}
 	printf("count = %d\n", count);
 	if (count > 15) {
