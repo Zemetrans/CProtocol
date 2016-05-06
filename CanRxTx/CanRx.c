@@ -19,12 +19,13 @@
 #define AJ_CAN_SERIAL_START			0x0B
 #define AJ_CAN_RESTART				0x8
 #define AJ_CAN_SERIAL_TERMINATION	0x6
-#define AJ_SERIES_SUCCESS			1
-#define AJ_SERIES_FAILURE			0
+#define AJ_SERIES_SUCCESS			0xFF
+#define AJ_SERIES_FAILURE			0x0
 #define AJ_NEW_CLIENT_MASK			0x3ff
 #define AJ_CONTROL_FRAME			0xf
 #define AJ_DATA_FRAME				0xC
 #define AJ_ERROR_FRAME				0x7
+
 /*
  * Controller Area Network Identifier structure
  *
@@ -44,6 +45,26 @@ struct Session {
  	int numberOfFrames;
  	//SDesc - Session Descripter. Показывает состояние сессии. TODO
 } session_struct;
+
+int getSeries(struct Session *session, int s) {
+	int i;
+	int nbytes;
+	struct can_frame frame;
+	printf("getSeries. Check session pointer. Session -> numberOfFrames: %x\n", session -> numberOfFrames);
+	for (i = 0; i < (session -> numberOfFrames); ++i) {
+		printf("Print in getSeries. For. I: %d numberOfFrames: %x\n", i, session -> numberOfFrames);
+		nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
+		if (nbytes <= 0) {
+			perror("Socket Read");
+		}
+		if ((frame.data[0] & 0xF) != i) {
+			printf("It`s trap!\nПорядок получения кадров нарушен\n");
+			break;
+		}
+		session->buffer[i] = frame;
+	}
+	return AJ_SERIES_SUCCESS;
+}
 
 int main() {
 	int s;
@@ -88,7 +109,8 @@ int main() {
 		session_struct.numberOfFrames = frame.data[0] & 0xf;
 		session_struct.ID = (frame.can_id & (0x7FF << 18)) >> 18;
 		session_struct.SID = frame.can_id & 0x3FFFF;
-		int i;
+		getSeries(&session_struct, s);
+		/*int i;
 		for (i = 0; i < session_struct.numberOfFrames; ++i) {
 			nbytes = read(s, (char *)&frame, sizeof(struct can_frame));
 			if (nbytes <= 0) {
@@ -99,13 +121,15 @@ int main() {
 				break;
 			}
 			session_struct.buffer[i] = frame;
-		}
+		}*/
 	} else {
 		printf("-_-\n%x\n", frame.data[0] & (AJ_CONTROL_FRAME << 4));
 	}
 	
 	printf("Struct data:\nNumber of frames: %d\ndata: %x\nCID: %x\nSID: %x\n", session_struct.numberOfFrames, session_struct.buffer[0].data[1], 
 		session_struct.ID, session_struct.SID);
+	printf("Test: \n");
+	printf("frame 0 in series, frame.data[1]: %x\n", session_struct.buffer[3].data[3]);
 	int i;
 	int offset = 0;
 	for (i = 0; i < session_struct.numberOfFrames; ++i) {
@@ -118,7 +142,7 @@ int main() {
  }
  /* TODO на завтра:
  * 1. Придумать Error Frame
- * 2. Вынести приём серии в функцию, дабы упростить свою жизнь
+ * 2. Вынести приём серии в функцию, дабы упростить свою жизнь +
  * 3. Ввести обработку Error Frame и ситуации, когда приходит новый Control Frame
  * 4. Ввести дескриптер передачи серии. Хотя бы int числом. Потом обрабатывать это при выдаче данных, мол если всё плохо, то ничего и не собираем.
  * Пока всё
