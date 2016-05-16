@@ -169,6 +169,7 @@ static const char versionPreamble[] =
     "Build: %s\n";
 
 void SignalHandler(int sig) {
+    printf("Enter SignalHandler\n");
     switch (sig) {
     case SIGHUP:
         if (!reload) {
@@ -181,6 +182,7 @@ void SignalHandler(int sig) {
         quit = 1;
         break;
     }
+    printf("Exit SignalHandler\n");
 }
 
 class OptParse {
@@ -533,6 +535,7 @@ exit:
 }
 
 int daemon(OptParse& opts) {
+    printf("Enter daemon\n");
     struct sigaction act, oldact;
     sigset_t sigmask, waitmask;
     ConfigDB* config = ConfigDB::GetConfigDB();
@@ -603,6 +606,7 @@ int daemon(OptParse& opts) {
 
     if (listenSpecs.empty()) {
         Log(LOG_ERR, "No listen address specified.  Aborting...\n");
+        printf("Exit daemon\n");
         return DAEMON_EXIT_CONFIG_ERROR;
     }
 
@@ -625,6 +629,7 @@ int daemon(OptParse& opts) {
     if (!config->GetAuth().empty()) {
         if (ajBus.GetInternal().FilterAuthMechanisms(config->GetAuth()) == 0) {
             Log(LOG_ERR, "No supported authentication mechanisms.  Aborting...\n");
+            printf("Exit daemon. Return DAEMON_EXIT_STARTUP_ERROR\n");
             return DAEMON_EXIT_STARTUP_ERROR;
         }
     }
@@ -635,6 +640,7 @@ int daemon(OptParse& opts) {
     status = ajBusController.Init(listenSpecs);
     if (ER_OK != status) {
         Log(LOG_ERR, "Failed to initialize BusController: %s\n", QCC_StatusText(status));
+        printf("Exit daemon. Return DAEMON_EXIT_STARTUP_ERROR\n");
         return DAEMON_EXIT_STARTUP_ERROR;
     }
 
@@ -671,6 +677,7 @@ int daemon(OptParse& opts) {
     Log(LOG_INFO, "Terminating.\n");
     ajBus.StopListen(listenSpecs.c_str());
 
+    printf("Exit daemon. Return DAEMON_EXIT_OK\n");
     return DAEMON_EXIT_OK;
 }
 
@@ -689,11 +696,14 @@ int CDECL_CALL main(int argc, char** argv, char** env)
     QCC_UNUSED(env);
 #endif
 
+    printf("Enter DaemonMain\n");
     if (AllJoynInit() != ER_OK) {
+    	printf("Exit DaemonMain. Return DAEMON_EXIT_STARTUP_ERROR\n");
         return DAEMON_EXIT_STARTUP_ERROR;
     }
     if (AllJoynRouterInit() != ER_OK) {
         AllJoynShutdown();
+        printf("Exit DaemonMain. DAEMON_EXIT_STARTUP_ERROR\n");
         return DAEMON_EXIT_STARTUP_ERROR;
     }
 
@@ -878,5 +888,6 @@ exit:
     delete config;
     AllJoynRouterShutdown();
     AllJoynShutdown();
+    printf("Exit DaemonMain. Return ret\n");
     return ret;
 }

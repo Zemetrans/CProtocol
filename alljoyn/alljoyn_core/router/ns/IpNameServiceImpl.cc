@@ -392,6 +392,7 @@ IpNameServiceImpl::IpNameServiceImpl()
     m_networkChangeScheduleCount(ArraySize(RETRY_INTERVALS)), m_staticScore(0), m_dynamicScore(0), m_priority(0),
     m_powerSource(0), m_mobility(0), m_availability(0), m_nodeConnection(0)
 {
+    printf("Enter IpNameServiceImpl::IpNameServiceImpl()\n");
     QCC_DbgHLPrintf(("IpNameServiceImpl::IpNameServiceImpl()"));
     TRANSPORT_INDEX_TCP = IndexFromBit(TRANSPORT_TCP);
     TRANSPORT_INDEX_UDP = IndexFromBit(TRANSPORT_UDP);
@@ -416,10 +417,12 @@ IpNameServiceImpl::IpNameServiceImpl()
         m_dynamicParams[i].maximumTransportConnections = 0;
         m_dynamicParams[i].maximumTransportRemoteClients = 0;
     }
+    printf("Exit IpNameServiceImpl::IpNameServiceImpl()\n");
 }
 
 QStatus IpNameServiceImpl::Init(const qcc::String& guid, bool loopback)
 {
+    printf("Enter IpNameServiceImpl::Init()\n");
     QStatus status = ER_OK;
 
     QCC_DbgHLPrintf(("IpNameServiceImpl::Init()"));
@@ -429,6 +432,7 @@ QStatus IpNameServiceImpl::Init(const qcc::String& guid, bool loopback)
     // of initializing
     //
     if (m_state != IMPL_SHUTDOWN) {
+        printf("Exit IpNameServiceImpl::Init(). Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -475,7 +479,7 @@ QStatus IpNameServiceImpl::Init(const qcc::String& guid, bool loopback)
 
         m_networkChangeScheduleCount = ArraySize(RETRY_INTERVALS);
     }
-
+    printf("Exit IpNameServiceImpl::Init(). Return status\n");
     return status;
 }
 
@@ -499,7 +503,7 @@ QStatus IpNameServiceImpl::Init(const qcc::String& guid, bool loopback)
 IpNameServiceImpl::~IpNameServiceImpl()
 {
     QCC_DbgHLPrintf(("IpNameServiceImpl::~IpNameServiceImpl()"));
-
+    printf("Enter IpNameServiceImpl::~IpNameServiceImpl()\n");
     //
     // Stop the worker thread to get things calmed down.
     //
@@ -562,27 +566,32 @@ IpNameServiceImpl::~IpNameServiceImpl()
     // All shut down and ready for bed.
     //
     m_state = IMPL_SHUTDOWN;
+    printf("Exit IpNameServiceImpl::~IpNameServiceImpl()\n");
 }
 
 QStatus IpNameServiceImpl::CreateVirtualInterface(const qcc::IfConfigEntry& entry)
 {
+    printf("Enter IpNameServiceImpl::CreateVirtualInterface\n");
     QCC_DbgPrintf(("IpNameServiceImpl::CreateVirtualInterface(%s)", entry.m_name.c_str()));
 
     std::vector<qcc::IfConfigEntry>::const_iterator it = m_virtualInterfaces.begin();
     for (; it != m_virtualInterfaces.end(); it++) {
         if (it->m_name == entry.m_name) {
             QCC_DbgPrintf(("Interface(%s) already exists", entry.m_name.c_str()));
+            printf("Exit IpNameServiceImpl::CreateVirtualInterface. Return ER_FAIL\n");
             return ER_FAIL;
         }
     }
     m_virtualInterfaces.push_back(entry);
     m_forceLazyUpdate = true;
     m_wakeEvent.SetEvent();
+    printf("Exit IpNameServiceImpl::CreateVirtualInterface. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::DeleteVirtualInterface(const qcc::String& ifceName)
 {
+    printf("Enter IpNameServiceImpl::DeleteVirtualInterface\n");
     QCC_DbgPrintf(("IpNameServiceImpl::DeleteVirtualInterface(%s)", ifceName.c_str()));
 
     std::vector<qcc::IfConfigEntry>::iterator it = m_virtualInterfaces.begin();
@@ -591,15 +600,18 @@ QStatus IpNameServiceImpl::DeleteVirtualInterface(const qcc::String& ifceName)
             m_virtualInterfaces.erase(it);
             m_forceLazyUpdate = true;
             m_wakeEvent.SetEvent();
+            printf("Exit IpNameServiceImpl::DeleteVirtualInterface. Return ER_OK\n");
             return ER_OK;
         }
     }
     QCC_DbgPrintf(("Interface(%s) does not exist", ifceName.c_str()));
+    printf("Exit IpNameServiceImpl::DeleteVirtualInterface. Return ER_FAIL\n");
     return ER_FAIL;
 }
 
 QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc::String& name)
 {
+    printf("Enter IpNameServiceImpl::OpenInterface\n");
     QCC_DbgHLPrintf(("IpNameServiceImpl::OpenInterface(%s)", name.c_str()));
 
     //
@@ -608,6 +620,7 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::OpenInterface(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::OpenInterface. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -616,6 +629,7 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
     //
     if (m_state != IMPL_RUNNING) {
         QCC_DbgPrintf(("IpNameServiceImpl::OpenInterface(): Not running"));
+        printf("Exit IpNameServiceImpl::OpenInterface. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -625,18 +639,21 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
     //
     if (name == INTERFACES_WILDCARD) {
         qcc::IPAddress wildcard("0.0.0.0");
+        printf("Exit IpNameServiceImpl::OpenInterface. Return OpenInterface(***)\n");
         return OpenInterface(transportMask, wildcard);
     }
 
     qcc::IPAddress addr;
     QStatus status = addr.SetAddress(name, false);
     if (status == ER_OK) {
+        printf("Exit IpNameServiceImpl::OpenInterface. Return OpenInterface(***)\n");
         return OpenInterface(transportMask, addr);
     }
     uint32_t transportIndex = IndexFromBit(transportMask);
     QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::OpenInterface(): Bad transport index");
 
     if (transportIndex >= 16) {
+        printf("Exit IpNameServiceImpl::OpenInterface. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
     //
@@ -657,6 +674,7 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
             m_forceLazyUpdate = true;
             m_wakeEvent.SetEvent();
             m_mutex.Unlock(MUTEX_CONTEXT);
+            printf("Enter IpNameServiceImpl::OpenInterface. Return ER_OK\n");
             return ER_OK;
         }
     }
@@ -671,11 +689,13 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
     m_forceLazyUpdate = true;
     m_wakeEvent.SetEvent();
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Enter IpNameServiceImpl::OpenInterface. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc::IPAddress& addr)
 {
+    printf("Enter IpNameServiceImpl::OpenInterface\n");
     QCC_DbgHLPrintf(("IpNameServiceImpl::OpenInterface(%s)", addr.ToString().c_str()));
 
     //
@@ -684,6 +704,7 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::OpenInterface(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::OpenInterface. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -691,6 +712,7 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
     QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::OpenInterface(): Bad transport index");
 
     if (transportIndex >= 16) {
+        printf("Exit IpNameServiceImpl::OpenInterface. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -699,6 +721,7 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
     //
     if (m_state != IMPL_RUNNING) {
         QCC_DbgPrintf(("IpNameServiceImpl::OpenInterface(): Not running"));
+        printf("Exit IpNameServiceImpl::OpenInterface. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -728,6 +751,7 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
         m_forceLazyUpdate = true;
         m_wakeEvent.SetEvent();
         m_mutex.Unlock(MUTEX_CONTEXT);
+        printf("Exit IpNameServiceImpl::OpenInterface. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -743,6 +767,7 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
             m_forceLazyUpdate = true;
             m_wakeEvent.SetEvent();
             m_mutex.Unlock(MUTEX_CONTEXT);
+            printf("Exit IpNameServiceImpl::OpenInterface. Return ER_OK\n");
             return ER_OK;
         }
     }
@@ -757,11 +782,13 @@ QStatus IpNameServiceImpl::OpenInterface(TransportMask transportMask, const qcc:
     m_forceLazyUpdate = true;
     m_wakeEvent.SetEvent();
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::OpenInterface. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc::String& name)
 {
+    printf("Enter IpNameServiceImpl::CloseInterface\n");
     QCC_DbgHLPrintf(("IpNameServiceImpl::CloseInterface(%s)", name.c_str()));
 
     //
@@ -770,6 +797,7 @@ QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::CloseInterface(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::CloseInterface. Return ER_BAD_TRANSPORT_MASK\n");        
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -778,6 +806,7 @@ QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc
     //
     if (m_state != IMPL_RUNNING) {
         QCC_DbgPrintf(("IpNameServiceImpl::CloseInterface(): Not running"));
+        printf("Exit IpNameServiceImpl::CloseInterface. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -785,6 +814,7 @@ QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc
     QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::CloseInterface(): Bad transport index");
 
     if (transportIndex >= 16) {
+        printf("Exit IpNameServiceImpl::CloseInterface. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -810,11 +840,13 @@ QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc
     m_forceLazyUpdate = true;
     m_wakeEvent.SetEvent();
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::CloseInterface. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc::IPAddress& addr)
 {
+    printf("Enter IpNameServiceImpl::CloseInterface\n");
     QCC_DbgHLPrintf(("IpNameServiceImpl::CloseInterface(%s)", addr.ToString().c_str()));
 
     //
@@ -823,6 +855,7 @@ QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::CloseInterface(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::CloseInterface. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -831,6 +864,7 @@ QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc
     //
     if (m_state != IMPL_RUNNING) {
         QCC_DbgPrintf(("IpNameServiceImpl::CloseInterface(): Not running"));
+        printf("Exit IpNameServiceImpl::CloseInterface. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -838,6 +872,7 @@ QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc
     QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::CloseInterface(): Bad transport index");
 
     if (transportIndex >= 16) {
+        printf("Exit IpNameServiceImpl::CloseInterface. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -860,6 +895,7 @@ QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc
         QCC_DbgPrintf(("IpNameServiceImpl::CloseInterface(): Wildcard address"));
         m_any[transportIndex] = false;
         m_mutex.Unlock(MUTEX_CONTEXT);
+        printf("Exit IpNameServiceImpl::CloseInterface. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -879,11 +915,13 @@ QStatus IpNameServiceImpl::CloseInterface(TransportMask transportMask, const qcc
     m_forceLazyUpdate = true;
     m_wakeEvent.SetEvent();
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::CloseInterface. Return ER_OK\n");
     return ER_OK;
 }
 
 void IpNameServiceImpl::ClearLiveInterfaces(void)
 {
+    printf("Enter IpNameServiceImpl::ClearLiveInterfaces\n");
     QCC_DbgPrintf(("IpNameServiceImpl::ClearLiveInterfaces()"));
 
     //
@@ -965,16 +1003,19 @@ void IpNameServiceImpl::ClearLiveInterfaces(void)
     m_mutex.Unlock(MUTEX_CONTEXT);
 
     QCC_DbgPrintf(("IpNameServiceImpl::ClearLiveInterfaces(): Done"));
+    printf("Exit IpNameServiceImpl::ClearLiveInterfaces\n");
 }
 
 QStatus IpNameServiceImpl::CreateUnicastSocket()
 {
+    printf("Enter IpNameServiceImpl::CreateUnicastSocket\n");
     if (m_ipv4UnicastSockFd == qcc::INVALID_SOCKET_FD) {
         QStatus status = qcc::Socket(qcc::QCC_AF_INET, qcc::QCC_SOCK_DGRAM, m_ipv4UnicastSockFd);
         if (status != ER_OK) {
             QCC_LogError(status, ("CreateUnicastSocket: qcc::Socket(%d) failed: %d - %s", qcc::QCC_AF_INET,
                                   qcc::GetLastError(), qcc::GetLastErrorString().c_str()));
             m_ipv4UnicastSockFd = qcc::INVALID_SOCKET_FD;
+            printf("Exit IpNameServiceImpl::CreateUnicastSocket. Return status\n");
             return status;
         }
         status = qcc::SetRecvPktAncillaryData(m_ipv4UnicastSockFd, qcc::QCC_AF_INET, true);
@@ -983,6 +1024,7 @@ QStatus IpNameServiceImpl::CreateUnicastSocket()
                                   " failed for sockFd %d", m_ipv4UnicastSockFd));
             qcc::Close(m_ipv4UnicastSockFd);
             m_ipv4UnicastSockFd = qcc::INVALID_SOCKET_FD;
+            printf("Exit IpNameServiceImpl::CreateUnicastSocket. Return status\n");
             return status;
         }
         //
@@ -996,6 +1038,7 @@ QStatus IpNameServiceImpl::CreateUnicastSocket()
             QCC_LogError(status, ("CreateUnicastSocket(): SetReusePort() failed"));
             qcc::Close(m_ipv4UnicastSockFd);
             m_ipv4UnicastSockFd = qcc::INVALID_SOCKET_FD;
+            printf("Exit IpNameServiceImpl::CreateUnicastSocket. Return status\n");
             return status;
         }
         //
@@ -1006,18 +1049,22 @@ QStatus IpNameServiceImpl::CreateUnicastSocket()
             QCC_LogError(status, ("CreateUnicastSocket(): bind failed"));
             qcc::Close(m_ipv4UnicastSockFd);
             m_ipv4UnicastSockFd = qcc::INVALID_SOCKET_FD;
+            printf("Exit IpNameServiceImpl::CreateUnicastSocket. Return status\n");
             return status;
         }
     }
+    printf("Exit IpNameServiceImpl::CreateUnicastSocket. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_group, const char* ipv6_multicast_group, uint16_t port, bool broadcast, SocketFd& sockFd)
 {
+    printf("Enter IpNameServiceImpl::CreateMulticastSocket\n");
     QStatus status = qcc::Socket(entry.m_family, qcc::QCC_SOCK_DGRAM, sockFd);
     if (status != ER_OK) {
         QCC_LogError(status, ("CreateMulticastSocket: qcc::Socket(%d) failed: %d - %s", entry.m_family,
                               qcc::GetLastError(), qcc::GetLastErrorString().c_str()));
+        printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
         return status;
     }
 
@@ -1026,6 +1073,7 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
         QCC_LogError(status, ("CreateMulticastSocket: enable recv ancillary data"
                               " failed for sockFd %d", sockFd));
         qcc::Close(sockFd);
+        printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
         return status;
     }
 
@@ -1035,6 +1083,7 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
             QCC_LogError(status, ("CreateMulticastSocket: enable recv IPv6 only"
                                   " failed for sockFd %d", sockFd));
             qcc::Close(sockFd);
+            printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
             return status;
         }
     }
@@ -1049,6 +1098,7 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
         if (status != ER_OK && status != ER_NOT_IMPLEMENTED) {
             QCC_LogError(status, ("CreateMulticastSocket: enable broadcast failed"));
             qcc::Close(sockFd);
+            printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
             return status;
         }
     }
@@ -1064,6 +1114,7 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
     if (status != ER_OK && status != ER_NOT_IMPLEMENTED) {
         QCC_LogError(status, ("CreateMulticastSocket(): SetReusePort() failed"));
         qcc::Close(sockFd);
+        printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
         return status;
     }
     //
@@ -1083,6 +1134,7 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
         if (status != ER_OK && status != ER_NOT_IMPLEMENTED) {
             QCC_LogError(status, ("CreateMulticastSocket(): SetMulticastHops() failed"));
             qcc::Close(sockFd);
+            printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
             return status;
         }
 
@@ -1096,6 +1148,7 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
         if (status != ER_OK && status != ER_NOT_IMPLEMENTED) {
             QCC_LogError(status, ("CreateMulticastSocket(): SetMulticastInterface() failed"));
             qcc::Close(sockFd);
+            printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
             return status;
         }
     }
@@ -1105,6 +1158,7 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
         if (status != ER_OK) {
             QCC_LogError(status, ("CreateMulticastSocket(): bind(0.0.0.0) failed"));
             qcc::Close(sockFd);
+            printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
             return status;
 
         }
@@ -1114,6 +1168,7 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
         if (status != ER_OK) {
             QCC_LogError(status, ("CreateMulticastSocket(): bind(::) failed"));
             qcc::Close(sockFd);
+            printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
             return status;
 
         }
@@ -1145,9 +1200,11 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
             QCC_LogError(status, ("CreateMulticastSocket(): JoinMulticastGroup failed"));
 
             qcc::Close(sockFd);
+            printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return status\n");
             return status;
         }
     }
+    printf("Exit IpNameServiceImpl::CreateMulticastSocket. Return ER_OK\n");
     return ER_OK;
 }
 //
@@ -1157,6 +1214,7 @@ QStatus CreateMulticastSocket(IfConfigEntry entry, const char* ipv4_multicast_gr
 //
 void IpNameServiceImpl::LazyUpdateInterfaces(const qcc::NetworkEventSet& networkEvents)
 {
+    printf("Enter IpNameServiceImpl::LazyUpdateInterfaces\n");
     QCC_DbgPrintf(("IpNameServiceImpl::LazyUpdateInterfaces()"));
     m_mutex.AssertOwnedByCurrentThread();
 
@@ -1207,6 +1265,7 @@ void IpNameServiceImpl::LazyUpdateInterfaces(const qcc::NetworkEventSet& network
             qcc::Close(m_ipv4UnicastSockFd);
             m_ipv4UnicastSockFd = qcc::INVALID_SOCKET_FD;
         }
+        printf("Exit IpNameServiceImpl::LazyUpdateInterfaces\n");
         return;
     }
 
@@ -1220,6 +1279,7 @@ void IpNameServiceImpl::LazyUpdateInterfaces(const qcc::NetworkEventSet& network
             qcc::Close(m_ipv4UnicastSockFd);
             m_ipv4UnicastSockFd = qcc::INVALID_SOCKET_FD;
         }
+        printf("Exit IpNameServiceImpl::LazyUpdateInterfaces\n");
         return;
     }
     //
@@ -1240,7 +1300,8 @@ void IpNameServiceImpl::LazyUpdateInterfaces(const qcc::NetworkEventSet& network
         if (m_ipv4UnicastSockFd != qcc::INVALID_SOCKET_FD) {
             qcc::Close(m_ipv4UnicastSockFd);
             m_ipv4UnicastSockFd = qcc::INVALID_SOCKET_FD;
-        }
+        }   
+        printf("Exit IpNameServiceImpl::LazyUpdateInterfaces\n");
         return;
     }
 
@@ -1552,6 +1613,7 @@ void IpNameServiceImpl::LazyUpdateInterfaces(const qcc::NetworkEventSet& network
         m_packetScheduler.Alert();
         m_refreshAdvertisements = false;
     }
+    printf("Exit IpNameServiceImpl::LazyUpdateInterfaces\n");
 }
 
 QStatus IpNameServiceImpl::Enable(TransportMask transportMask,
@@ -1560,6 +1622,7 @@ QStatus IpNameServiceImpl::Enable(TransportMask transportMask,
                                   bool enableReliableIPv4, bool enableReliableIPv6,
                                   bool enableUnreliableIPv4, bool enableUnreliableIPv6)
 {
+    printf("Enter IpNameServiceImpl::Enable\n");
     QCC_UNUSED(unreliableIPv6Port);
     QCC_DbgHLPrintf(("IpNameServiceImpl::Enable(0x%x, %d., %d., %d., %d., %d, %d, %d, %d )", transportMask,
                      reliableIPv4PortMap.size(), reliableIPv6Port, unreliableIPv4PortMap.size(), unreliableIPv6Port,
@@ -1571,6 +1634,7 @@ QStatus IpNameServiceImpl::Enable(TransportMask transportMask,
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::Enable(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::Enable. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -1578,6 +1642,7 @@ QStatus IpNameServiceImpl::Enable(TransportMask transportMask,
     QCC_ASSERT(i < 16 && "IpNameServiceImpl::Enable(): Bad callback index");
 
     if (i >= 16) {
+        printf("Exit IpNameServiceImpl::Enable. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -1710,11 +1775,13 @@ QStatus IpNameServiceImpl::Enable(TransportMask transportMask,
     m_forceLazyUpdate = true;
     m_wakeEvent.SetEvent();
 
+    printf("Exit IpNameServiceImpl::Enable. Return ER_OK\n");
     return ER_OK;
 }
 
 uint16_t IpNameServiceImpl::ComputePriority(uint32_t staticScore, uint32_t dynamicScore)
 {
+    printf("Exit IpNameServiceImpl::ComputePriority\n");
     uint32_t combinedScore = staticScore + dynamicScore;
     if (combinedScore > std::numeric_limits<uint16_t>::max()) {
         combinedScore = std::numeric_limits<uint16_t>::max();
@@ -1725,79 +1792,105 @@ uint16_t IpNameServiceImpl::ComputePriority(uint32_t staticScore, uint32_t dynam
     if (priority == 1) {
         priority = 2;
     }
+    printf("Exit IpNameServiceImpl::ComputePriority. Return priority\n");
     return priority;
 }
 
 uint32_t IpNameServiceImpl::LoadParam(const ConfigDB* config, const qcc::String param)
 {
+    printf("Enter IpNameServiceImpl::LoadParam\n");
     if (param == "router_power_source") {
         String powerSource = ToLowerCase(config->GetProperty("router_power_source", ALLJOYN_DEFAULT_ROUTER_POWER_SOURCE));
         if (powerSource == "always ac powered") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 2700\n");
             return 2700;
         } else if (powerSource == "battery powered and chargeable") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 1800\n");
             return 1800;
         }  else if (powerSource == "battery powered and not chargeable") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 900\n");
             return 900;
         } else {
             QCC_LogError(ER_WARNING, ("Ignoring invalid config value:%s for router power source, using default value instead", powerSource.c_str()));
+            printf("Exit IpNameServiceImpl::LoadParam. Return 1800\n");
             return 1800;
         }
     } else if (param == "router_mobility") {
         String mobility = ToLowerCase(config->GetProperty("router_mobility", ALLJOYN_DEFAULT_ROUTER_MOBILITY));
         if (mobility == "always stationary") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 8100\n");
             return 8100;
         } else if (mobility == "low mobility") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 6075\n");
             return 6075;
         } else if (mobility == "intermediate mobility") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 4050\n");
             return 4050;
         } else if (mobility == "high mobility") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 2025\n");
             return 2025;
         } else {
             QCC_LogError(ER_WARNING, ("Ignoring invalid config value:%s for router mobility, using default value instead", mobility.c_str()));
+            printf("Exit IpNameServiceImpl::LoadParam. Return 4050\n");
             return 4050;
         }
     } else if (param == "router_availability") {
         String availability = ToLowerCase(config->GetProperty("router_availability", ALLJOYN_DEFAULT_ROUTER_AVAILABILITY));
         if (availability == "0-3 hr") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 1012\n");
             return 1012;
         } else if (availability == "3-6 hr") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 2025\n");
             return 2025;
         }  else if (availability == "6-9 hr") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 3037\n");
             return 3037;
         }  else if (availability == "9-12 hr") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 4050\n");
             return 4050;
         }  else if (availability == "12-15 hr") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 5062\n");
             return 5062;
         }  else if (availability == "15-18 hr") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 6075\n");
             return 6075;
         }  else if (availability == "18-21 hr") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 7087\n");
             return 7087;
         }  else if (availability == "21-24 hr") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 8100\n");
             return 8100;
         }  else {
             QCC_LogError(ER_WARNING, ("Ignoring invalid config value:%s for router availability, using default value instead", availability.c_str()));
+            printf("Exit IpNameServiceImpl::LoadParam. Return 2025\n");
             return 2025;
         }
     } else if (param == "router_node_connection") {
         String nodeConnection = ToLowerCase(config->GetProperty("router_node_connection", ALLJOYN_DEFAULT_ROUTER_NODE_TYPE));
         if (nodeConnection == "access point") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 8100\n");
             return 8100;
         } else if (nodeConnection == "wired") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 8100\n");
             return 8100;
         } else if (nodeConnection == "wireless") {
+            printf("Exit IpNameServiceImpl::LoadParam. Return 4050\n");
             return 4050;
         } else {
             QCC_LogError(ER_WARNING, ("Ignoring invalid config value:%s for router node connection, using default value instead", nodeConnection.c_str()));
+            printf("Exit IpNameServiceImpl::LoadParam. Return 4050\n");
             return 4050;
         }
     } else {
         QCC_LogError(ER_WARNING, ("Ignoring invalid config parameter"));
+        printf("Exit IpNameServiceImpl::LoadParam. Return std::numeric_limits<uint32_t>::max();\n");
         return std::numeric_limits<uint32_t>::max();
     }
 }
 
 void IpNameServiceImpl::LoadStaticRouterParams(const ConfigDB* config)
 {
+    printf("Enter IpNameServiceImpl::LoadStaticRouterParams\n");
     m_powerSource = LoadParam(config, "router_power_source");
     m_mobility = LoadParam(config, "router_mobility");
     m_availability = LoadParam(config, "router_availability");
@@ -1807,29 +1900,35 @@ void IpNameServiceImpl::LoadStaticRouterParams(const ConfigDB* config)
     QCC_ASSERT(m_mobility >= ROUTER_MOBILITY_MIN && m_mobility <= ROUTER_MOBILITY_MAX);
     QCC_ASSERT(m_availability >= ROUTER_AVAILABILITY_MIN && m_availability <= ROUTER_AVAILABILITY_MAX);
     QCC_ASSERT(m_nodeConnection >= ROUTER_NODE_CONNECTION_MIN && m_nodeConnection <= ROUTER_NODE_CONNECTION_MAX);
+    printf("Exit IpNameServiceImpl::LoadStaticRouterParams\n");
 }
 
 QStatus IpNameServiceImpl::ComputeStaticScore(uint32_t powerSource, uint32_t mobility, uint32_t availability, uint32_t nodeConnection, uint32_t* staticScore)
 {
+    printf("Enter IpNameServiceImpl::ComputeStaticScore\n");
     if (!((powerSource >= ROUTER_POWER_SOURCE_MIN) && (powerSource <= ROUTER_POWER_SOURCE_MAX))) {
         QCC_LogError(ER_BAD_ARG_1, ("powerSource has invalid value %u", powerSource));
+        printf("Exit IpNameServiceImpl::ComputeStaticScore. Return ER_BAD_ARG_1\n");
         return ER_BAD_ARG_1;
     }
     if (!((mobility >= ROUTER_MOBILITY_MIN) && (mobility <= ROUTER_MOBILITY_MAX))) {
         QCC_LogError(ER_BAD_ARG_2, ("mobility has invalid value %u", mobility));
+        printf("Exit IpNameServiceImpl::ComputeStaticScore. Return ER_BAD_ARG_2\n");        
         return ER_BAD_ARG_2;
     }
     if (!((availability >= ROUTER_AVAILABILITY_MIN) && (availability <= ROUTER_AVAILABILITY_MAX))) {
         QCC_LogError(ER_BAD_ARG_3, ("availability has invalid value %u", availability));
+        printf("Exit IpNameServiceImpl::ComputeStaticScore. Return ER_BAD_ARG_3\n");
         return ER_BAD_ARG_3;
     }
     if (!((nodeConnection >= ROUTER_NODE_CONNECTION_MIN) && (nodeConnection <= ROUTER_NODE_CONNECTION_MAX))) {
         QCC_LogError(ER_BAD_ARG_4, ("nodeConnection has invalid value %u", nodeConnection));
+        printf("Exit IpNameServiceImpl::ComputeStaticScore. Return ER_BAD_ARG_4\n");
         return ER_BAD_ARG_4;
     }
 
     *staticScore = (powerSource + mobility + availability + nodeConnection);
-
+    printf("Exit IpNameServiceImpl::ComputeStaticScore. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -1844,23 +1943,28 @@ QStatus IpNameServiceImpl::ComputeDynamicScore(
     uint32_t maximumUdpRemoteClients,
     uint32_t* dynamicScore)
 {
+    printf("Enter IpNameServiceImpl::ComputeDynamicScore\n");
     /* For the following four pairs, either argument might be invalid, so we always return the
      * error to indicate the first of each pair is bad.
      */
     if (!(availableTcpConnections <= maximumTcpConnections)) {
         QCC_LogError(ER_BAD_ARG_1, ("availableTcpConnections(%u) is not <= maximumTcpConnections(%u)", availableTcpConnections, maximumTcpConnections));
+        printf("Exit IpNameServiceImpl::ComputeDynamicScore. Return ER_BAD_ARG_1\n");
         return ER_BAD_ARG_1;
     }
     if (!(availableUdpConnections <= maximumUdpConnections)) {
         QCC_LogError(ER_BAD_ARG_3, ("availableUdpConnections(%u) is not <= maximumUdpConnections(%u)", availableUdpConnections, maximumUdpConnections));
+        printf("Exit IpNameServiceImpl::ComputeDynamicScore. Return ER_BAD_ARG_3\n");
         return ER_BAD_ARG_3;
     }
     if (!(availableTcpRemoteClients <= maximumTcpRemoteClients)) {
         QCC_LogError(ER_BAD_ARG_5, ("availableTcpRemoteClients(%u) is not <= maximumTcpRemoteClients(%u)", availableTcpRemoteClients, maximumTcpRemoteClients));
+        printf("Exit IpNameServiceImpl::ComputeDynamicScore. Return ER_BAD_ARG_5\n");
         return ER_BAD_ARG_5;
     }
     if (!(availableUdpRemoteClients <= maximumUdpRemoteClients)) {
         QCC_LogError(ER_BAD_ARG_7, ("availableUdpRemoteClients(%u) is not <= maximumUdpRemoteClients(%u)", availableUdpRemoteClients, maximumUdpRemoteClients));
+        printf("Exit IpNameServiceImpl::ComputeDynamicScore. Return ER_BAD_ARG_7\n");
         return ER_BAD_ARG_7;
     }
 
@@ -1899,16 +2003,19 @@ QStatus IpNameServiceImpl::ComputeDynamicScore(
     } else {
         *dynamicScore = 0;
     }
+    printf("Exit IpNameServiceImpl::ComputeDynamicScore. Return ER_OK\n");
     return ER_OK;
 }
 
 uint16_t IpNameServiceImpl::GetCurrentPriority()
 {
+    printf("Enter and Exit IpNameServiceImpl::GetCurrentPriority. Return m_priority\n");
     return m_priority;
 }
 
 QStatus IpNameServiceImpl::UpdateDynamicScore(TransportMask transportMask, uint32_t availableTransportConnections, uint32_t maximumTransportConnections, uint32_t availableTransportRemoteClients, uint32_t maximumTransportRemoteClients)
 {
+    printf("Enter IpNameServiceImpl::UpdateDynamicScore\n");
     QStatus status = ER_OK;
     uint32_t i = IndexFromBit(transportMask);
     QCC_ASSERT(i < 16 && "IpNameServiceImpl::UpdateDynamicScore(): Bad index");
@@ -1931,18 +2038,19 @@ QStatus IpNameServiceImpl::UpdateDynamicScore(TransportMask transportMask, uint3
     if (status == ER_OK) {
         m_priority = ComputePriority(m_staticScore, m_dynamicScore);
     }
-
+    printf("Exit IpNameServiceImpl::UpdateDynamicScore. Return status\n");
     return status;
 }
 
 qcc::String IpNameServiceImpl::ToLowerCase(const qcc::String& str)
 {
+    printf("Enter IpNameServiceImpl::ToLowerCase\n");
     qcc::String s = str;
 
     for (unsigned i = 0; i < s.size(); ++i) {
         s[i] = tolower(s[i]);
     }
-
+    printf("Exit IpNameServiceImpl::ToLowerCase. Return s\n");
     return s;
 }
 
@@ -1950,6 +2058,7 @@ QStatus IpNameServiceImpl::Enabled(TransportMask transportMask,
                                    std::map<qcc::String, uint16_t>& reliableIPv4PortMap, uint16_t& reliableIPv6Port,
                                    std::map<qcc::String, uint16_t>& unreliableIPv4PortMap, uint16_t& unreliableIPv6Port)
 {
+    printf("Enter IpNameServiceImpl::Enabled\n");
     QCC_DbgPrintf(("IpNameServiceImpl::Enabled()"));
 
     //
@@ -1958,6 +2067,7 @@ QStatus IpNameServiceImpl::Enabled(TransportMask transportMask,
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::Enable(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::Enabled. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -1965,6 +2075,7 @@ QStatus IpNameServiceImpl::Enabled(TransportMask transportMask,
     QCC_ASSERT(i < 16 && "IpNameServiceImpl::Enabled(): Bad callback index");
 
     if (i >= 16) {
+        printf("Exit IpNameServiceImpl::Enabled. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -1975,11 +2086,13 @@ QStatus IpNameServiceImpl::Enabled(TransportMask transportMask,
     unreliableIPv6Port = m_unreliableIPv6Port[i];
     m_mutex.Unlock(MUTEX_CONTEXT);
 
+    printf("Exit IpNameServiceImpl::Enabled. Return ER_OK\n");
     return ER_OK;
 }
 
 void IpNameServiceImpl::TriggerTransmission(Packet packet)
 {
+    printf("Enter IpNameServiceImpl::TriggerTransmission\n");
     BurstResponseHeader brh(packet);
 
     uint32_t nsVersion, msgVersion;
@@ -1999,10 +2112,12 @@ void IpNameServiceImpl::TriggerTransmission(Packet packet)
 
     m_packetScheduler.Alert();
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::TriggerTransmission\n");
 }
 
 QStatus IpNameServiceImpl::FindAdvertisement(TransportMask transportMask, const qcc::String& matchingStr, LocatePolicy policy, TransportMask completeTransportMask)
 {
+    printf("Enter IpNameServiceImpl::FindAdvertisement\n");
     QCC_UNUSED(policy);
 
     QCC_DbgHLPrintf(("IpNameServiceImpl::FindAdvertisement(0x%x, \"%s\", %d)", transportMask, matchingStr.c_str(), policy));
@@ -2013,12 +2128,14 @@ QStatus IpNameServiceImpl::FindAdvertisement(TransportMask transportMask, const 
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::FindAdvertisement(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::FindAdvertisement. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
     uint32_t transportIndex = IndexFromBit(transportMask);
 
     if (transportIndex >= 16) {
+        printf("Exit IpNameServiceImpl::FindAdvertisement. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -2180,22 +2297,25 @@ QStatus IpNameServiceImpl::FindAdvertisement(TransportMask transportMask, const 
     }
 
 
-
+    printf("Exit IpNameServiceImpl::FindAdvertisement. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::CancelFindAdvertisement(TransportMask transportMask, const qcc::String& matchingStr, LocatePolicy policy, TransportMask completeTransportMask)
 {
+    printf("Enter IpNameServiceImpl::CancelFindAdvertisement\n");
     QCC_UNUSED(policy);
     QCC_UNUSED(completeTransportMask);
 
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::CancelFindAdvertisement(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::CancelFindAdvertisement. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
     uint32_t transportIndex = IndexFromBit(transportMask);
     if (transportIndex >= 16) {
+        printf("Exit IpNameServiceImpl::CancelFindAdvertisement. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -2218,6 +2338,7 @@ QStatus IpNameServiceImpl::CancelFindAdvertisement(TransportMask transportMask, 
     m_v2_queries[transportIndex].erase(matchingStr);
 
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::CancelFindAdvertisement. Return ER_OK\n");
     return ER_OK;
 }
 const uint32_t MIN_THRESHOLD_CACHE_REFRESH_MS = 1000;
@@ -2226,6 +2347,7 @@ const uint32_t MIN_THRESHOLD_CACHE_REFRESH_MS = 1000;
 // for 3 Cache refresh cycles i.e. 3 * 120 seconds.
 const uint32_t PEER_INFO_MAP_PURGE_TIMEOUT = 3 * 120 * 1000;
 QStatus IpNameServiceImpl::RefreshCache(TransportMask transportMask, const qcc::String& guid, const qcc::String& matchingStr, LocatePolicy policy, bool ping) {
+    printf("Enter IpNameServiceImpl::RefreshCache\n");
     QCC_UNUSED(policy);
 
     QCC_DbgHLPrintf(("IpNameServiceImpl::RefreshCache(0x%x, \"%s\", %d)", transportMask, matchingStr.c_str(), policy));
@@ -2316,7 +2438,8 @@ QStatus IpNameServiceImpl::RefreshCache(TransportMask transportMask, const qcc::
         QCC_DbgPrintf((" IpNameServiceImpl::RefreshCache(): Entry not found in PeerInfoMap"));
     }
     m_mutex.Unlock(MUTEX_CONTEXT);
-
+    
+    printf("Exit IpNameServiceImpl::RefreshCache. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -2327,16 +2450,19 @@ void IpNameServiceImpl::SetCriticalParameters(
     uint32_t modulus,
     uint32_t retries)
 {
+    printf("Enter IpNameServiceImpl::SetCriticalParameters\n");
     m_tDuration = tDuration;
     m_tRetransmit = tRetransmit;
     m_tQuestion = tQuestion;
     m_modulus = modulus;
     m_retries = (retries < ArraySize(RETRY_INTERVALS)) ? retries : ArraySize(RETRY_INTERVALS);
+    printf("Exit IpNameServiceImpl::SetCriticalParameters\n");
 }
 
 QStatus IpNameServiceImpl::SetCallback(TransportMask transportMask,
                                        Callback<void, const qcc::String&, const qcc::String&, vector<qcc::String>&, uint32_t>* cb)
 {
+    printf("Enter IpNameServiceImpl::SetCallback\n");
     QCC_DbgPrintf(("IpNameServiceImpl::SetCallback()"));
 
     //
@@ -2345,12 +2471,14 @@ QStatus IpNameServiceImpl::SetCallback(TransportMask transportMask,
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::SetCallback(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::SetCallback. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
     uint32_t i = IndexFromBit(transportMask);
     QCC_ASSERT(i < 16 && "IpNameServiceImpl::SetCallback(): Bad callback index");
     if (i >= 16) {
+        printf("Exit IpNameServiceImpl::SetCallback. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -2368,13 +2496,14 @@ QStatus IpNameServiceImpl::SetCallback(TransportMask transportMask,
     m_callback[i] = cb;
 
     m_mutex.Unlock(MUTEX_CONTEXT);
-
+    printf("Exit IpNameServiceImpl::SetCallback. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::SetNetworkEventCallback(TransportMask transportMask,
                                                    Callback<void, const std::map<qcc::String, qcc::IPAddress>&>* cb)
 {
+    printf("Enter IpNameServiceImpl::SetNetworkEventCallback\n");
     QCC_DbgPrintf(("IpNameServiceImpl::SetNetworkEventCallback()"));
 
     //
@@ -2383,12 +2512,14 @@ QStatus IpNameServiceImpl::SetNetworkEventCallback(TransportMask transportMask,
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::SetNetworkEventCallback(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::SetNetworkEventCallback. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
     uint32_t i = IndexFromBit(transportMask);
     QCC_ASSERT(i < 16 && "IpNameServiceImpl::SetNetworkEventCallback(): Bad callback index");
     if (i >= 16) {
+        printf("Exit IpNameServiceImpl::SetNetworkEventCallback. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -2406,12 +2537,13 @@ QStatus IpNameServiceImpl::SetNetworkEventCallback(TransportMask transportMask,
     m_networkEventCallback[i] = cb;
 
     m_mutex.Unlock(MUTEX_CONTEXT);
-
+    printf("Exit IpNameServiceImpl::SetNetworkEventCallback. Return ER_OK\n");
     return ER_OK;
 }
 
 void IpNameServiceImpl::ClearCallbacks(void)
 {
+    printf("Enter IpNameServiceImpl::ClearCallbacks\n");
     QCC_DbgPrintf(("IpNameServiceImpl::ClearCallbacks()"));
 
     m_mutex.Lock(MUTEX_CONTEXT);
@@ -2432,10 +2564,12 @@ void IpNameServiceImpl::ClearCallbacks(void)
     }
 
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::ClearCallbacks\n");
 }
 
 void IpNameServiceImpl::ClearNetworkEventCallbacks(void)
 {
+    printf("Enter IpNameServiceImpl::ClearNetworkEventCallbacks\n");
     QCC_DbgPrintf(("IpNameServiceImpl::ClearNetworkEventCallbacks()"));
 
     m_mutex.Lock(MUTEX_CONTEXT);
@@ -2456,10 +2590,12 @@ void IpNameServiceImpl::ClearNetworkEventCallbacks(void)
     }
 
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::ClearNetworkEventCallbacks\n");
 }
 
 size_t IpNameServiceImpl::NumAdvertisements(TransportMask transportMask)
 {
+    printf("Enter IpNameServiceImpl::NumAdvertisements\n");
     QCC_DbgPrintf(("IpNameServiceImpl::NumAdvertisements()"));
 
     //
@@ -2468,30 +2604,34 @@ size_t IpNameServiceImpl::NumAdvertisements(TransportMask transportMask)
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::NumAdvertisements(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::NumAdvertisements. Return 0\n");
         return 0;
     }
 
     uint32_t i = IndexFromBit(transportMask);
     QCC_ASSERT(i < 16 && "IpNameServiceImpl::NumAdvertisements(): Bad callback index");
     if (i >= 16) {
+        printf("Exit IpNameServiceImpl::NumAdvertisements. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
-
+    printf("Exit IpNameServiceImpl::NumAdvertisements. Return m_advertised[i].size();\n");
     return m_advertised[i].size();
 }
 
 QStatus IpNameServiceImpl::AdvertiseName(TransportMask transportMask, const qcc::String& wkn, bool quietly, TransportMask completeTransportMask)
 {
+    printf("Enter IpNameServiceImpl::AdvertiseName\n");
     QCC_DbgHLPrintf(("IpNameServiceImpl::AdvertiseName(0x%x, \"%s\", %d)", transportMask, wkn.c_str(), quietly));
 
     vector<qcc::String> wknVector;
     wknVector.push_back(wkn);
-
+    printf("Exit IpNameServiceImpl::AdvertiseName.  Return AdvertiseName(***)\n");
     return AdvertiseName(transportMask, wknVector, quietly, completeTransportMask);
 }
 
 QStatus IpNameServiceImpl::AdvertiseName(TransportMask transportMask, vector<qcc::String>& wkn, bool quietly, TransportMask completeTransportMask)
 {
+    printf("Enter IpNameServiceImpl::AdvertiseName\n");
     QCC_DbgHLPrintf(("IpNameServiceImpl::AdvertiseName(0x%x, 0x%p, %d)", transportMask, &wkn, quietly));
 
     //
@@ -2500,17 +2640,20 @@ QStatus IpNameServiceImpl::AdvertiseName(TransportMask transportMask, vector<qcc
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::AdvertiseName(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::AdvertiseName. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
     uint32_t transportIndex = IndexFromBit(transportMask);
     QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::AdvertiseName(): Bad transport index");
     if (transportIndex >= 16) {
+        printf("Exit IpNameServiceImpl::AdvertiseName. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
     if (m_state != IMPL_RUNNING) {
         QCC_DbgPrintf(("IpNameServiceImpl::AdvertiseName(): Not IMPL_RUNNING"));
+        printf("Exit IpNameServiceImpl::AdvertiseName. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -2539,6 +2682,7 @@ QStatus IpNameServiceImpl::AdvertiseName(TransportMask transportMask, vector<qcc
                 //
                 QCC_DbgPrintf(("IpNameServiceImpl::AdvertiseName(): Duplicate advertisement"));
                 m_mutex.Unlock(MUTEX_CONTEXT);
+                printf("Exit IpNameServiceImpl::AdvertiseName. Return ER_OK\n");
                 return ER_OK;
             }
         }
@@ -2549,6 +2693,7 @@ QStatus IpNameServiceImpl::AdvertiseName(TransportMask transportMask, vector<qcc
         // if-else.
         //
         m_mutex.Unlock(MUTEX_CONTEXT);
+        printf("Exit IpNameServiceImpl::AdvertiseName. Return ER_OK\n");
         return ER_OK;
     } else {
         for (uint32_t i = 0; i < wkn.size(); ++i) {
@@ -2562,6 +2707,7 @@ QStatus IpNameServiceImpl::AdvertiseName(TransportMask transportMask, vector<qcc
                 QCC_DbgPrintf(("IpNameServiceImpl::AdvertiseName(): Duplicate advertisement"));
 
                 m_mutex.Unlock(MUTEX_CONTEXT);
+                printf("Exit IpNameServiceImpl::AdvertiseName. Return ER_OK\n");
                 return ER_OK;
             }
         }
@@ -2719,6 +2865,7 @@ QStatus IpNameServiceImpl::AdvertiseName(TransportMask transportMask, vector<qcc
             QueueProtocolMessage(Packet::cast(nspacket));
         } else {
             QCC_LogError(ER_PACKET_TOO_LARGE, ("IpNameServiceImpl::AdvertiseName(): Resulting NS message too large"));
+            printf("Exit IpNameServiceImpl::AdvertiseName. Return ER_PACKET_TOO_LARGE\n");
             return ER_PACKET_TOO_LARGE;
         }
     }
@@ -2811,26 +2958,29 @@ QStatus IpNameServiceImpl::AdvertiseName(TransportMask transportMask, vector<qcc
             QueueProtocolMessage(Packet::cast(nspacket));
         } else {
             QCC_LogError(ER_PACKET_TOO_LARGE, ("IpNameServiceImpl::AdvertiseName(): Resulting NS message too large"));
+            printf("Exit IpNameServiceImpl::AdvertiseName. Return ER_PACKET_TOO_LARGE\n");
             return ER_PACKET_TOO_LARGE;
         }
     }
 
-
+    printf("Exit IpNameServiceImpl::AdvertiseName. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::CancelAdvertiseName(TransportMask transportMask, const qcc::String& wkn, bool quietly, TransportMask completeTransportMask)
 {
+    printf("Enter IpNameServiceImpl::CancelAdvertiseName\n");
     QCC_DbgPrintf(("IpNameServiceImpl::CancelAdvertiseName(0x%x, \"%s\")", transportMask, wkn.c_str()));
 
     vector<qcc::String> wknVector;
     wknVector.push_back(wkn);
-
+    printf("Exit IpNameServiceImpl::CancelAdvertiseName. Return CancelAdvertiseName(***)\n");
     return CancelAdvertiseName(transportMask, wknVector, quietly, completeTransportMask);
 }
 
 QStatus IpNameServiceImpl::CancelAdvertiseName(TransportMask transportMask, vector<qcc::String>& wkn, bool quietly, TransportMask completeTransportMask)
 {
+    printf("Enter IpNameServiceImpl::CancelAdvertiseName\n");
     QCC_DbgPrintf(("IpNameServiceImpl::CancelAdvertiseName(0x%x, 0x%p)", transportMask, &wkn));
 
     //
@@ -2839,6 +2989,7 @@ QStatus IpNameServiceImpl::CancelAdvertiseName(TransportMask transportMask, vect
     //
     if (CountOnes(transportMask) != 1) {
         QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::CancelAdvertiseName(): Bad transport mask"));
+        printf("Exit IpNameServiceImpl::CancelAdvertiseName. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
@@ -2846,11 +2997,13 @@ QStatus IpNameServiceImpl::CancelAdvertiseName(TransportMask transportMask, vect
     QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::CancelAdvertiseName(): Bad transport index");
 
     if (transportIndex >= 16) {
+        printf("Exit IpNameServiceImpl::CancelAdvertiseName. Return ER_BAD_TRANSPORT_MASK\n");
         return ER_BAD_TRANSPORT_MASK;
     }
 
     if (m_state != IMPL_RUNNING) {
         QCC_DbgPrintf(("IpNameServiceImpl::CancelAdvertiseName(): Not IMPL_RUNNING"));
+        printf("Exit IpNameServiceImpl::CancelAdvertiseName. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -2877,6 +3030,7 @@ QStatus IpNameServiceImpl::CancelAdvertiseName(TransportMask transportMask, vect
         // network, just return.
         //
         m_mutex.Unlock(MUTEX_CONTEXT);
+        printf("Exit IpNameServiceImpl::CancelAdvertiseName. Return ER_OK\n");
         return ER_OK;
     } else {
         bool changed = false;
@@ -2889,6 +3043,7 @@ QStatus IpNameServiceImpl::CancelAdvertiseName(TransportMask transportMask, vect
         }
         if (changed == false) {
             m_mutex.Unlock(MUTEX_CONTEXT);
+            printf("Exit IpNameServiceImpl::CancelAdvertiseName. Return ER_OK\n");
             return ER_OK;
         }
     }
@@ -3126,22 +3281,26 @@ QStatus IpNameServiceImpl::CancelAdvertiseName(TransportMask transportMask, vect
         QueueProtocolMessage(Packet::cast(nspacket));
     }
 
-
+    printf("Exit IpNameServiceImpl::CancelAdvertiseName. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::Ping(TransportMask transportMask, const qcc::String& guid, const qcc::String& name)
 {
+    printf("Enter IpNameServiceImpl::Ping.\n");
     qcc::String pingString = "name='" + name + "'";
+    printf("Exit IpNameServiceImpl::Ping. Return RefreshCache\n");
     return RefreshCache(transportMask, guid, pingString, ALWAYS_RETRY, true);
 }
 
 QStatus IpNameServiceImpl::Query(TransportMask completeTransportMask, MDNSPacket mdnsPacket)
 {
+    printf("Enter IpNameServiceImpl::Query.\n");
     QCC_DbgPrintf(("IpNameServiceImpl::Query(0x%x, ...)", completeTransportMask));
 
     if (m_state != IMPL_RUNNING) {
         QCC_DbgPrintf(("IpNameServiceImpl::Query(): Not running"));
+        printf("Exit IpNameServiceImpl::Query. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -3208,16 +3367,18 @@ QStatus IpNameServiceImpl::Query(TransportMask completeTransportMask, MDNSPacket
         m_mutex.Unlock(MUTEX_CONTEXT);
         TriggerTransmission(Packet::cast(mdnsPacket));
     }
-
+    printf("Exit IpNameServiceImpl::Query. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::Response(TransportMask completeTransportMask, uint32_t ttl,  MDNSPacket mdnsPacket)
 {
+    printf("Enter IpNameServiceImpl::Response.\n");
     QCC_DbgHLPrintf(("IpNameServiceImpl::Response(0x%x, ...)", completeTransportMask));
 
     if (m_state != IMPL_RUNNING) {
         QCC_DbgPrintf(("IpNameServiceImpl::Response(): Not running"));
+        printf("Exit IpNameServiceImpl::Response. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -3361,42 +3522,50 @@ QStatus IpNameServiceImpl::Response(TransportMask completeTransportMask, uint32_
         }
     } else {
         QCC_LogError(ER_PACKET_TOO_LARGE, ("IpNameServiceImpl::AdvertiseName(): Resulting NS message too large"));
+        printf("Enter IpNameServiceImpl::Response. Return ER_PACKET_TOO_LARGE\n");
         return ER_PACKET_TOO_LARGE;
     }
 
-
+    printf("Exit IpNameServiceImpl::Response. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::OnProcSuspend()
 {
+    printf("Enter IpNameServiceImpl::OnProcSuspend.\n");
     if (!m_isProcSuspending) {
         m_isProcSuspending = true;
         m_forceLazyUpdate = true;
         m_wakeEvent.SetEvent();
     }
+    printf("Exit IpNameServiceImpl::OnProcSuspend. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameServiceImpl::OnProcResume()
 {
+    printf("Enter IpNameServiceImpl::OnProcResume.\n");
     if (m_isProcSuspending) {
         m_isProcSuspending = false;
         m_forceLazyUpdate = true;
         m_wakeEvent.SetEvent();
     }
+    printf("Exit IpNameServiceImpl::OnProcResume. Return ER_OK\n");
     return ER_OK;
 }
 
 void IpNameServiceImpl::RegisterListener(IpNameServiceListener& listener)
 {
+    printf("Enter IpNameServiceImpl::RegisterListener.\n");
     m_mutex.Lock(MUTEX_CONTEXT);
     m_listeners.push_back(&listener);
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::RegisterListener.\n");
 }
 
 void IpNameServiceImpl::UnregisterListener(IpNameServiceListener& listener)
 {
+    printf("Enter IpNameServiceImpl::UnregisterListener.\n");
     m_mutex.Lock(MUTEX_CONTEXT);
     // Wait till the listeners are not in use.
     while (m_protectListeners) {
@@ -3406,10 +3575,12 @@ void IpNameServiceImpl::UnregisterListener(IpNameServiceListener& listener)
     }
     m_listeners.remove(&listener);
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::UnregisterListener.\n");
 }
 
 void IpNameServiceImpl::QueueProtocolMessage(Packet packet)
 {
+    printf("Enter IpNameServiceImpl::QueueProtocolMessage.\n");
     // Maximum number of IpNameService protocol messages that can be queued.
     static const size_t MAX_IPNS_MESSAGES = 50;
     QCC_DbgPrintf(("IpNameServiceImpl::QueueProtocolMessage()"));
@@ -3429,6 +3600,7 @@ void IpNameServiceImpl::QueueProtocolMessage(Packet packet)
         m_wakeEvent.SetEvent();
     }
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::QueueProtocolMessage.\n");
 }
 
 //
@@ -3473,12 +3645,15 @@ bool g_enableWander = false;
 
 void WanderInit(void)
 {
+    printf("Enter WanderInit.\n");
     srand(time(NULL));
+    printf("Exit WanderInit.\n");
 }
 
 bool Wander(void)
 {
-    //
+    
+    printf("Enter Wander\n");//
     // If you don't explicitly enable this behavior, Wander() always returns
     // "in-range".
     //
@@ -3512,7 +3687,7 @@ bool Wander(void)
     }
 
     QCC_LogError(ER_FAIL, ("Wander(): Wandered to %d which %s in-range", x, x < WANDER_RANGE ? "is" : "is NOT"));
-
+    printf("Exit Wander. Return x < WANDER_RANGE\n");
     return x < WANDER_RANGE;
 }
 
@@ -3528,12 +3703,14 @@ void IpNameServiceImpl::SendProtocolMessage(
     uint32_t interfaceIndex,
     const qcc::IPAddress& localAddress)
 {
+    printf("Enter IpNameServiceImpl::SendProtocolMessage\n");
     QCC_DbgPrintf(("**********IpNameServiceImpl::SendProtocolMessage()"));
     IncrementPerfCounter(PERF_COUNTER_IPNS_SEND_PROTOCOL_MESSAGE);
 
 #if HAPPY_WANDERER
     if (Wander() == false) {
         QCC_LogError(ER_FAIL, ("IpNameServiceImpl::SendProtocolMessage(): Wander(): out of range"));
+        printf("Exit IpNameServiceImpl::SendProtocolMessage\n");
         return;
     } else {
         QCC_LogError(ER_FAIL, ("IpNameServiceImpl::SendProtocolMessage(): Wander(): in range"));
@@ -3549,6 +3726,7 @@ void IpNameServiceImpl::SendProtocolMessage(
          * Make sure to check the quietly advertised names too.
          */
         if (!PurgeAndUpdatePacket(mdnsPacket, false)) {
+            printf("Exit IpNameServiceImpl::SendProtocolMessage\n");
             return;
         }
     }
@@ -3557,6 +3735,7 @@ void IpNameServiceImpl::SendProtocolMessage(
     if (size > NS_MESSAGE_MAX) {
         QCC_LogError(ER_FAIL, ("SendProtocolMessage: Message (%d bytes) is longer than NS_MESSAGE_MAX (%d bytes)",
                                size, NS_MESSAGE_MAX));
+        printf("Exit IpNameServiceImpl::SendProtocolMessage\n");
         return;
     }
 
@@ -3621,6 +3800,7 @@ void IpNameServiceImpl::SendProtocolMessage(
         }
 
         delete [] buffer;
+        printf("Exit IpNameServiceImpl::SendProtocolMessage\n");
         return;
     }
 
@@ -3787,10 +3967,12 @@ void IpNameServiceImpl::SendProtocolMessage(
     }
 
     delete [] buffer;
+    printf("Exit IpNameServiceImpl::SendProtocolMessage\n");
 }
 
 bool IpNameServiceImpl::InterfaceRequested(uint32_t transportIndex, uint32_t liveIndex)
 {
+    
     QCC_DbgPrintf(("IpNameServiceImpl::InterfaceRequested()"));
 
     //
@@ -3800,11 +3982,13 @@ bool IpNameServiceImpl::InterfaceRequested(uint32_t transportIndex, uint32_t liv
 #if defined(QCC_OS_ANDROID)
     if (m_any[transportIndex] && m_liveInterfaces[liveIndex].m_interfaceName.find("p2p") == qcc::String::npos) {
         QCC_DbgPrintf(("IpNameServiceImpl::InterfaceRequested(): Interface \"%s\" approved.", m_liveInterfaces[liveIndex].m_interfaceName.c_str()));
+        printf("Exit IpNameServiceImpl::InterfaceRequested. Return true\n");
         return true;
     }
 #else
     if (m_any[transportIndex]) {
         QCC_DbgPrintf(("IpNameServiceImpl::InterfaceRequested(): Interface \"%s\" approved.", m_liveInterfaces[liveIndex].m_interfaceName.c_str()));
+        printf("Exit IpNameServiceImpl::InterfaceRequested. Return true\n");
         return true;
     }
 #endif
@@ -3822,6 +4006,7 @@ bool IpNameServiceImpl::InterfaceRequested(uint32_t transportIndex, uint32_t liv
         //
         if (m_requestedInterfaces[transportIndex][i].m_interfaceName == m_liveInterfaces[liveIndex].m_interfaceName) {
             QCC_DbgPrintf(("IpNameServiceImpl::InterfaceRequested(): Interface \"%s\" approved.", m_liveInterfaces[liveIndex].m_interfaceName.c_str()));
+            printf("Exit IpNameServiceImpl::InterfaceRequested. Return true\n");
             return true;
         }
         //
@@ -3831,10 +4016,11 @@ bool IpNameServiceImpl::InterfaceRequested(uint32_t transportIndex, uint32_t liv
         if (m_requestedInterfaces[transportIndex][i].m_interfaceName.size() == 0 &&
             m_requestedInterfaces[transportIndex][i].m_interfaceAddr == qcc::IPAddress(m_liveInterfaces[liveIndex].m_interfaceAddr)) {
             QCC_DbgPrintf(("IpNameServiceImpl::InterfaceRequested(): Interface \"%s\" approved.", m_liveInterfaces[liveIndex].m_interfaceName.c_str()));
+            printf("Exit IpNameServiceImpl::InterfaceRequested. Return true\n");
             return true;
         }
     }
-
+    printf("Exit IpNameServiceImpl::InterfaceRequested. Return false\n");
     return false;
 }
 
@@ -3846,6 +4032,7 @@ void IpNameServiceImpl::RewriteVersionSpecific(
     uint16_t unicastIpv4Port, const qcc::String& interface,
     uint16_t const reliableTransportPort, const uint16_t unreliableTransportPort)
 {
+    printf("Enter IpNameServiceImpl::RewriteVersionSpecific\n");
     QCC_UNUSED(interface);
 
     QCC_DbgPrintf(("IpNameServiceImpl::RewriteVersionSpecific()"));
@@ -3932,6 +4119,7 @@ void IpNameServiceImpl::RewriteVersionSpecific(
                 uint32_t transportIndex = IndexFromBit(isAt->GetTransportMask());
                 QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::RewriteVersionSpecific(): Bad transport index in messageg");
                 if (transportIndex >= 16) {
+                    printf("Exit IpNameServiceImpl::RewriteVersionSpecific\n");
                     return;
                 }
 
@@ -4076,11 +4264,13 @@ void IpNameServiceImpl::RewriteVersionSpecific(
         QCC_ASSERT(false && "IpNameServiceImpl::RewriteVersionSpecific(): Bad message version");
         break;
     }
+    printf("Exit IpNameServiceImpl::RewriteVersionSpecific\n");
 
 }
 
 bool IpNameServiceImpl::SameNetwork(uint32_t interfaceAddressPrefixLen, qcc::IPAddress addressA, qcc::IPAddress addressB)
 {
+    printf("Enter IpNameServiceImpl::SameNetwork\n");
     QCC_DbgPrintf(("IpNameServiceImpl::SameNetwork(%d, \"%s\", \"%s\")", interfaceAddressPrefixLen,
                    addressA.ToString().c_str(), addressB.ToString().c_str()));
 
@@ -4091,17 +4281,20 @@ bool IpNameServiceImpl::SameNetwork(uint32_t interfaceAddressPrefixLen, qcc::IPA
     //
     if (interfaceAddressPrefixLen == static_cast<uint32_t>(-1)) {
         QCC_LogError(ER_FAIL, ("IpNameServiceImpl::SameNetwork(): Bad network prefix"));
+        printf("Exit IpNameServiceImpl::SameNetwork. Return false\n");
         return false;
     }
 
     if (addressA.IsIPv6()) {
         if (addressB.IsIPv4()) {
             QCC_DbgPrintf(("IpNameServiceImpl::SameNetwork(): Network families are different"));
+            printf("Exit IpNameServiceImpl::SameNetwork. Return false\n");
             return false;
         }
 
         if (interfaceAddressPrefixLen > 128) {
             QCC_LogError(ER_FAIL, ("IpNameServiceImpl::SameNetwork(): Bad IPv6 network prefix"));
+            printf("Exit IpNameServiceImpl::SameNetwork. Return false\n");
             return false;
         }
 
@@ -4114,6 +4307,7 @@ bool IpNameServiceImpl::SameNetwork(uint32_t interfaceAddressPrefixLen, qcc::IPA
         for (uint32_t i = 0; i < nBytes; ++i) {
             if (addrA[i] != addrB[i]) {
                 QCC_DbgPrintf(("IpNameServiceImpl::SameNetwork(): IPv6 networks are different"));
+                printf("Exit IpNameServiceImpl::SameNetwork. Return false\n");
                 return false;
             }
         }
@@ -4126,24 +4320,29 @@ bool IpNameServiceImpl::SameNetwork(uint32_t interfaceAddressPrefixLen, qcc::IPA
         }
 
         if (interfaceAddressPrefixLen == 128) {
+            printf("Exit IpNameServiceImpl::SameNetwork. Return true\n");
             return true;
         }
 
         if ((addrA[nBytes] & mask) == (addrB[nBytes] & mask)) {
             QCC_DbgPrintf(("IpNameServiceImpl::SameNetwork(): IPv6 networks are the same"));
+            printf("Exit IpNameServiceImpl::SameNetwork. Return true\n");
             return true;
         } else {
             QCC_DbgPrintf(("IpNameServiceImpl::SameNetwork(): IPv6 networks are different"));
+            printf("Exit IpNameServiceImpl::SameNetwork. Return false\n");
             return false;
         }
     } else if (addressA.IsIPv4()) {
         if (addressB.IsIPv6()) {
             QCC_DbgPrintf(("IpNameServiceImpl::SameNetwork(): Network families are different"));
+            printf("Exit IpNameServiceImpl::SameNetwork. Return false\n");
             return false;
         }
 
         if (interfaceAddressPrefixLen > 32) {
             QCC_LogError(ER_FAIL, ("IpNameServiceImpl::SameNetwork(): Bad IPv4 network prefix"));
+            printf("Exit IpNameServiceImpl::SameNetwork. Return false\n");
             return false;
         }
 
@@ -4171,19 +4370,23 @@ bool IpNameServiceImpl::SameNetwork(uint32_t interfaceAddressPrefixLen, qcc::IPA
         //
         if (addrA == addrB) {
             QCC_DbgPrintf(("IpNameServiceImpl::SameNetwork(): IPv4 networks are the same"));
+            printf("Exit IpNameServiceImpl::SameNetwork. Return true\n");
             return true;
         } else {
             QCC_DbgPrintf(("IpNameServiceImpl::SameNetwork(): IPv4 networks are different"));
+            printf("Exit IpNameServiceImpl::SameNetwork. Return false\n");
             return false;
         }
     }
 
     QCC_ASSERT(false && "IpNameServiceImpl::SameNetwork(): Not IPv4 or IPv6?");
+    printf("Exit IpNameServiceImpl::SameNetwork. Return false\n");
     return false;
 }
 
 void IpNameServiceImpl::SendOutboundMessageQuietly(Packet packet)
 {
+    printf("Enter IpNameServiceImpl::SendOutboundMessageQuietly\n");
     QCC_DbgPrintf(("IpNameServiceImpl::SendOutboundMessageQuietly()"));
     m_mutex.AssertOwnedByCurrentThread();
 
@@ -4196,6 +4399,7 @@ void IpNameServiceImpl::SendOutboundMessageQuietly(Packet packet)
 
     if (msgVersion == 0) {
         QCC_DbgPrintf(("IpNameServiceImpl::SendOutboundMessageQuietly(): Down-version message ignored"));
+        printf("Exit IpNameServiceImpl::SendOutboundMessageQuietly\n");
         return;
     }
 
@@ -4630,10 +4834,12 @@ void IpNameServiceImpl::SendOutboundMessageQuietly(Packet packet)
             }
         }
     }
+    printf("Exit IpNameServiceImpl::SendOutboundMessageQuietly\n");
 }
 
 void IpNameServiceImpl::SendOutboundMessageActively(Packet packet, const qcc::IPAddress& localAddress)
 {
+    printf("Enter IpNameServiceImpl::SendOutboundMessageActively\n");
     QCC_DbgPrintf(("IpNameServiceImpl::SendOutboundMessageActively()"));
     m_mutex.AssertOwnedByCurrentThread();
 
@@ -4763,6 +4969,7 @@ void IpNameServiceImpl::SendOutboundMessageActively(Packet packet, const qcc::IP
                 uint32_t transportIndex = IndexFromBit(transportMask);
                 QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::SendOutboundMessageActively(): Bad transport index");
                 if (transportIndex >= 16) {
+                    printf("Exit IpNameServiceImpl::SendOutboundMessageActively\n");
                     return;
                 }
 
@@ -4789,6 +4996,7 @@ void IpNameServiceImpl::SendOutboundMessageActively(Packet packet, const qcc::IP
                 uint32_t transportIndex = IndexFromBit(transportMask);
                 QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::SendOutboundMessageActively(): Bad transport index");
                 if (transportIndex >= 16) {
+                    printf("Exit IpNameServiceImpl::SendOutboundMessageActively\n");
                     return;
                 }
 
@@ -5308,10 +5516,12 @@ void IpNameServiceImpl::SendOutboundMessageActively(Packet packet, const qcc::IP
         removedTcp = false;
         removedUdp = false;
     }
+    printf("Exit IpNameServiceImpl::SendOutboundMessageActively\n");
 }
 
 void IpNameServiceImpl::SendOutboundMessages(void)
 {
+    printf("Enter IpNameServiceImpl::SendOutboundMessages\n");
     QCC_DbgPrintf(("IpNameServiceImpl::SendOutboundMessages()"));
     m_mutex.AssertOwnedByCurrentThread();
     int count = m_outbound.size();
@@ -5346,10 +5556,12 @@ void IpNameServiceImpl::SendOutboundMessages(void)
         //
         m_outbound.pop_front();
     }
+    printf("Exit IpNameServiceImpl::SendOutboundMessages\n");
 }
 
 void* IpNameServiceImpl::Run(void* arg)
 {
+    printf("Enter IpNameServiceImpl::Run\n");
     QCC_UNUSED(arg);
 
     QCC_DbgPrintf(("IpNameServiceImpl::Run()"));
@@ -5748,12 +5960,14 @@ void* IpNameServiceImpl::Run(void* arg)
     }
 
     delete [] buffer;
+    printf("Exit IpNameServiceImpl::Run. Return 0\n");
     return 0;
 }
 
 void IpNameServiceImpl::GetResponsePackets(std::list<Packet>& packets, bool quietly, const qcc::IPEndpoint destination, uint8_t type,
                                            TransportMask completeTransportMask, const int32_t interfaceIndex, const qcc::AddressFamily family)
 {
+    printf("Enter IpNameServiceImpl::GetResponsePackets\n");
     m_mutex.Lock(MUTEX_CONTEXT);
     bool tcpProcessed = false;
     bool udpProcessed = false;
@@ -6061,10 +6275,12 @@ void IpNameServiceImpl::GetResponsePackets(std::list<Packet>& packets, bool quie
         }
     }
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::GetResponsePackets\n");
 }
 
 void IpNameServiceImpl::GetQueryPackets(std::list<Packet>& packets, const uint8_t type, const int32_t interfaceIndex, const qcc::AddressFamily family)
 {
+    printf("Enter IpNameServiceImpl::GetQueryPackets\n");
     m_mutex.Lock(MUTEX_CONTEXT);
     for (uint32_t transportIndex = 0; transportIndex < N_TRANSPORTS; ++transportIndex) {
         if (m_enableV1 && (type & TRANSMIT_V0_V1) && !m_v0_v1_queries[transportIndex].empty()) {
@@ -6286,10 +6502,12 @@ void IpNameServiceImpl::GetQueryPackets(std::list<Packet>& packets, const uint8_
         }
     }
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::GetQueryPackets\n");
 }
 
 void IpNameServiceImpl::Retransmit(uint32_t transportIndex, bool exiting, bool quietly, const qcc::IPEndpoint& destination, const qcc::IPEndpoint& source, uint8_t type, TransportMask completeTransportMask, vector<qcc::String>& wkns, const int32_t interfaceIndex, const qcc::AddressFamily family)
 {
+    printf("Enter IpNameServiceImpl::Retransmit\n");
     //
     // Type can be one of the following 3 values:
     // - TRANSMIT_V0_V1: transmit version zero and version one messages.
@@ -6306,6 +6524,7 @@ void IpNameServiceImpl::Retransmit(uint32_t transportIndex, bool exiting, bool q
 
     if (type == 0) {
         //Nothing to transmit
+        printf("Exit IpNameServiceImpl::Retransmit\n");
         return;
     }
     QCC_DbgPrintf(("IpNameServiceImpl::Retransmit()"));
@@ -6339,6 +6558,7 @@ void IpNameServiceImpl::Retransmit(uint32_t transportIndex, bool exiting, bool q
     if (doRetransmit == false) {
         QCC_DbgPrintf(("IpNameServiceImpl::Retransmit(): Nothing to do for transportIndex %d", transportIndex));
         m_mutex.Unlock(MUTEX_CONTEXT);
+        printf("Exit IpNameServiceImpl::Retransmit\n");
         return;
     }
 
@@ -7091,25 +7311,30 @@ void IpNameServiceImpl::Retransmit(uint32_t transportIndex, bool exiting, bool q
 
     }
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::Retransmit\n");
 }
 
 // Note: this function assumes the mutex is locked
 bool IpNameServiceImpl::IsPeriodicMaintenanceTimerNeeded(void) const
 {
+    printf("Enter IpNameServiceImpl::IsPeriodicMaintenanceTimerNeeded\n");
     //
     // The timer is needed when we're in the midst of handling a terminal message,
     // we have an outbound message queued, or we're counting down to send the
     // queued advertisement (in V1 config).
     //
     if (m_terminal || (m_outbound.size() > 0) || (m_enableV1 && (m_timer > 0))) {
+        printf("Exit IpNameServiceImpl::IsPeriodicMaintenanceTimerNeeded. Return true\n");
         return true;
     } else {
+        printf("Exit IpNameServiceImpl::IsPeriodicMaintenanceTimerNeeded. Return false\n");
         return false;
     }
 }
 
 void IpNameServiceImpl::DoPeriodicMaintenance(void)
 {
+    printf("Enter IpNameServiceImpl::DoPeriodicMaintenance\n");
 #if HAPPY_WANDERER
     Wander();
 #endif
@@ -7132,10 +7357,12 @@ void IpNameServiceImpl::DoPeriodicMaintenance(void)
     }
 
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::DoPeriodicMaintenance\n");
 }
 
 void IpNameServiceImpl::HandleProtocolQuestion(WhoHas whoHas, const qcc::IPEndpoint& remote, int32_t interfaceIndex, const qcc::IPEndpoint& local)
 {
+    printf("Enter IpNameServiceImpl::HandleProtocolQuestion\n");
     QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolQuestion(%s)", remote.ToString().c_str()));
 
     //
@@ -7155,6 +7382,7 @@ void IpNameServiceImpl::HandleProtocolQuestion(WhoHas whoHas, const qcc::IPEndpo
         if (whoHas.GetUdpFlag()) {
             QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolQuestion(): Ignoring version zero message from version one peer"));
             m_mutex.Unlock(MUTEX_CONTEXT);
+            printf("Exit IpNameServiceImpl::HandleProtocolQuestion\n");
             return;
         }
     }
@@ -7163,6 +7391,7 @@ void IpNameServiceImpl::HandleProtocolQuestion(WhoHas whoHas, const qcc::IPEndpo
         if (whoHas.GetUdpFlag()) {
             QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolQuestion(): Ignoring version one message from version two peer"));
             m_mutex.Unlock(MUTEX_CONTEXT);
+            printf("Exit IpNameServiceImpl::HandleProtocolQuestion\n");
             return;
         }
     }
@@ -7285,10 +7514,12 @@ void IpNameServiceImpl::HandleProtocolQuestion(WhoHas whoHas, const qcc::IPEndpo
     }
 
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::HandleProtocolQuestion\n");
 }
 
 void IpNameServiceImpl::HandleProtocolAnswer(IsAt isAt, uint32_t timer, const qcc::IPEndpoint& remote, int32_t interfaceIndex)
 {
+    printf("Enter IpNameServiceImpl::HandleProtocolAnswer\n");
     QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolAnswer(%s)", remote.ToString().c_str()));
 
     // Get IPv4 address of interface for this message (message may have been
@@ -7327,12 +7558,14 @@ void IpNameServiceImpl::HandleProtocolAnswer(IsAt isAt, uint32_t timer, const qc
 
         if (CountOnes(transportMask) != 1) {
             QCC_LogError(ER_BAD_TRANSPORT_MASK, ("IpNameServiceImpl::HandleProtocolAnswer(): Bad transport mask"));
+            printf("Exit IpNameServiceImpl::HandleProtocolAnswer\n");
             return;
         }
 
         transportIndex = IndexFromBit(transportMask);
         QCC_ASSERT(transportIndex < 16 && "IpNameServiceImpl::HandleProtocolAnswer(): Bad callback index");
         if (transportIndex >= 16) {
+            printf("Exit IpNameServiceImpl::HandleProtocolAnswer\n");
             return;
         }
 
@@ -7361,7 +7594,7 @@ void IpNameServiceImpl::HandleProtocolAnswer(IsAt isAt, uint32_t timer, const qc
         QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolAnswer(): No callback for transport, so nothing to do"));
 
         m_mutex.Unlock(MUTEX_CONTEXT);
-
+        printf("Exit IpNameServiceImpl::HandleProtocolAnswer\n");
         return;
     }
 
@@ -7379,7 +7612,7 @@ void IpNameServiceImpl::HandleProtocolAnswer(IsAt isAt, uint32_t timer, const qc
             QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolAnswer(): Ignoring version zero message from version one/version two peer"));
 
             m_mutex.Unlock(MUTEX_CONTEXT);
-
+            printf("Exit IpNameServiceImpl::HandleProtocolAnswer\n");
             return;
         }
     }
@@ -7397,7 +7630,7 @@ void IpNameServiceImpl::HandleProtocolAnswer(IsAt isAt, uint32_t timer, const qc
         if (isAt.GetReliableIPv6Flag()) {
             QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolAnswer(): Ignoring version one message from version two peer"));
             m_mutex.Unlock(MUTEX_CONTEXT);
-
+            printf("Exit IpNameServiceImpl::HandleProtocolAnswer\n");
             return;
         }
     }
@@ -7653,16 +7886,19 @@ void IpNameServiceImpl::HandleProtocolAnswer(IsAt isAt, uint32_t timer, const qc
     }
 
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::HandleProtocolAnswer\n");
 }
 
 void IpNameServiceImpl::HandleProtocolMessage(uint8_t const* buffer, uint32_t nbytes, const qcc::IPEndpoint& remote, const qcc::IPEndpoint& local, int32_t interfaceIndex)
 {
+    printf("Enter IpNameServiceImpl::HandleProtocolMessage\n");
     QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolMessage(0x%x, %d, %s)", buffer, nbytes, remote.ToString().c_str()));
     IncrementPerfCounter(PERF_COUNTER_IPNS_HANDLE_PROTOCOL_MESSAGE);
 
 #if HAPPY_WANDERER
     if (Wander() == false) {
         QCC_LogError(ER_FAIL, ("IpNameServiceImpl::HandleProtocolMessage(): Wander(): out of range"));
+        printf("Exit IpNameServiceImpl::HandleProtocolMessage\n");
         return;
     } else {
         QCC_LogError(ER_FAIL, ("IpNameServiceImpl::HandleProtocolMessage(): Wander(): in range"));
@@ -7676,6 +7912,7 @@ void IpNameServiceImpl::HandleProtocolMessage(uint8_t const* buffer, uint32_t nb
         size_t bytesRead = nsPacket->Deserialize(buffer, nbytes);
         if (bytesRead != nbytes) {
             QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolMessage(): Deserialize(): Error"));
+            printf("Exit IpNameServiceImpl::HandleProtocolMessage\n");
             return;
         }
 
@@ -7687,6 +7924,7 @@ void IpNameServiceImpl::HandleProtocolMessage(uint8_t const* buffer, uint32_t nb
 
         if (msgVersion != 0 && msgVersion != 1) {
             QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolMessage(): Unknown version: Error"));
+            printf("Exit IpNameServiceImpl::HandleProtocolMessage\n");
             return;
         }
 
@@ -7707,6 +7945,7 @@ void IpNameServiceImpl::HandleProtocolMessage(uint8_t const* buffer, uint32_t nb
         // core leaf nodes looking for router nodes.
         //
         if (!m_enableV1) {
+            printf("Exit IpNameServiceImpl::HandleProtocolMessage\n");
             return;
         }
         //
@@ -7733,6 +7972,7 @@ void IpNameServiceImpl::HandleProtocolMessage(uint8_t const* buffer, uint32_t nb
         size_t bytesRead = mdnsPacket->Deserialize(buffer, nbytes);
         if (bytesRead != nbytes) {
             QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolMessage(): Deserialize(): Error."));
+            printf("Exit IpNameServiceImpl::HandleProtocolMessage\n");
             return;
         }
 
@@ -7742,29 +7982,36 @@ void IpNameServiceImpl::HandleProtocolMessage(uint8_t const* buffer, uint32_t nb
             HandleProtocolResponse(mdnsPacket, remote, local, interfaceIndex);
         }
     }
+    printf("Exit IpNameServiceImpl::HandleProtocolMessage\n");
 }
 
 qcc::String IpNameServiceImpl::PeerInfo::ToString(const qcc::String& guid) const
 {
+    printf("Enter IpNameServiceImpl::PeerInfo::ToString\n");
     String s;
     s += "guid=" + guid + "/" + GUID128(guid).ToShortString();
     s += ",ip=" + unicastInfo.ToString();
+    printf("Exit IpNameServiceImpl::PeerInfo::ToString. Return s\n");
     return s;
 }
 
 void IpNameServiceImpl::PrintPeerInfoMap()
 {
+    printf("Enter IpNameServiceImpl::PrintPeerInfoMap\n");
     for (std::unordered_map<std::string, std::set<PeerInfo> >::iterator it = m_peerInfoMap.begin();
          it != m_peerInfoMap.end(); ++it) {
         for (std::set<PeerInfo>::iterator pit = it->second.begin(); pit != it->second.end(); ++pit) {
             QCC_DbgHLPrintf(("  %s", pit->ToString(it->first).c_str()));
         }
     }
+    printf("Exit IpNameServiceImpl::PrintPeerInfoMap\n");
 }
 
 bool IpNameServiceImpl::AddToPeerInfoMap(const qcc::String& guid, const qcc::IPEndpoint& ipEndpoint)
 {
+    printf("Enter IpNameServiceImpl::AddToPeerInfoMap\n");
     if (ipEndpoint.GetPort() == 0 || ipEndpoint.GetAddress() == IPAddress()) {
+        printf("Exit IpNameServiceImpl::AddToPeerInfoMap. Return false\n");
         return false;
     }
     m_mutex.Lock(MUTEX_CONTEXT);
@@ -7792,11 +8039,13 @@ bool IpNameServiceImpl::AddToPeerInfoMap(const qcc::String& guid, const qcc::IPE
         QCC_DbgHLPrintf(("Add to peer info map: %s", peerInfo.ToString(guid).c_str()));
     }
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::AddToPeerInfoMap. Return true\n");
     return true;
 }
 
 bool IpNameServiceImpl::RemoveFromPeerInfoMap(const qcc::String& guid)
 {
+    printf("Enter IpNameServiceImpl::RemoveFromPeerInfoMap\n");
     m_mutex.Lock(MUTEX_CONTEXT);
     std::unordered_map<std::string, std::set<PeerInfo> >::iterator it = m_peerInfoMap.find(guid);
     if (it != m_peerInfoMap.end()) {
@@ -7806,15 +8055,18 @@ bool IpNameServiceImpl::RemoveFromPeerInfoMap(const qcc::String& guid)
         QCC_DbgHLPrintf(("Erase from peer info map: guid=%s", guid.c_str()));
         m_peerInfoMap.erase(guid);
         m_mutex.Unlock(MUTEX_CONTEXT);
+        printf("Exit IpNameServiceImpl::RemoveFromPeerInfoMap. Return true\n");
         return true;
     }
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::RemoveFromPeerInfoMap. Return false\n");
     return false;
 }
 
 const uint32_t MDNS_PACKET_TRACKER_PURGE_TIMEOUT = 5 * 1000; /* 5 seconds */
 void IpNameServiceImpl::PurgeMDNSPacketTracker()
 {
+    printf("Enter IpNameServiceImpl::PurgeMDNSPacketTracker\n");
     Timespec<MonotonicTime> now;
     GetTimeNow(&now);
     m_mutex.Lock(MUTEX_CONTEXT);
@@ -7827,18 +8079,22 @@ void IpNameServiceImpl::PurgeMDNSPacketTracker()
         }
     }
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::PurgeMDNSPacketTracker\n");
 }
 
 bool IpNameServiceImpl::IsMDNSPacketTrackerEmpty()
 {
+    printf("Enter IpNameServiceImpl::IsMDNSPacketTrackerEmpty\n");
     m_mutex.Lock(MUTEX_CONTEXT);
     bool isEmpty = m_mdnsPacketTracker.empty();
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::IsMDNSPacketTrackerEmpty. Return isEmpty\n");
     return isEmpty;
 }
 
 bool IpNameServiceImpl::UpdateMDNSPacketTracker(qcc::String guid, const qcc::IPEndpoint& endpoint, uint16_t burstId)
 {
+    printf("Enter IpNameServiceImpl::UpdateMDNSPacketTracker\n");
     //QCC_DbgPrintf(("IpNameServiceImpl::UpdateMDNSPacketTracker(%s, %s,%d)", guid.c_str(), endpoint.ToString().c_str(), burstId));
 
     //
@@ -7855,6 +8111,7 @@ bool IpNameServiceImpl::UpdateMDNSPacketTracker(qcc::String guid, const qcc::IPE
     if (it != m_mdnsPacketTracker.end()) {
         // Drop the packet if burst id is lower or same
         if (it->second.burstId >= burstId) {
+            printf("Exit IpNameServiceImpl::UpdateMDNSPacketTracker. Return false\n");
             return false;
         }
         // Update the last seen burst id from this guid
@@ -7870,6 +8127,7 @@ bool IpNameServiceImpl::UpdateMDNSPacketTracker(qcc::String guid, const qcc::IPE
             m_packetScheduler.Alert();
         }
     }
+    printf("Exit IpNameServiceImpl::UpdateMDNSPacketTracker. Return true\n");
     return true;
 }
 
@@ -7878,6 +8136,7 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
     // Get IPv4 address of interface for this message (message may have been
     // received on the IPv6 address).  This will be used as a sanity check later
     // against the connect spec in the message.
+    printf("Enter IpNameServiceImpl::HandleProtocolResponse\n");
     String ifName;
     int32_t ifIndexV4 = -1;
     if (interfaceIndex != -1) {
@@ -7909,23 +8168,27 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
 
     if (!isAllJoynResponse) {
         QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolResponse Ignoring Non-AllJoyn related response"));
+        printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
         return;
     }
     MDNSResourceRecord* refRecord;
     if (!mdnsPacket->GetAdditionalRecord("sender-info.*", MDNSResourceRecord::TXT, MDNSTextRData::TXTVERS, &refRecord)) {
         QCC_DbgPrintf(("Ignoring response without sender-info"));
+        printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
         return;
     }
     MDNSSenderRData* refRData = static_cast<MDNSSenderRData*>(refRecord->GetRData());
 
     if (!refRData) {
         QCC_DbgPrintf(("Ignoring response with invalid sender-info"));
+        printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
         return;
     }
 
     String guid = refRecord->GetDomainName().substr(sizeof("sender-info.") - 1, 32);
     if (guid == m_guid) {
         QCC_DbgPrintf(("Ignoring my own response"));
+        printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
         return;
     }
     IPEndpoint r4, r6;
@@ -7937,17 +8200,20 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
         MDNSPtrRData* ptrRDataTcp = static_cast<MDNSPtrRData*>(answerTcp->GetRData());
         if (!ptrRDataTcp) {
             QCC_DbgPrintf(("Ignoring response with invalid sender-info"));
+            printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
             return;
         }
 
         MDNSResourceRecord* srvAnswerTcp;
         if (!mdnsPacket->GetAnswer(ptrRDataTcp->GetPtrDName(), MDNSResourceRecord::SRV, &srvAnswerTcp)) {
             QCC_DbgPrintf(("Ignoring response without srv"));
+            printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
             return;
         }
         MDNSSrvRData* srvRDataTcp = static_cast<MDNSSrvRData*>(srvAnswerTcp->GetRData());
         if (!srvRDataTcp) {
             QCC_DbgPrintf(("Ignoring response with invalid srv"));
+            printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
             return;
         }
         r4.port = srvRDataTcp->GetPort();
@@ -7956,6 +8222,7 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
             MDNSTextRData* txtRDataTcp = static_cast<MDNSTextRData*>(txtAnswerTcp->GetRData());
             if (!txtRDataTcp) {
                 QCC_DbgPrintf(("Ignoring response with invalid txt"));
+                printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
                 return;
             }
             r6.port = StringToU32(txtRDataTcp->GetValue("r6port"));
@@ -7965,6 +8232,7 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
             MDNSARData* aRData = static_cast<MDNSARData*>(aRecord->GetRData());
             if (!aRData) {
                 QCC_DbgPrintf(("Ignoring response with invalid ipv4 address"));
+                printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
                 return;
             }
             r4.addr = aRData->GetAddr();
@@ -7975,6 +8243,7 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
             MDNSAAAARData* aaaaRData = static_cast<MDNSAAAARData*>(aaaaRecord->GetRData());
             if (!aaaaRData) {
                 QCC_DbgPrintf(("Ignoring response with invalid ipv6 address"));
+                printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
                 return;
             }
             r6.addr = aaaaRData->GetAddr();
@@ -7985,17 +8254,20 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
         MDNSPtrRData* ptrRDataUdp = static_cast<MDNSPtrRData*>(answerUdp->GetRData());
         if (!ptrRDataUdp) {
             QCC_DbgPrintf(("Ignoring response with invalid sender-info"));
+            printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
             return;
         }
 
         MDNSResourceRecord* srvAnswerUdp;
         if (!mdnsPacket->GetAnswer(ptrRDataUdp->GetPtrDName(), MDNSResourceRecord::SRV, &srvAnswerUdp)) {
             QCC_DbgPrintf(("Ignoring response without srv"));
+            printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
             return;
         }
         MDNSSrvRData* srvRDataUdp = static_cast<MDNSSrvRData*>(srvAnswerUdp->GetRData());
         if (!srvRDataUdp) {
             QCC_DbgPrintf(("Ignoring response with invalid srv"));
+            printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
             return;
         }
         u4.port = srvRDataUdp->GetPort();
@@ -8004,6 +8276,7 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
             MDNSTextRData* txtRDataUdp = static_cast<MDNSTextRData*>(txtAnswerUdp->GetRData());
             if (!txtRDataUdp) {
                 QCC_DbgPrintf(("Ignoring response with invalid txt"));
+                printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
                 return;
             }
             u6.port = StringToU32(txtRDataUdp->GetValue("u6port"));
@@ -8013,6 +8286,7 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
             MDNSARData* aRData = static_cast<MDNSARData*>(aRecord->GetRData());
             if (!aRData) {
                 QCC_DbgPrintf(("Ignoring response with invalid ipv4 address"));
+                printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
                 return;
             }
             u4.addr = aRData->GetAddr();
@@ -8023,6 +8297,7 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
             MDNSAAAARData* aaaaRData = static_cast<MDNSAAAARData*>(aaaaRecord->GetRData());
             if (!aaaaRData) {
                 QCC_DbgPrintf(("Ignoring response with invalid ipv6 address"));
+                printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
                 return;
             }
             u6.addr = aaaaRData->GetAddr();
@@ -8044,6 +8319,7 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
         if (!UpdateMDNSPacketTracker(guid, ns4, refRData->GetSearchID())) {
             QCC_DbgPrintf(("Ignoring response with duplicate burst ID"));
             m_mutex.Unlock(MUTEX_CONTEXT);
+            printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
             return;
         }
     }
@@ -8063,6 +8339,7 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
                            ifName.c_str()));
         }
         m_mutex.Unlock(MUTEX_CONTEXT);
+        printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
         return;
     }
 
@@ -8083,22 +8360,26 @@ void IpNameServiceImpl::HandleProtocolResponse(MDNSPacket mdnsPacket, const qcc:
     m_protectListeners = false;
 
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::HandleProtocolResponse\n");
 }
 
 bool IpNameServiceImpl::HandleAdvertiseResponse(MDNSPacket mdnsPacket,
                                                 const qcc::String& guid, const qcc::IPEndpoint& ns4,
                                                 const qcc::IPEndpoint& r4, const qcc::IPEndpoint& r6, const qcc::IPEndpoint& u4, const qcc::IPEndpoint& u6)
 {
+    printf("Enter IpNameServiceImpl::HandleAdvertiseResponse\n");
     uint32_t numMatches = mdnsPacket->GetNumMatches("advertise.*", MDNSResourceRecord::TXT, MDNSTextRData::TXTVERS);
     for (uint32_t match = 0; match < numMatches; match++) {
         MDNSResourceRecord* advRecord;
         if (!mdnsPacket->GetAdditionalRecordAt("advertise.*", MDNSResourceRecord::TXT, MDNSTextRData::TXTVERS, match, &advRecord)) {
+            printf("Exit IpNameServiceImpl::HandleAdvertiseResponse. Return false\n");
             return false;
         }
 
         MDNSAdvertiseRData* advRData = static_cast<MDNSAdvertiseRData*>(advRecord->GetRData());
         if (!advRData) {
             QCC_DbgPrintf(("Ignoring response with invalid advertisement info"));
+            printf("Exit IpNameServiceImpl::HandleAdvertiseResponse. Return true\n");
             return true;
         }
         uint32_t ttl = advRecord->GetRRttl();
@@ -8214,11 +8495,13 @@ bool IpNameServiceImpl::HandleAdvertiseResponse(MDNSPacket mdnsPacket,
             m_protect_callback = false;
         }
     }
+    printf("Exit IpNameServiceImpl::HandleAdvertiseResponse. Return true\n");
     return true;
 }
 
 void IpNameServiceImpl::HandleProtocolQuery(MDNSPacket mdnsPacket, const qcc::IPEndpoint& remote, const qcc::IPEndpoint& local)
 {
+    printf("Enter IpNameServiceImpl::HandleProtocolQuery\n");
     QCC_UNUSED(remote);
 
     bool isAllJoynQuery = true;
@@ -8236,16 +8519,19 @@ void IpNameServiceImpl::HandleProtocolQuery(MDNSPacket mdnsPacket, const qcc::IP
     }
     if (!isAllJoynQuery) {
         QCC_DbgPrintf(("IpNameServiceImpl::HandleProtocolQuery Ignoring Non-AllJoyn related query"));
+         printf("Exit IpNameServiceImpl::HandleProtocolQuery\n");
         return;
     }
     MDNSResourceRecord* refRecord;
     if (!mdnsPacket->GetAdditionalRecord("sender-info.*", MDNSResourceRecord::TXT, MDNSTextRData::TXTVERS, &refRecord)) {
         QCC_DbgPrintf(("Ignoring query without sender info"));
+        printf("Exit IpNameServiceImpl::HandleProtocolQuery\n");
         return;
     }
     MDNSSenderRData* refRData = static_cast<MDNSSenderRData*>(refRecord->GetRData());
     if (!refRData) {
         QCC_DbgPrintf(("Ignoring query with invalid sender info"));
+        printf("Exit IpNameServiceImpl::HandleProtocolQuery\n");
         return;
     }
     IPEndpoint dst(refRData->GetIPV4ResponseAddr(), refRData->GetIPV4ResponsePort());
@@ -8253,6 +8539,7 @@ void IpNameServiceImpl::HandleProtocolQuery(MDNSPacket mdnsPacket, const qcc::IP
     String guid = refRecord->GetDomainName().substr(sizeof("sender-info.") - 1, 32);
     if (guid == m_guid) {
         QCC_DbgPrintf(("Ignoring my own query"));
+        printf("Exit IpNameServiceImpl::HandleProtocolQuery\n");
         return;
     }
     m_mutex.Lock(MUTEX_CONTEXT);
@@ -8270,6 +8557,7 @@ void IpNameServiceImpl::HandleProtocolQuery(MDNSPacket mdnsPacket, const qcc::IP
         if (!UpdateMDNSPacketTracker(guid, dst, refRData->GetSearchID())) {
             QCC_DbgPrintf(("Ignoring query with duplicate burst ID"));
             m_mutex.Unlock(MUTEX_CONTEXT);
+            printf("Exit IpNameServiceImpl::HandleProtocolQuery\n");            
             return;
         }
     }
@@ -8283,27 +8571,32 @@ void IpNameServiceImpl::HandleProtocolQuery(MDNSPacket mdnsPacket, const qcc::IP
     m_protectListeners = false;
     if (handled) {
         m_mutex.Unlock(MUTEX_CONTEXT);
+        printf("Exit IpNameServiceImpl::HandleProtocolQuery\n");
         return;
     }
     HandleSearchQuery(completeTransportMask, mdnsPacket, local, guid, dst);
 
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::HandleProtocolQuery\n");
 }
 
 bool IpNameServiceImpl::HandleSearchQuery(TransportMask completeTransportMask, MDNSPacket mdnsPacket, const qcc::IPEndpoint& src,
                                           const qcc::String& guid, const qcc::IPEndpoint& dst)
 {
+    printf("Enter IpNameServiceImpl::HandleSearchQuery\n");
     QCC_UNUSED(guid);
 
     QCC_DbgPrintf(("IpNameServiceImpl::HandleSearchQuery"));
     MDNSResourceRecord* searchRecord;
     if (!mdnsPacket->GetAdditionalRecord("search.*", MDNSResourceRecord::TXT, MDNSTextRData::TXTVERS, &searchRecord)) {
+        printf("Exit IpNameServiceImpl::HandleSearchQuery. Return false\n");
         return false;
     }
 
     MDNSSearchRData* searchRData = static_cast<MDNSSearchRData*>(searchRecord->GetRData());
     if (!searchRData) {
         QCC_DbgPrintf(("Ignoring query with invalid search info"));
+        printf("Exit IpNameServiceImpl::HandleSearchQuery. Return true\n");
         return true;
     }
 
@@ -8407,11 +8700,13 @@ bool IpNameServiceImpl::HandleSearchQuery(TransportMask completeTransportMask, M
             m_mutex.Lock(MUTEX_CONTEXT);
         }
     }
+    printf("Exit IpNameServiceImpl::HandleSearchQuery. Return true\n");
     return true;
 }
 
 QStatus IpNameServiceImpl::Start(void* arg, qcc::ThreadListener* listener)
 {
+    printf("Enter IpNameServiceImpl::Start\n");
     QCC_UNUSED(arg);
 
     QCC_DbgPrintf(("IpNameServiceImpl::Start()"));
@@ -8423,16 +8718,19 @@ QStatus IpNameServiceImpl::Start(void* arg, qcc::ThreadListener* listener)
     QCC_DbgPrintf(("IpNameServiceImpl::Start(): Started"));
     m_mutex.Unlock(MUTEX_CONTEXT);
     m_packetScheduler.Start();
+    printf("Exit IpNameServiceImpl::Start. Return status\n");
     return status;
 }
 
 bool IpNameServiceImpl::Started()
 {
+    printf("Enter and exit IpNameServiceImpl::Started. Return IsRunning()\n");
     return IsRunning();
 }
 
 QStatus IpNameServiceImpl::Stop()
 {
+    printf("Enter IpNameServiceImpl::Stop\n");
     QCC_DbgPrintf(("IpNameServiceImpl::Stop()"));
     m_mutex.Lock(MUTEX_CONTEXT);
     if (m_state != IMPL_SHUTDOWN) {
@@ -8443,11 +8741,13 @@ QStatus IpNameServiceImpl::Stop()
     QCC_DbgPrintf(("IpNameServiceImpl::Stop(): Stopped"));
     m_packetScheduler.Stop();
     m_mutex.Unlock(MUTEX_CONTEXT);
+    printf("Exit IpNameServiceImpl::Stop. Return status\n");
     return status;
 }
 
 QStatus IpNameServiceImpl::Join()
 {
+    printf("Enter IpNameServiceImpl::Join\n");
     m_packetScheduler.Join();
     QCC_DbgPrintf(("IpNameServiceImpl::Join()"));
     QCC_ASSERT(m_state == IMPL_STOPPING || m_state == IMPL_SHUTDOWN);
@@ -8455,6 +8755,7 @@ QStatus IpNameServiceImpl::Join()
     QStatus status = Thread::Join();
     QCC_DbgPrintf(("IpNameServiceImpl::Join(): Joined"));
     m_state = IMPL_SHUTDOWN;
+    printf("Exit IpNameServiceImpl::Join. Return status\n");
     return status;
 }
 
@@ -8474,6 +8775,7 @@ QStatus IpNameServiceImpl::Join()
 //
 uint32_t IpNameServiceImpl::CountOnes(uint32_t data)
 {
+    printf("Enter IpNameServiceImpl::CountOnes\n");
     QCC_DbgPrintf(("IpNameServiceImpl::CountOnes(0x%x)", data));
 
     data = data - ((data >> 1) & 0x55555555);
@@ -8481,6 +8783,7 @@ uint32_t IpNameServiceImpl::CountOnes(uint32_t data)
     uint32_t result = (((data + (data >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
 
     QCC_DbgPrintf(("IpNameServiceImpl::CountOnes(): %d bits are set", result));
+    printf("Exit IpNameServiceImpl::CountOnes. Return result\n");
     return result;
 }
 
@@ -8501,6 +8804,7 @@ uint32_t IpNameServiceImpl::CountOnes(uint32_t data)
 //
 uint32_t IpNameServiceImpl::IndexFromBit(uint32_t data)
 {
+    printf("Enter IpNameServiceImpl::IndexFromBit\n");
     QCC_DbgPrintf(("IpNameServiceImpl::IndexFromBit(0x%x)", data));
 
     uint32_t c = 32;
@@ -8533,6 +8837,7 @@ uint32_t IpNameServiceImpl::IndexFromBit(uint32_t data)
     //
     QCC_DbgPrintf(("IpNameServiceImpl::IndexFromBit(): Index is %d.", c));
     QCC_ASSERT(c < 16 && "IpNameServiceImpl::IndexFromBit(): Bad transport index");
+    printf("Exit IpNameServiceImpl::IndexFromBit. Return c\n");
     return c;
 }
 
@@ -8553,13 +8858,16 @@ uint32_t IpNameServiceImpl::IndexFromBit(uint32_t data)
 //
 TransportMask IpNameServiceImpl::MaskFromIndex(uint32_t index)
 {
+    printf("Enter IpNameServiceImpl::MaskFromIndex\n");
     QCC_DbgPrintf(("IpNameServiceImpl::MaskFromIndex(%d.)", index));
     uint32_t result = 1 << index;
     QCC_DbgPrintf(("IpNameServiceImpl::MaskFromIndex(): Bit is 0x%x", result));
+    printf("Exit IpNameServiceImpl::MaskFromIndex. Return result\n");
     return result;
 }
 
 set<String> IpNameServiceImpl::GetAdvertising(TransportMask transportMask) {
+    printf("Enter IpNameServiceImpl::GetAdvertising\n");
     set<String> set_common, set_return;
     std::set<String> empty;
     set_intersection(m_advertised[TRANSPORT_INDEX_TCP].begin(), m_advertised[TRANSPORT_INDEX_TCP].end(), m_advertised[TRANSPORT_INDEX_UDP].begin(), m_advertised[TRANSPORT_INDEX_UDP].end(), std::inserter(set_common, set_common.end()));
@@ -8569,20 +8877,24 @@ set<String> IpNameServiceImpl::GetAdvertising(TransportMask transportMask) {
 
         uint32_t transportIndex = IndexFromBit(transportMask);
         if (transportIndex >= 16) {
+            printf("Exit IpNameServiceImpl::GetAdvertising. Return empty\n");
             return empty;
         }
 
         set_difference(m_advertised[transportIndex].begin(), m_advertised[transportIndex].end(), set_common.begin(), set_common.end(), std::inserter(set_return, set_return.end()));
+        printf("Exit IpNameServiceImpl::GetAdvertising. Return set_Return\n");
         return set_return;
     }
     if (transportMask == (TRANSPORT_TCP | TRANSPORT_UDP)) {
+        printf("Exit IpNameServiceImpl::GetAdvertising. Return set_common\n");
         return set_common;
     }
-
+    printf("Exit IpNameServiceImpl::GetAdvertising. Return empty\n");
     return empty;
 
 }
 set<String> IpNameServiceImpl::GetAdvertisingQuietly(TransportMask transportMask) {
+    printf("Enter IpNameServiceImpl::GetAdvertisingQuietly\n");
     set<String> set_common, set_return;
     std::set<String> empty;
     set_intersection(m_advertised_quietly[TRANSPORT_INDEX_TCP].begin(), m_advertised_quietly[TRANSPORT_INDEX_TCP].end(), m_advertised_quietly[TRANSPORT_INDEX_UDP].begin(), m_advertised_quietly[TRANSPORT_INDEX_UDP].end(), std::inserter(set_common, set_common.end()));
@@ -8590,23 +8902,27 @@ set<String> IpNameServiceImpl::GetAdvertisingQuietly(TransportMask transportMask
     if (transportMask == TRANSPORT_TCP || transportMask == TRANSPORT_UDP) {
         uint32_t transportIndex = IndexFromBit(transportMask);
         if (transportIndex >= 16) {
+            printf("Exit IpNameServiceImpl::GetAdvertisingQuietly. Return empty\n");
             return empty;
         }
 
         set_difference(m_advertised_quietly[transportIndex].begin(), m_advertised_quietly[transportIndex].end(), set_common.begin(), set_common.end(), std::inserter(set_return, set_return.end()));
+        printf("Exit IpNameServiceImpl::GetAdvertisingQuietly. Return set_return\n");
         return set_return;
     }
     if (transportMask == (TRANSPORT_TCP | TRANSPORT_UDP)) {
 
+        printf("Exit IpNameServiceImpl::GetAdvertisingQuietly. Return set_return\n");
         return set_common;
     }
-
+    printf("Exit IpNameServiceImpl::GetAdvertisingQuietly. Return empty\n");
     return empty;
 
 }
 
 bool IpNameServiceImpl::PurgeAndUpdatePacket(MDNSPacket mdnspacket, bool updateSid)
 {
+    printf("Enter IpNameServiceImpl::PurgeAndUpdatePacket\n");
     bool isUnicast = mdnspacket->DestinationSet();
     MDNSResourceRecord* refRecord;
     mdnspacket->GetAdditionalRecord("sender-info.*", MDNSResourceRecord::TXT, MDNSTextRData::TXTVERS, &refRecord);
@@ -8620,6 +8936,7 @@ bool IpNameServiceImpl::PurgeAndUpdatePacket(MDNSPacket mdnspacket, bool updateS
             /* Do not purge unicast queries(RefreshCache and Ping),
              * These packets do not have an entry in m_v2_queries.
              */
+            printf("Exit IpNameServiceImpl::PurgeAndUpdatePacket. Return true\n");
             return true;
         }
         MDNSResourceRecord* searchRecord;
@@ -8661,12 +8978,14 @@ bool IpNameServiceImpl::PurgeAndUpdatePacket(MDNSPacket mdnspacket, bool updateS
             }
 
         }
+        printf("Exit IpNameServiceImpl::PurgeAndUpdatePacket. Return (numSearch > 0)\n");
         return (numSearch > 0);
     } else {
         /* If the packet is isUnicast, then we need to check the quietly advertised names too. */
         MDNSResourceRecord* advRecord;
         if (!mdnspacket->GetAdditionalRecord("advertise.*", MDNSResourceRecord::TXT, MDNSTextRData::TXTVERS, &advRecord) || (advRecord == NULL)) {
             /* Ping response packets do not contain an advertise record and must be always sent. */
+            printf("Exit IpNameServiceImpl::PurgeAndUpdatePacket. Return true\n");
             return true;
         }
         MDNSAdvertiseRData* advRData = static_cast<MDNSAdvertiseRData*>(advRecord->GetRData());
@@ -8749,12 +9068,14 @@ bool IpNameServiceImpl::PurgeAndUpdatePacket(MDNSPacket mdnspacket, bool updateS
             }
 
         }
-
+        printf("Exit IpNameServiceImpl::PurgeAndUpdatePacket. Return (numNamesTotal > 0)\n");
         return (numNamesTotal > 0);
     }
+    printf("Exit IpNameServiceImpl::PurgeAndUpdatePacket. return false\n");
     return false;
 }
 ThreadReturn STDCALL IpNameServiceImpl::PacketScheduler::Run(void* arg) {
+    printf("Enter IpNameServiceImpl::PacketScheduler::Run\n");
     QCC_UNUSED(arg);
 
     m_impl.m_mutex.Lock(MUTEX_CONTEXT);
@@ -9032,7 +9353,7 @@ ThreadReturn STDCALL IpNameServiceImpl::PacketScheduler::Run(void* arg) {
     }
     m_impl.m_burstQueue.clear();
     m_impl.m_mutex.Unlock(MUTEX_CONTEXT);
-
+    printf("Exit IpNameServiceImpl::PacketScheduler::Run. Return 0\n");
     return 0;
 
 }

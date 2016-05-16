@@ -29,6 +29,7 @@
 #include <qcc/String.h>
 #include <qcc/StringUtil.h>
 #include <qcc/Util.h>
+#include <stdio.h>
 
 #include <sys/un.h>
 #if defined(QCC_OS_DARWIN)
@@ -73,21 +74,21 @@ class _ClientEndpoint : public _RemoteEndpoint {
      *
      * @param   processId   Process ID number.
      */
-    void SetProcessId(uint32_t processId) { this->processId = processId; }
+    void SetProcessId(uint32_t processId) { printf("Enter SetProcessId\n"); this->processId = processId; printf("Exit SetProcessId\n"); }
 
     /**
      * Return the process id of the endpoint.
      *
      * @return  Process ID number.
      */
-    uint32_t GetProcessId() const { return processId; }
+    uint32_t GetProcessId() const { printf("Enter and Exit GetProcessId. Return processId\n"); return processId; }
 
     /**
      * Indicates if the endpoint supports reporting UNIX style user, group, and process IDs.
      *
      * @return  'true' if UNIX IDs supported, 'false' if not supported.
      */
-    bool SupportsUnixIDs() const { return true; }
+    bool SupportsUnixIDs() const { printf("Enter and exit SupportsUnixIDs(). Return true\n"); return true; }
 
 
   private:
@@ -102,8 +103,10 @@ QStatus ClientTransport::NormalizeTransportSpec(const char* inSpec, qcc::String&
      * looking for comma-separated "key=value" pairs and initialize the
      * argMap with those pairs.
      */
+    printf("Enter ClientTransport::NormalizeTransportSpec\n"); 
     QStatus status = ParseArguments("unix", inSpec, argMap);
     if (status != ER_OK) {
+    	printf("Exit ClientTransport::NormalizeTransportSpec. Return status\n");
         return status;
     }
 
@@ -124,17 +127,19 @@ QStatus ClientTransport::NormalizeTransportSpec(const char* inSpec, qcc::String&
             status = ER_BUS_BAD_TRANSPORT_ARGS;
         }
     }
-
+    printf("Exit ClientTransport::NormalizeTransportSpec. Return true\n");
     return status;
 }
 
 static QStatus SendSocketCreds(SocketFd sockFd, uid_t uid, gid_t gid, pid_t pid)
 {
+    printf("Enter SendSocketCreds\n");
     int enableCred = 1;
     int rc = setsockopt(sockFd, SOL_SOCKET, SO_PASSCRED, &enableCred, sizeof(enableCred));
     if (rc == -1) {
         QCC_LogError(ER_OS_ERROR, ("ClientTransport(): setsockopt(SO_PASSCRED) failed"));
         qcc::Close(sockFd);
+        printf("Exit SendSocketCreds. Return ER_OS_ERROR\n");
         return ER_OS_ERROR;
     }
 
@@ -170,6 +175,7 @@ static QStatus SendSocketCreds(SocketFd sockFd, uid_t uid, gid_t gid, pid_t pid)
 
     ret = sendmsg(sockFd, &msg, 0);
     if (ret != 1) {
+        printf("Exit SendSocketCreds. Return ER_OS_ERROR\n");
         return ER_OS_ERROR;
     }
 
@@ -182,12 +188,13 @@ static QStatus SendSocketCreds(SocketFd sockFd, uid_t uid, gid_t gid, pid_t pid)
     if (rc == -1) {
         QCC_LogError(ER_OS_ERROR, ("ClientTransport(): setsockopt(SO_PASSCRED) failed"));
     }
-
+    printf("Exit SendSocketCreds. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus ClientTransport::Connect(const char* connectArgs, const SessionOpts& opts, BusEndpoint& newep)
 {
+    printf("Enter ClientTransport::Connect\n");
     QCC_UNUSED(opts);
     if (!m_running) {
         return ER_BUS_TRANSPORT_NOT_STARTED;
@@ -207,6 +214,7 @@ QStatus ClientTransport::Connect(const char* connectArgs, const SessionOpts& opt
     status = ClientTransport::NormalizeTransportSpec(connectArgs, normSpec, argMap);
     if (ER_OK != status) {
         QCC_LogError(status, ("ClientTransport::Connect(): Invalid Unix connect spec \"%s\"", connectArgs));
+        printf("Exit ClientTransport::Connect. Return status\n");
         return status;
     }
     /*
@@ -216,6 +224,7 @@ QStatus ClientTransport::Connect(const char* connectArgs, const SessionOpts& opt
     status = Socket(QCC_AF_UNIX, QCC_SOCK_STREAM, sockFd);
     if (status != ER_OK) {
         QCC_LogError(status, ("ClientTransport(): socket Create() failed"));
+        printf("Exit ClientTransport::Connect. Return status\n");
         return status;
     }
     /*
@@ -226,6 +235,7 @@ QStatus ClientTransport::Connect(const char* connectArgs, const SessionOpts& opt
     if (status != ER_OK) {
         QCC_DbgHLPrintf(("ClientTransport(): socket Connect(%d, %s) failed: %s", sockFd, spec.c_str(), QCC_StatusText(status)));
         qcc::Close(sockFd);
+        printf("Exit ClientTransport::Connect. Return status\n");
         return status;
     }
 
@@ -260,7 +270,7 @@ QStatus ClientTransport::Connect(const char* connectArgs, const SessionOpts& opt
         newep = BusEndpoint::cast(ep);
         m_endpoint = RemoteEndpoint::cast(ep);
     }
-
+    printf("Exit ClientTransport::Connect. Return status.\n");
     return status;
 }
 

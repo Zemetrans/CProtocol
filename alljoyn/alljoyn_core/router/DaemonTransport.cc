@@ -27,6 +27,7 @@
 #include <qcc/String.h>
 #include <qcc/StringUtil.h>
 #include <qcc/Util.h>
+#include <stdio.h>
 
 #include <alljoyn/BusAttachment.h>
 
@@ -47,21 +48,27 @@ namespace ajn {
 DaemonTransport::DaemonTransport(BusAttachment& bus)
     : Thread("DaemonTransport"), bus(bus), stopping(false)
 {
+    printf("Enter DaemonTransport::DaemonTransport\n");
     /*
      * We know we are daemon code, so we'd better be running with a daemon
      * router.  This is assumed elsewhere.
      */
+    
     QCC_ASSERT(bus.GetInternal().GetRouter().IsDaemon());
+    printf("Exit DaemonTransport::DaemonTransport\n");
 }
 
 DaemonTransport::~DaemonTransport()
 {
+    printf("Enter DaemonTransport::~DaemonTransport\n");
     Stop();
     Join();
+    printf("Exit DaemonTransport::~DaemonTransport\n");
 }
 
 QStatus DaemonTransport::Start()
 {
+    printf("Enter DaemonTransport::Start\n");
     stopping = false;
 
     ConfigDB* config = ConfigDB::GetConfigDB();
@@ -75,11 +82,13 @@ QStatus DaemonTransport::Start()
 
     QCC_DbgPrintf(("DaemonTransport: Using m_minHbeatIdleTimeout=%u, m_maxHbeatIdleTimeout=%u, m_numHbeatProbes=%u, m_defaultHbeatProbeTimeout=%u m_maxHbeatProbeTimeout=%u", m_minHbeatIdleTimeout, m_maxHbeatIdleTimeout, m_numHbeatProbes, m_defaultHbeatProbeTimeout, m_maxHbeatProbeTimeout));
 
+    printf("Exit DaemonTransport::Start. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus DaemonTransport::Stop(void)
 {
+    printf("Enter DaemonTransport::Stop\n");
     stopping = true;
 
     /*
@@ -89,6 +98,7 @@ QStatus DaemonTransport::Stop(void)
     QStatus status = Thread::Stop();
     if (status != ER_OK) {
         QCC_LogError(status, ("DaemonDaemonTransport::Stop(): Failed to Stop() server thread"));
+        printf("Exit DaemonTransport::Stop. Return status\n");
         return status;
     }
 
@@ -103,6 +113,7 @@ QStatus DaemonTransport::Stop(void)
 
     endpointListLock.Unlock(MUTEX_CONTEXT);
 
+    printf("Exit DaemonTransport::Stop. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -111,9 +122,11 @@ QStatus DaemonTransport::Join(void)
     /*
      * Wait for the server accept loop thread to exit.
      */
+    printf("Enter DaemonTransport::Join\n");
     QStatus status = Thread::Join();
     if (status != ER_OK) {
         QCC_LogError(status, ("DaemonTransport::Join(): Failed to Join() server thread"));
+        printf("Exit DaemonTransport::Join. Return status\n");
         return status;
     }
 
@@ -134,7 +147,7 @@ QStatus DaemonTransport::Join(void)
     endpointListLock.Unlock(MUTEX_CONTEXT);
 
     stopping = false;
-
+    printf("Enter DaemonTransport::Join. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -146,6 +159,7 @@ void DaemonTransport::EndpointExit(RemoteEndpoint& ep)
      * either of the threads (transmit or receive) of one of our endpoints exits
      * for some reason, we get called back here.
      */
+    printf("Enter DaemonTransport::EndpointExit\n");
     QCC_DbgTrace(("DaemonTransport::EndpointExit()"));
 
     /* Remove the dead endpoint from the live endpoint list */
@@ -158,6 +172,7 @@ void DaemonTransport::EndpointExit(RemoteEndpoint& ep)
     }
     endpointListLock.Unlock(MUTEX_CONTEXT);
     ep->Invalidate();
+    printf("Exit DaemonTransport::EndpointExit\n");
 }
 
 } // namespace ajn

@@ -56,21 +56,21 @@
  * How the transport fits into the system
  * ======================================
  *
- * AllJoyn provides the concept of a Transport which provides a relatively
+ * AllJoyn provides the concept of a Transport which provides a relatively(достаточно)
  * abstract way for the daemon to use different network mechanisms for getting
  * Messages from place to another.  Conceptually, think of, for example, a Unix
  * transport that moves bits using unix domain sockets or a TCP transport that
  * moves Messages over a TCP connection.  A UDP transport moves Messages over
  * UDP datagrams using a reliability layer.
  *
- * BSD sockets is oriented toward clients and servers.  There are different
+ * BSD sockets is oriented toward (к) clients and servers.  There are different
  * sockets calls required for a program implementing a server-side part and a
  * client side part.  The server-side listens for incoming connection requests
  * and the client-side initiates the requests.  AllJoyn clients are bus
  * attachments that our Applications may use and these can only initiate
- * connection requests to AllJoyn daemons.  Although dameons may at first blush
+ * connection requests to AllJoyn daemons.  Although dameons may at first blush (?)
  * appear as the service side of a typical BSD sockets client-server pair, it
- * turns out that while daemons obviously must listen for incoming connections,
+ * turns out that while daemons obviously(очевидно) must listen for incoming connections,
  * they also must be able to initiate connection requests to other daemons.
  * This explains the presence of both connect-like methods and listen-like
  * methods here.
@@ -88,7 +88,7 @@
  * the start method returns, but they are being *started*.  Some time later, a
  * thread of execution appears in a thread run function, at which point the
  * thread is considered *running*.  In the case of the UDPTransport, the Start()
- * method spins up a thread to run the basic maintenance operations such as
+ * method spins up (раскручивает) a thread to run the basic maintenance operations such as
  * deciding when to listen and advertise.  Another thread(s) is started to deal
  * with handling callbacks for deadlock avoidance.  The AllJoyn daemon is a
  * fundamentally multithreaded environemnt, so multiple threads may be trying to
@@ -101,18 +101,18 @@
  * module.
  *
  * In generic threads packages, executing a stop method asks the underlying
- * system to arrange for a thread to end its execution.  The system typically
+ * system to arrange(упорядочить) for a thread to end its execution.  The system typically
  * sends a message to the thread to ask it to stop doing what it is doing.  The
  * thread is running until it responds to the stop message, at which time the
  * run method exits and the thread is considered *stopping*.  The UDPTransport
  * provides a Stop() method to do exactly that.  Note that neither of Start()
- * nor Stop() are synchronous in the sense that one has actually accomplished
- * the desired effect upon the return from a call.  Of particular interest is
+ * nor Stop() are synchronous in the sense that one has actually accomplished(выполнен)
+ * the desired effect upon the return from a call.  Of particular (частности, особенности) interest is
  * the fact that after a call to Stop(), threads will still be *running* for
  * some non-deterministic time.  In order to wait until all of the threads have
  * actually stopped, a blocking call is required.  In threading packages this is
- * typically called join, and our corresponding method is called Join().  A user
- * of the UDPTransport must assume that immediately after a call to Start() is
+ * typically called join, and our corresponding(соответствующий) method is called Join().  A user
+ * of the UDPTransport must assume (предполагать) that immediately(сразу) after a call to Start() is
  * begun, and until a call to Join() returns, there may be threads of execution
  * wandering anywhere in the transport and in any callback registered by the
  * caller.  The same model applies to connection endpoints (_UDPEndpoint)
@@ -122,9 +122,9 @@
  * these state transitions occur in an orderly and deterministic manner.
  *
  * The high-level process regarding how an advertisement translates into a
- * transport Connect() is a bit opaque, so we paint a high-level picture here.
+ * transport Connect() is a bit opaque(непрозрачный), so we paint a high-level picture here.
  * First, a service (that will be *handling* RPC calls and *emitting* signals)
- * acquires a name on the bus, binds a session port and calls AdvertiseName.
+ * acquires(приобретает) a name on the bus, binds a session port and calls AdvertiseName.
  * This filters down (possibly through language bindings) to the AllJoyn Object.
  * The AllJoynObj essentially turns a DBus into an AllJoyn bus.  The AllJoyn
  * Object consults the transports on the transport list (the UDP transport is
@@ -183,27 +183,27 @@
  * choose the "best" method since we don't bother clients with that level of
  * detail.
  *
- * Perhaps somewhat counter-intuitively, advertisements relating to the
+ * Perhaps(возможно) somewhat counter-intuitively(контр-интуитивно), advertisements relating to the
  * UDP Transport use the addr (unreliable IPv4 or IPv6 address), and port
  * unreliable IPv4 or IPv6 port).
  * At the same time, the UDP Transport tells clients of the transport that it
  * supports TRAFFIC MESSAGES only.  This is because the underlying network
- * protocol used is UDP which is inherently unreliable.  We provide a
+ * protocol used is UDP which is inherently(по своей сути) unreliable.  We provide a
  * reliability layer to translate the unreliable UDP4 and UDP6 datagrams into
  * reliable AllJoyn messages.  The UDP Transpot does not provide RAW sockets
  * which is a deprecated traffic type.
  *
- * Internals
+ * Internals (внутренности)
  * =========
  *
  * We spend a lot of time on the threading aspects of the transport since they
  * are often the hardest part to get right and are complicated.  This is where
  * the bugs live.
  *
- * As mentioned above, the AllJoyn system uses the concept of a Transport.  You
+ * As mentioned above(как упомянуто выше), the AllJoyn system uses the concept of a Transport.  You
  * are looking at the UDPTransport.  Each transport also has the concept of an
  * Endpoint.  The most important function fo an endpoint is to provide (usually)
- * non-blocking semantics to higher level code.  If the source thread overruns
+ * non-blocking semantics to higher level code.  If the source thread overruns(перерасходывать)
  * the ability of the transport to move bits (reliably), we must apply
  * back-pressure by blocking the calling thread, but usually a call to PushBytes
  * results in an immediate UDP datagram sendto.  In the UDP transport there are
@@ -216,8 +216,8 @@
  * represents a connection from a router to a remote attachment or daemon.  By
  * definition, the UDPTransport provides RemoteEndpoint functionality.
  *
- * RemoteEndpoints are further specialized according to the flavor of the
- * corresponding transport, and so you will see a UDPEndpoint class defined
+ * RemoteEndpoints are further specialized according to the flavor(разновидность) of the
+ * corresponding(соответсвующего) transport, and so you will see a UDPEndpoint class defined
  * below which provides functionality to send messages from the local router to
  * a destination off of the local process using a UDP transport mechanism.
  *
@@ -230,22 +230,22 @@
  * a message backing object.
  *
  * Unlike a TCP transport, there are no dedicated receive threads.  Receive
- * operations in UDP are not associted with a particular endpoint at all, other
+ * operations in UDP are not associted with a particular(конкретного) endpoint at all, other
  * than using the required endpoint as a convencient place holder for a
  * connection data structure.  The UDP Transport operates more in an
  * Asynchronous IO-like fashion.  Received datagrams appear out of the ARDP
  * protocol as callbacks and are sent into a callback dispatcher thread.  Once
- * the dispatcher has an inbound datagram(s) it reassembles and unmarshals the
+ * the dispatcher(диспетчер) has an inbound(входящие) datagram(s) it reassembles and unmarshals the
  * datagrams into an AllJoyn Message.  It then calls into the daemon
  * (PushMessage) to arrange for delivery.  A separate thread runs the
  * maintenance aspects of the UDP reliability layer (to drive retransmissions,
  * timeouts, etc.) and the endpoint management code (to drive the lifetime state
  * transitions of endpoints).
  *
- * The UDPEndpoint inherits some infrastructure from the more generic
+ * The UDPEndpoint inherits(наследует) some infrastructure from the more generic
  * RemoteEndpoint class.  Since the UDP transport is a not a stream-based
  * protocol, it does redefine some of the basic operation of the RemoteEndpoint
- * to suit its needs.  The RemoteEndpoint is also somewhat bound to the concept
+ * to suit its needs.  The RemoteEndpoint is also somewhat bound(связаны) to the concept
  * of stream and receive thread, so we have to jump through some hoops to
  * coexist.
  *
@@ -254,7 +254,7 @@
  * protocol.  Although there is no authentication, per se, we still call this
  * handshake phase authentication since the BusHello is part of the
  * authentication phase of the TCP Transport.  Authentication can, of course,
- * succeed or fail based on timely interaction between the two sides, but it can
+ * succeed(следовать, получаться) or fail based on timely interaction between the two sides, but it can
  * also be abused in a denial of service attack.  If a client simply starts the
  * process but never responds, it could tie up a daemon's resources, and
  * coordinated action could bring down a daemon.  Because of this, we provide a
@@ -263,8 +263,8 @@
  *
  * As described above, a daemon can listen for inbound connections and it can
  * initiate connections to remote daemons.  Authentication must happen in both
- * cases and so we need to worry about denial of service in both directions and
- * recover gracefully.
+ * cases and so we need to worry about denial(отказ) of service in both directions and
+ * recover gracefully(изящно).
  *
  * When the daemon is brought up, its TransportList is Start()ed.  The transport
  * specs string (e.g., "unix:abstract=alljoyn;udp:;tcp:") is provided to
@@ -498,6 +498,7 @@ const char* TestAcceptStr = "ARDP TEST ACCEPT";
 #if BYTEDUMPS
 static void DumpLine(uint8_t* buf, uint32_t len, uint32_t width)
 {
+    printf("Enter DumpLine\n");
     for (uint32_t i = 0; i < width; ++i) {
         if (i > len) {
             printf("   ");
@@ -514,15 +515,18 @@ static void DumpLine(uint8_t* buf, uint32_t len, uint32_t width)
         }
     }
     printf("\n");
+    printf("Exit DumpLine\n");
 }
 
 static void DumpBytes(uint8_t* buf, uint32_t len)
 {
+    printf("Enter DumpBytes\n");
     if (_QCC_DbgPrintCheck(DBG_GEN_MESSAGE, QCC_MODULE)) {
         for (uint32_t i = 0; i < len; i += 16) {
             DumpLine(buf + i, len - i > 16 ? 16 : len - i, 16);
         }
     }
+    printf("Exit DumpBytes\n");
 }
 #endif // BYTEDUMPS
 #endif // NDEBUG
@@ -554,15 +558,19 @@ void qdtm(void)
 
 static void SealBuffer(uint8_t* p)
 {
+    printf("Enter SealBuffer\n");
     *p++ = 'S';
     *p++ = 'E';
     *p++ = 'A';
     *p++ = 'L';
+    printf("Exit SealBuffer\n");
 }
 
 static void CheckSeal(uint8_t* p)
 {
+    printf("Enter CheckSeal\n");
     QCC_ASSERT(*p++ == 'S' && *p++ == 'E' && *p++ == 'A' && *p++ == 'L' && "CheckSeal(): Seal blown");
+    printf("Exit CheckSeal\n");
 }
 #endif
 
@@ -706,6 +714,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
 #ifndef NDEBUG
     void PrintEpState(const char* prefix)
     {
+        printf("Enter PrintEpState\n");
         switch (m_epState) {
         case EP_INITIALIZED:
             QCC_DbgPrintf(("%s: EP_INITIALIZED", prefix));
@@ -744,6 +753,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
             QCC_ASSERT(false && "_Endpoint::PrintEpState(): Bad state");
             break;
         }
+        printf("Exit PrintEpState\n");
     }
 #endif
 
@@ -795,8 +805,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
         m_stateLock(LOCK_LEVEL_UDPTRANSPORT_UDPENDPOINT_STATELOCK),
         m_wait(true)
     {
+        printf("Enter UDPEndpoint\n");
         QCC_DbgHLPrintf(("_UDPEndpoint::_UDPEndpoint(transport=%p, bus=%p, incoming=%d., connectSpec=\"%s\")",
                          transport, &bus, incoming, connectSpec.c_str()));
+        printf("Exit UDPEndpoint\n");
     }
 
     /**
@@ -811,6 +823,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     int32_t IncrementRefs()
     {
+        printf("Enter and Exit IncrementRefs. Return  IncrementAndFetch(***)\n");
         return IncrementAndFetch(&m_refCount);
     }
 
@@ -821,6 +834,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     int32_t DecrementRefs()
     {
+        printf("Enter and Exit DecrementRefs. Return  DecrementAndFetch(***)\n");
         return DecrementAndFetch(&m_refCount);
     }
 
@@ -834,6 +848,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     uint32_t GetPushMessageCount()
     {
+        printf("Enter and Exit GetPushMessageCount. Return pushCount\n");
         return m_pushCount;
     }
 
@@ -882,6 +897,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     QStatus Exit()
     {
+        printf("Enter Exit\n");
         IncrementAndFetch(&m_refCount);
         QCC_DbgHLPrintf(("_UDPEndpoint::Exit()"));
 
@@ -924,6 +940,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
         m_stateLock.Unlock(MUTEX_CONTEXT);
         m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_refCount);
+        printf("Exit Exit. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -932,6 +949,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     UDPTransport* GetTransport()
     {
+        printf("Enter and Exit GetTransport. Return m_transport\n");
         return m_transport;
     }
 
@@ -941,7 +959,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool GetExited()
     {
+        printf("Enter GetExited\n");
         QCC_DbgHLPrintf(("_UDPEndpoint::GetExited(): -> %s", m_remoteExited ? "true" : "false"));
+        printf("Exit GetExited. Return m_remoteExited\n");
         return m_remoteExited;
     }
 
@@ -951,8 +971,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetExitScheduled()
     {
+        printf("Enter SetExitScheduled\n");
         QCC_DbgHLPrintf(("_UDPEndpoint::SetExitScheduled()"));
         m_exitScheduled = true;
+        printf("Exit SetExitScheduled\n");
     }
 
     /**
@@ -961,7 +983,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool GetExitScheduled()
     {
+        printf("Enter GetExitScheduled\n");
         QCC_DbgHLPrintf(("_UDPEndpoint::GetExitScheduled(): -> %s", m_exitScheduled ? "true" : "false"));
+        printf("Exit GetExitScheduled. Return m_exitSheduled\n");
         return m_exitScheduled;
     }
 
@@ -971,7 +995,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool GetRegistered()
     {
+        printf("Enter GetRegistered\n");
         QCC_DbgHLPrintf(("_UDPEndpoint::GetRegistered(): -> %s", m_registered ? "true" : "false"));
+        printf("Exit GetRegistered. Return m_registered\n");
         return m_registered;
     }
 
@@ -987,7 +1013,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     ArdpStream* GetStream()
     {
+        printf("Enter GetStream\n");
         QCC_DbgTrace(("_UDPEndpoint::GetStream() => %p", m_stream));
+        printf("Exit GetStream. Return m_stream\n");
         return m_stream;
     }
 
@@ -998,9 +1026,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
     void DestroyStream();
 
     /**
-     * Take a Message destined to be send over the connection represented
+     * Take a Message destined(предназначен) to be send over the connection represented
      * by the UDP Endpoint and ask it to Deliver() itself though this
-     * remote endpoint (we are a descendent).  DeliverNonBlocking() will
+     * remote endpoint (we are a descendent(потомок)).  DeliverNonBlocking() will
      * end up calling PushBytes() on the Stream Sink associated with the
      * endpoint.  This will find its way down to the PushBytes() defined
      * in our ARDP Stream.
@@ -1054,6 +1082,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
          * the counter indicating "something is executing inside the endpoint"
          * bumped below.
          */
+        printf("Enter PushMessage\n");
         IncrementAndFetch(&m_pushCount);
 
         IncrementAndFetch(&m_refCount);
@@ -1114,6 +1143,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
             m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
             DecrementAndFetch(&m_refCount);
             DecrementAndFetch(&m_pushCount);
+            printf("Exit PushMessage. Return ER_UDP_ENDPOINT_REMOVED\n");
             return ER_UDP_ENDPOINT_REMOVED;
         }
 
@@ -1149,6 +1179,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
         QCC_DbgPrintf(("_UDPEndpoint::PushMessage(): DeliverNonBlocking() returns \"%s\"", QCC_StatusText(status)));
         DecrementAndFetch(&m_refCount);
         DecrementAndFetch(&m_pushCount);
+        printf("Exit PushMessage. Return status\n");
         return status;
     }
 
@@ -1192,6 +1223,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void RecvCb(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t connId, ArdpRcvBuf* rcv, QStatus status)
     {
+        printf("Enter RecvCb\n");
         QCC_UNUSED(connId);
 
         IncrementAndFetch(&m_refCount);
@@ -1226,6 +1258,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
         if (found == 0) {
             QCC_DbgPrintf(("_UDPEndpoint::RecvCb(): Endpoint is gone"));
             m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
+            printf("Exit RecvCb\n");
             return;
         }
 
@@ -1270,6 +1303,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
 
             m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
             DecrementAndFetch(&m_refCount);
+            printf("Exit RecvCb\n");
             return;
         }
 
@@ -1295,6 +1329,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
 
             DecrementAndFetch(&m_refCount);
             QCC_ASSERT(false && "_UDPEndpoint::RecvCb(): unexpected rcv->fcnt");
+            printf("Exit RecvCb\n");
             return;
         }
 
@@ -1331,6 +1366,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
 
                     DecrementAndFetch(&m_refCount);
                     QCC_ASSERT(false && "_UDPEndpoint::RecvCb(): unexpected rcv->fcnt");
+                    printf("Exit RecvCb\n");
                     return;
                 }
 
@@ -1432,6 +1468,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
              */
             m_transport->Alert();
             DecrementAndFetch(&m_refCount);
+            printf("Exit RecvCb\n");
             return;
         }
 
@@ -1481,6 +1518,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
              */
             m_transport->Alert();
             DecrementAndFetch(&m_refCount);
+            printf("Exit RecvCb\n");
             return;
         }
 
@@ -1515,6 +1553,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
          */
         m_transport->Alert();
         DecrementAndFetch(&m_refCount);
+        printf("Exit RecvCb\n");
     }
 
     /**
@@ -1542,7 +1581,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     ArdpHandle* GetHandle()
     {
+        printf("Enter GetHandle\n");
         QCC_DbgTrace(("_UDPEndpoint::GetHandle() => %p", m_handle));
+        printf("Exit GetHandle\n");
         return m_handle;
     }
 
@@ -1551,8 +1592,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetHandle(ArdpHandle* handle)
     {
+        printf("Enter SetHandle\n");
         QCC_DbgTrace(("_UDPEndpoint::SetHandle(handle=%p)", handle));
         m_handle = handle;
+        printf("Exit SetHandle\n");
     }
 
     /**
@@ -1560,7 +1603,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     ArdpConnRecord* GetConn()
     {
+        printf("Enter GetConn\n");
         QCC_DbgTrace(("_UDPEndpoint::GetConn(): => %p", m_conn));
+        printf("Exit GetConn. Return m_conn\n");
         return m_conn;
     }
 
@@ -1569,6 +1614,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetConn(ArdpConnRecord* conn)
     {
+        printf("Enter SetConn\n");
         QCC_DbgTrace(("_UDPEndpoint::SetConn(conn=%p)", conn));
         m_conn = conn;
         m_transport->m_ardpLock.Lock(MUTEX_CONTEXT);
@@ -1582,6 +1628,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
 
         SetConnId(cid);
         m_transport->m_ardpLock.Unlock(MUTEX_CONTEXT);
+        printf("Exit SetConn\n");
     }
 
     /**
@@ -1590,7 +1637,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     uint32_t GetConnId()
     {
+        printf("Enter GetConnId\n");
 //      QCC_DbgTrace(("_UDPEndpoint::GetConnId(): => %d.", m_id));
+        printf("Return GetConnId\n");
         return m_id;
     }
 
@@ -1600,8 +1649,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetConnId(uint32_t id)
     {
+        printf("Enter SetConnId\n");
         QCC_DbgTrace(("_UDPEndpoint::SetConnId(id=%d.)", id));
         m_id = id;
+        printf("Exit SetConnId\n");
     }
 
     /**
@@ -1609,7 +1660,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     qcc::IPAddress GetIpAddr()
     {
+        printf("Enter GetIpAddr\n");
         QCC_DbgTrace(("_UDPEndpoint::GetIpAddr(): => \"%s\"", m_ipAddr.ToString().c_str()));
+        printf("Exit GetIpAddr\n");
         return m_ipAddr;
     }
 
@@ -1618,8 +1671,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetIpAddr(qcc::IPAddress& ipAddr)
     {
+        printf("Enter SetIpAddr\n");
         QCC_DbgTrace(("_UDPEndpoint::SetIpAddr(ipAddr=\"%s\")", ipAddr.ToString().c_str()));
         m_ipAddr = ipAddr;
+        printf("Exit SetIpAddr\n");
     }
 
     /**
@@ -1627,7 +1682,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     uint16_t GetIpPort()
     {
+        printf("Enter GetIpPort\n");
         QCC_DbgTrace(("_UDPEndpoint::GetIpPort(): => %d.", m_ipPort));
+        printf("Exit GetIpPort. Return m_ipPort\n");
         return m_ipPort;
     }
 
@@ -1636,8 +1693,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetIpPort(uint16_t ipPort)
     {
+        printf("Enter SetIpPort\n");
         QCC_DbgTrace(("_UDPEndpoint::SetIpPort(ipPort=%d.)", ipPort));
         m_ipPort = ipPort;
+        printf("Exit SetIpPort\n");
     }
 
     /**
@@ -1645,6 +1704,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     QStatus GetLocalIp(qcc::String& ipAddrStr)
     {
+        printf("Enter GetLocalIp\n");
         QCC_UNUSED(ipAddrStr);
         QCC_DbgTrace(("_UDPEndpoint::GetLocalIp(ipAddrStr=%0)", &ipAddrStr));
 
@@ -1656,6 +1716,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
          * ER_OK but the IPAddress string returned is empty.
          */
         if (IsEpStarted() == false) {
+            printf("Enter GetLocalIp. Return ER_UDP_ENDPOINT_NOT_STARTED\n");
             return ER_UDP_ENDPOINT_NOT_STARTED;
         }
 
@@ -1668,6 +1729,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
         }
 
         m_transport->m_ardpLock.Unlock(MUTEX_CONTEXT);
+        printf("Exit GetLocalIp. Return status\n");
         return status;
     };
 
@@ -1676,8 +1738,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     QStatus GetRemoteIp(qcc::String& ipAddrStr)
     {
+        printf("Enter GetRemoteIp\n");
         QCC_DbgTrace(("_UDPEndpoint::GetRemoteIp(ipAddrStr=%p): => \"%s\"", &ipAddrStr, m_ipAddr.ToString().c_str()));
         ipAddrStr = m_ipAddr.ToString();
+        printf("Exit GetRemoteIp. Return ER_OK\n");
         return ER_OK;
     };
 
@@ -1686,8 +1750,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetStartTime(qcc::Timespec<qcc::MonotonicTime> tStart)
     {
+        printf("Enter SetStartTime\n");
         QCC_DbgTrace(("_UDPEndpoint::SetStartTime()"));
         m_tStart = tStart;
+        printf("Exit SetStartTime\n");
     }
 
     /**
@@ -1695,7 +1761,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     qcc::Timespec<qcc::MonotonicTime> GetStartTime(void)
     {
+        printf("Enter GetStartTime\n");
         QCC_DbgTrace(("_UDPEndpoint::GetStartTime(): => %" PRIu64 ".%03d.", m_tStart.seconds, m_tStart.mseconds));
+        printf("Enter GetStartTime\n");
         return m_tStart;
     }
 
@@ -1704,8 +1772,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetStopTime(qcc::Timespec<qcc::MonotonicTime> tStop)
     {
+        printf("Enter SetStopTime\n");
         QCC_DbgTrace(("_UDPEndpoint::SetStopTime()"));
         m_tStop = tStop;
+        printf("Exit SetStopTime\n");
     }
 
     /**
@@ -1713,7 +1783,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     qcc::Timespec<qcc::MonotonicTime> GetStopTime(void)
     {
+        printf("Enter GetStopTime\n");
         QCC_DbgTrace(("_UDPEndpoint::GetStopTime(): => %" PRIu64 ".%03d.", m_tStop.seconds, m_tStop.mseconds));
+        printf("Exit GetStopTime. Return m_tStop\n");
         return m_tStop;
     }
 
@@ -1723,8 +1795,11 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetWaitStartTime(qcc::Timespec<qcc::MonotonicTime> tWaitStart)
     {
+        
+        printf("Enter SetWaitStartTime\n");
         QCC_DbgTrace(("_UDPEndpoint::SetWaitStartTime()"));
         m_tWaitStart = tWaitStart;
+        printf("Exit SetWaitStartTime\n");
     }
 
     /**
@@ -1733,7 +1808,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     qcc::Timespec<qcc::MonotonicTime> GetWaitStartTime(void)
     {
+        printf("Enter GetWaitStartTime\n");
         QCC_DbgTrace(("_UDPEndpoint::GetWaitStartTime(): => %" PRIu64 ".%03d.", m_tWaitStart.seconds, m_tWaitStart.mseconds));
+        printf("Exit GetWaitStartTime. Return m_tWaitStart\n");
         return m_tWaitStart;
     }
 
@@ -1742,8 +1819,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetStallTime(qcc::Timespec<qcc::MonotonicTime> tStall)
     {
+        printf("Enter SetStallTime\n");
         QCC_DbgTrace(("_UDPEndpoint::SetStallTime()"));
         m_tStall = tStall;
+        printf("Exit SetStallTime\n");
     }
 
     /**
@@ -1751,7 +1830,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     qcc::Timespec<qcc::MonotonicTime> GetStallTime(void)
     {
+        printf("Enter GetStallTime\n");
         QCC_DbgTrace(("_UDPEndpoint::GetStallTime(): => %" PRIu64 ".%03d.", m_tStall.seconds, m_tStall.mseconds));
+        printf("Exit GetStallTime. Return m_tStall\n");
         return m_tStall;
     }
 
@@ -1760,7 +1841,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     SideState GetSideState(void)
     {
+        printf("Enter GetSideState\n");
         QCC_DbgTrace(("_UDPEndpoint::GetSideState(): => %d.", m_sideState));
+        printf("Exit GetSideState\n");
         return m_sideState;
     }
 
@@ -1769,8 +1852,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetActive(void)
     {
+        printf("Enter SetActive\n");
         QCC_DbgTrace(("_UDPEndpoint::SetActive()"));
         m_sideState = SIDE_ACTIVE;
+        printf("Exit SetActive\n");
     }
 
     /**
@@ -1778,8 +1863,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetPassive(void)
     {
+        printf("Enter SetPassive\n");
         QCC_DbgTrace(("_UDPEndpoint::SetPassive()"));
         m_sideState = SIDE_PASSIVE;
+        printf("Exit SetPassive\n");
     }
 
     /**
@@ -1787,7 +1874,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     EndpointState GetEpState(void)
     {
+        printf("Enter GetEpState\n");
         QCC_DbgTrace(("_UDPEndpoint::GetEpState(): => %d.", m_epState));
+        printf("Exit GetEpState. Return m_epState\n");
         return m_epState;
     }
 
@@ -1796,7 +1885,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool IsEpInitialized(void)
     {
+        printf("Enter IsEpInitialized\n");
         QCC_DbgTrace(("_UDPEndpoint::IsEpInitialized() <= \"%s\"", m_epState == EP_INITIALIZED ? "true" : "false"));
+        printf("Exit IsEpInitialized\n");
         return m_epState == EP_INITIALIZED;
     }
 
@@ -1805,9 +1896,11 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetEpActiveStarted(void)
     {
+        printf("Enter SetEpActiveStarted\n");
         QCC_DbgTrace(("_UDPEndpoint::SetEpActiveStarted()"));
         QCC_ASSERT(m_epState == EP_INITIALIZED);
         m_epState = EP_ACTIVE_STARTED;
+        printf("Exit SetEpActiveStarted\n");
     }
 
     /**
@@ -1815,7 +1908,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool IsEpActiveStarted(void)
     {
+        printf("Enter IsEpActiveStarted\n");
         QCC_DbgTrace(("_UDPEndpoint::IsEpActiveStarted() <= \"%s\"", m_epState == EP_ACTIVE_STARTED ? "true" : "false"));
+        printf("Exit IsEpActiveStarted. Return m_epState == EP_ACTIVE_STARTED\n");
         return m_epState == EP_ACTIVE_STARTED;
     }
 
@@ -1824,9 +1919,11 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetEpPassiveStarted(void)
     {
+        printf("Enter SetEpPassiveStarted\n");
         QCC_DbgTrace(("_UDPEndpoint::SetEpPassiveStarted()"));
         QCC_ASSERT(m_epState == EP_INITIALIZED);
         m_epState = EP_PASSIVE_STARTED;
+        printf("Exit SetEpPassiveStarted\n");
     }
 
     /**
@@ -1834,8 +1931,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool IsEpPassiveStarted(void)
     {
+        printf("Enter IsEpPassiveStarted\n");
         QCC_DbgTrace(("_UDPEndpoint::IsEpPassiveStarted() <= \"%s\"", m_epState == EP_PASSIVE_STARTED ? "true" : "false"));
         return m_epState == EP_PASSIVE_STARTED;
+        printf("Exit IsEpPassiveStarted\n");
     }
 
     /**
@@ -1843,9 +1942,11 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetEpStarted(void)
     {
+        printf("Enter SetEpStarted\n");
         QCC_DbgTrace(("_UDPEndpoint::SetEpStarted()"));
         QCC_ASSERT(m_epState == EP_ACTIVE_STARTED || m_epState == EP_PASSIVE_STARTED);
         m_epState = EP_STARTED;
+        printf("Exit SetEpStarted\n");
     }
 
     /**
@@ -1853,7 +1954,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool IsEpStarted(void)
     {
+        printf("Enter IsEpStarted\n");
         QCC_DbgTrace(("_UDPEndpoint::IsEpStarted() <= \"%s\"", m_epState == EP_STARTED ? "true" : "false"));
+        printf("Exit IsEpStarted. Return m_epState == EP_STARTED\n");
         return m_epState == EP_STARTED;
     }
 
@@ -1863,8 +1966,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetEpWaitEnable(bool wait)
     {
+        printf("Enter SetEpWaitEnable\n");
         QCC_DbgTrace(("_UDPEndpoint::SetEpWaitEnable(wait=\"%s\")", wait ? "true" : "false"));
         m_wait = wait;
+        printf("Exit SetEpWaitEnable\n");
     }
 
     /**
@@ -1872,7 +1977,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool IsEpWaitEnabled(void)
     {
+        printf("Enter IsEpWaitEnabled\n");
         QCC_DbgTrace(("_UDPEndpoint::IsEpWaitEnabled() <= \"%s\"", m_wait ? "true" : "false"));
+        printf("Exit IsEpWaitEnabled. Return m_wait\n");
         return m_wait;
     }
 
@@ -1885,6 +1992,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetEpStopping()
     {
+        printf("Enter SetEpStopping\n");
         QCC_DbgTrace(("_UDPEndpoint::SetEpStopping()"));
 
 #ifndef NDEBUG
@@ -1902,6 +2010,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
         SetStallTime(tNow);
 
         m_epState = EP_STOPPING;
+        printf("Exit SetEpStopping\n");
     }
 
     /**
@@ -1909,7 +2018,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool IsEpStopping(void)
     {
+        printf("Enter IsEpStopping\n");
         QCC_DbgTrace(("_UDPEndpoint::IsEpStopping() <= \"%s\"", m_epState == EP_STOPPING ? "true" : "false"));
+        printf("Exit IsEpStopping. Return m_epState == EP_STOPPING\n");
         return m_epState == EP_STOPPING;
     }
 
@@ -1918,9 +2029,11 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetEpWaiting(void)
     {
+        printf("Enter SetEpWaiting\n");
         QCC_DbgTrace(("_UDPEndpoint::SetEpWaiting()"));
         QCC_ASSERT(m_epState == EP_STOPPING);
         m_epState = EP_WAITING;
+        printf("Exit SetEpWaiting\n");
     }
 
     /**
@@ -1928,7 +2041,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool IsEpWaiting(void)
     {
+        printf("Enter IsEpWaiting\n");
         QCC_DbgTrace(("_UDPEndpoint::IsEpWaiting() <= \"%s\"", m_epState == EP_WAITING ? "true" : "false"));
+        printf("Exit IsEpWaiting. Return m_epState == EP_WAITING\n");
         return m_epState == EP_WAITING;
     }
 
@@ -1937,6 +2052,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetEpJoined(void)
     {
+        printf("Enter SetEpJoined\n");
         QCC_DbgTrace(("_UDPEndpoint::SetEpJoined()"));
 
         /*
@@ -1950,6 +2066,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
         QCC_ASSERT(m_epState != EP_DONE);
 
         m_epState = EP_JOINED;
+        printf("Exit SetEpJoined\n");
     }
 
     /**
@@ -1957,7 +2074,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool IsEpJoined(void)
     {
+        printf("Enter IsEpJoined\n");
         QCC_DbgTrace(("_UDPEndpoint::IsEpJoined() <= \"%s\"", m_epState == EP_JOINED ? "true" : "false"));
+        printf("Exit IsEpJoined. m_epState == EP_JOINED\n");
         return m_epState == EP_JOINED;
     }
 
@@ -1966,9 +2085,11 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetEpDone(void)
     {
+        printf("Enter SetEpDone\n");
         QCC_DbgTrace(("_UDPEndpoint::SetEpDone()"));
         QCC_ASSERT(m_epState == EP_JOINED);
         m_epState = EP_DONE;
+        printf("Exit SetEpDone\n");
     }
 
     /**
@@ -1976,7 +2097,9 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     bool IsEpDone(void)
     {
+        printf("Enter IsEpDone\n");
         QCC_DbgTrace(("_UDPEndpoint::IsEpDone() <= \"%s\"", m_epState == EP_DONE ? "true" : "false"));
+        printf("Exit IsEpDone. m_epState == EP_DONE\n");
         return m_epState == EP_DONE;
     }
 
@@ -1987,6 +2110,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetEpDisconnectStatus(QStatus status)
     {
+        printf("Enter SetEpDisconnectStatus\n");
         QCC_DbgTrace(("_UDPEndpoint::SetEpDisconnectStatus(status=%s)", QCC_StatusText(status)));
 
         /*
@@ -1996,6 +2120,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
         QStatus oldStatus = GetDisconnectStatus();
         if (oldStatus != ER_OK) {
             QCC_DbgTrace(("_UDPEndpoint::SetEpDisconnectStatus(): Previously set status.  Ignoring new"));
+            printf("Exit SetEpDisconnectStatus\n");
             return;
         }
 
@@ -2056,6 +2181,7 @@ class _UDPEndpoint : public _RemoteEndpoint {
          * sanitized version.
          */
         disconnectStatus = status;
+        printf("Exit SetEpDisconnectStatus\n");
     }
 
     /**
@@ -2066,8 +2192,10 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     void SetDisconnected()
     {
+        printf("Enter SetDisconnected\n");
         QCC_DbgTrace(("_UDPEndpoint::SetDisconnected()"));
         m_disconnected = true;
+        printf("Exit SetDisconnected\n");
     }
 
     /**
@@ -2083,30 +2211,40 @@ class _UDPEndpoint : public _RemoteEndpoint {
      */
     QStatus SetLinkTimeout(uint32_t& linkTimeout)
     {
+        printf("Enter SetLinkTimeout\n");
         QCC_UNUSED(linkTimeout);
         QCC_DbgTrace(("_UDPEndpoint::SetLinkTimeout(linkTimeout=%d.)", linkTimeout));
         QCC_DbgPrintf(("_UDPEndpoint::SetLinkTimeout(): Ignored", linkTimeout));
+        printf("Exit SetLinkTimeout. Return ER_OK\n");
         return ER_OK;
     }
-
+    
     void StateLock(const char* file, uint32_t line)
     {
+        printf("Enter StateLock\n");
         m_stateLock.Lock(file, line);
+        printf("Exit StateLock\n");
     }
 
     void StateUnlock(const char* file, uint32_t line)
     {
+        printf("Enter StateUnlock\n");
         m_stateLock.Unlock(file, line);
+        printf("Exit StateUnlock\n");
     }
 
     void StateLock()
     {
+        printf("Enter StateLock\n");
         m_stateLock.Lock();
+        printf("Exit StateLock\n");
     }
 
     void StateUnlock()
     {
+        printf("Enter StateUnlock\n");
         m_stateLock.Unlock();
+        printf("Exit StateUnlock\n");
     }
 
   private:
@@ -2155,17 +2293,21 @@ class ArdpStream : public qcc::Stream {
         m_writeCondition(NULL),
         m_sendsOutstanding(0)
     {
+        printf("Enter ArdpStream\n");
         QCC_DbgTrace(("ArdpStream::ArdpStream()"));
         m_writeCondition = new qcc::Condition();
+        printf("Exit ArdpStream\n");
     }
 
     virtual ~ArdpStream()
     {
+        printf("Enter ~ArdpStream\n");
         QCC_DbgTrace(("ArdpStream::~ArdpStream()"));
 
         QCC_DbgPrintf(("ArdpStream::~ArdpStream(): delete events"));
         delete m_writeCondition;
         m_writeCondition = NULL;
+        printf("Exit ~ArdpStream\n");
     }
 
     /**
@@ -2173,7 +2315,9 @@ class ArdpStream : public qcc::Stream {
      */
     UDPTransport* GetTransport() const
     {
+        printf("Enter GetTransport\n");
         QCC_DbgTrace(("ArdpStream::GetTransport(): => %p", m_transport));
+        printf("Exit GetTransport\n");
         return m_transport;
     }
 
@@ -2182,8 +2326,10 @@ class ArdpStream : public qcc::Stream {
      */
     void SetTransport(UDPTransport* transport)
     {
+        printf("Enter SetTransport\n");
         QCC_DbgTrace(("ArdpStream::SetTransport(transport=%p)", transport));
         m_transport = transport;
+        printf("Exit SetTransport\n");
     }
 
     /**
@@ -2191,7 +2337,9 @@ class ArdpStream : public qcc::Stream {
      */
     _UDPEndpoint* GetEndpoint() const
     {
+        printf("Enter GetEndpoint\n");
         QCC_DbgTrace(("ArdpStream::GetEndpoint(): => %p", m_endpoint));
+        printf("Exit GetEndpoint\n");
         return m_endpoint;
     }
 
@@ -2200,8 +2348,10 @@ class ArdpStream : public qcc::Stream {
      */
     void SetEndpoint(_UDPEndpoint* endpoint)
     {
+        printf("Enter SetEndpoint\n");
         QCC_DbgTrace(("ArdpStream::SetEndpoint(endpoint=%p)", endpoint));
         m_endpoint = endpoint;
+        printf("Exit SetEndpoint\n");
     }
 
     /**
@@ -2209,7 +2359,9 @@ class ArdpStream : public qcc::Stream {
      */
     ArdpHandle* GetHandle() const
     {
+        printf("Enter GetHandle\n");
         QCC_DbgTrace(("ArdpStream::GetHandle(): => %p", m_handle));
+        printf("Exit GetHandle. Return m_handle\n");
         return m_handle;
     }
 
@@ -2218,8 +2370,10 @@ class ArdpStream : public qcc::Stream {
      */
     void SetHandle(ArdpHandle* handle)
     {
+        printf("Enter SetHandle\n");
         QCC_DbgTrace(("ArdpStream::SetHandle(handle=%p)", handle));
         m_handle = handle;
+        printf("Exit SetHandle\n");
     }
 
     /**
@@ -2228,7 +2382,9 @@ class ArdpStream : public qcc::Stream {
      */
     ArdpConnRecord* GetConn() const
     {
+        printf("Enter GetConn\n");
         QCC_DbgTrace(("ArdpStream::GetConn(): => %p", m_conn));
+        printf("Exit GetConn. Return m_conn\n");
         return m_conn;
     }
 
@@ -2238,8 +2394,10 @@ class ArdpStream : public qcc::Stream {
      */
     void SetConn(ArdpConnRecord* conn)
     {
+        printf("Enter SetConn\n");
         QCC_DbgTrace(("ArdpStream::SetConn(conn=%p)", conn));
         m_conn = conn;
+        printf("Exit SetConn\n");
     }
 
     /**
@@ -2247,7 +2405,9 @@ class ArdpStream : public qcc::Stream {
      */
     uint32_t GetConnId() const
     {
+        printf("Enter GetConnId\n");
         QCC_DbgTrace(("ArdpStream::GetConnId(): => %p", m_connId));
+        printf("Exit GetConnId. Return m_connId\n");
         return m_connId;
     }
 
@@ -2256,8 +2416,10 @@ class ArdpStream : public qcc::Stream {
      */
     void SetConnId(uint32_t connId)
     {
+        printf("Enter SetConnId\n");
         QCC_DbgTrace(("ArdpStream::SetConnId(connId=%d.)", connId));
         m_connId = connId;
+        printf("Exit SetConnId\n");
     }
 
     /**
@@ -2270,6 +2432,7 @@ class ArdpStream : public qcc::Stream {
      */
     void AddCurrentThread()
     {
+        printf("Enter AddCurrentThread\n");        
         QCC_DbgTrace(("ArdpStream::AddCurrentThread()"));
 
         ThreadEntry entry;
@@ -2278,6 +2441,7 @@ class ArdpStream : public qcc::Stream {
         m_lock.Lock(MUTEX_CONTEXT);
         m_threads.insert(entry);
         m_lock.Unlock(MUTEX_CONTEXT);
+        printf("Exit AddCurrentThread\n");  
     }
 
     /**
@@ -2286,6 +2450,7 @@ class ArdpStream : public qcc::Stream {
      */
     void RemoveCurrentThread()
     {
+        printf("Enter RemoveCurrentThread\n");  
         QCC_DbgTrace(("ArdpStream::RemoveCurrentThread()"));
 
         ThreadEntry entry;
@@ -2297,6 +2462,7 @@ class ArdpStream : public qcc::Stream {
         QCC_ASSERT(i != m_threads.end() && "ArdpStream::RemoveCurrentThread(): Thread not on m_threads");
         m_threads.erase(i);
         m_lock.Unlock(MUTEX_CONTEXT);
+        printf("Exit RemoveCurrentThread\n");
     }
 
     /**
@@ -2308,12 +2474,14 @@ class ArdpStream : public qcc::Stream {
      */
     void WakeThreadSet()
     {
+        printf("Enter WakeThreadSet\n");
         QCC_DbgTrace(("ArdpStream::WakeThreadSet()"));
         m_lock.Lock(MUTEX_CONTEXT);
         if (m_writeCondition) {
             m_writeCondition->Broadcast();
         }
         m_lock.Unlock(MUTEX_CONTEXT);
+        printf("Exit WakeThreadSet\n");
     }
 
     /**
@@ -2322,6 +2490,7 @@ class ArdpStream : public qcc::Stream {
      */
     bool ThreadSetEmpty()
     {
+        printf("Enter ThreadSetEmpty\n");
         QCC_DbgTrace(("ArdpStream::ThreadSetEmpty()"));
 
         m_lock.Lock(MUTEX_CONTEXT);
@@ -2329,6 +2498,7 @@ class ArdpStream : public qcc::Stream {
         m_lock.Unlock(MUTEX_CONTEXT);
 
         QCC_DbgTrace(("ArdpStream::ThreadSetEmpty(): -> %s", empty ? "true" : "false"));
+        printf("Exit ThreadSetEmpty. Return empty\n");
         return empty;
     }
 
@@ -2338,10 +2508,12 @@ class ArdpStream : public qcc::Stream {
      */
     uint32_t GetSendsOutstanding()
     {
+        printf("Enter GetSendsOutstanding\n");
         QCC_DbgTrace(("ArdpStream::GetSendsOutstanding() -> %d.", m_sendsOutstanding));
         m_transport->m_cbLock.Lock(MUTEX_CONTEXT);
         uint32_t sendsOutstanding = m_sendsOutstanding;
         m_transport->m_cbLock.Unlock(MUTEX_CONTEXT);
+        printf("Exit GetSendsOutstanding. Return sendsOutstanding\n");
         return sendsOutstanding;
     }
 
@@ -2352,12 +2524,14 @@ class ArdpStream : public qcc::Stream {
      */
     void SignalWriteCondition()
     {
+        printf("Enter SignalWriteCondition\n");
         QCC_DbgTrace(("ArdpStream::SignalWriteCondition()"));
         m_lock.Lock(MUTEX_CONTEXT);
         if (m_writeCondition) {
             m_writeCondition->Signal();
         }
         m_lock.Unlock(MUTEX_CONTEXT);
+        printf("Exit SignalWriteCondition\n");
     }
 
     /**
@@ -2390,6 +2564,7 @@ class ArdpStream : public qcc::Stream {
      */
     QStatus PushBytes(const void* buf, size_t numBytes, size_t& numSent, uint32_t ttl)
     {
+        printf("Enter PushBytes\n");
         QCC_DbgTrace(("ArdpStream::PushBytes(buf=%p, numBytes=%d., numSent=%p)", buf, numBytes, &numSent));
         QStatus status = ER_OK;
 
@@ -2417,9 +2592,11 @@ class ArdpStream : public qcc::Stream {
          * catch that case before actually starting the send.
          */
         if (m_transport->IsRunning() == false || m_transport->m_stopping == true) {
+            printf("Exit PushBytes. Return ER_BUS_ENDPOINT_CLOSING\n");
             return ER_BUS_ENDPOINT_CLOSING;
         }
         if (m_endpoint->IsEpStarted() == false) {
+            printf("Exit PushBytes. Return ER_BUS_ENDPOINT_CLOSING\n");
             return ER_BUS_ENDPOINT_CLOSING;
         }
 
@@ -2732,6 +2909,7 @@ class ArdpStream : public qcc::Stream {
          */
         m_transport->m_cbLock.Unlock(MUTEX_CONTEXT);
         RemoveCurrentThread();
+        printf("Exit PushBytes. Return status\n");
         return status;
     }
 
@@ -2740,7 +2918,9 @@ class ArdpStream : public qcc::Stream {
      */
     QStatus PushBytes(const void* buf, size_t numBytes, size_t& numSent)
     {
+        printf("Enter PushBytes\n");
         QCC_DbgTrace(("ArdpStream::PushBytes(buf=%p, numBytes=%d., numSent=%p)", buf, numBytes, &numSent));
+        printf("Exit PushBytes. Return PushBytes(buf, numBytes, numSent, 0);\n");
         return PushBytes(buf, numBytes, numSent, 0);
     }
 
@@ -2754,6 +2934,7 @@ class ArdpStream : public qcc::Stream {
      */
     QStatus PullBytes(void* buf, size_t reqBytes, size_t& actualBytes, uint32_t timeout)
     {
+        printf("Enter PullBytes\n");
         QCC_UNUSED(buf);
         QCC_UNUSED(reqBytes);
         QCC_UNUSED(actualBytes);
@@ -2761,6 +2942,7 @@ class ArdpStream : public qcc::Stream {
         QCC_DbgTrace(("ArdpStream::PullBytes(buf=%p, reqBytes=%d., actualBytes=%d., timeout=%d.)",
                       buf, reqBytes, actualBytes, timeout));
         QCC_ASSERT(0 && "ArdpStream::PullBytes(): Should never be called");
+        printf("Exit PullBytes. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -2770,6 +2952,7 @@ class ArdpStream : public qcc::Stream {
      */
     void EarlyExit()
     {
+        printf("Enter EarlyExit\n");
         QCC_DbgTrace(("ArdpStream::EarlyExit()"));
 
         /*
@@ -2783,6 +2966,7 @@ class ArdpStream : public qcc::Stream {
         m_conn = NULL;
         m_discStatus = ER_UDP_EARLY_EXIT;
         m_lock.Unlock(MUTEX_CONTEXT);
+        printf("Exit EarlyExit\n");
     }
 
     /**
@@ -2791,7 +2975,9 @@ class ArdpStream : public qcc::Stream {
      */
     bool GetDisconnected()
     {
+        printf("Enter GetDisconnected\n");
         QCC_DbgTrace(("ArdpStream::Disconnected(): -> %s", m_disc ? "true" : "false"));
+        printf("Exit GetDisconnected. Return m_disc\n");
         return m_disc;
     }
 
@@ -2801,7 +2987,9 @@ class ArdpStream : public qcc::Stream {
      */
     bool GetDiscSent()
     {
+        printf("Enter GetDiscSent\n");
         QCC_DbgTrace(("ArdpStream::GetDiscSent(): -> %s", m_discSent ? "true" : "false"));
+        printf("Exit GetDiscSent\n");
         return m_discSent;
     }
 
@@ -2812,7 +3000,9 @@ class ArdpStream : public qcc::Stream {
      */
     QStatus GetDiscStatus()
     {
+        printf("Enter GetDiscStatus\n");
         QCC_DbgTrace(("ArdpStream::GetDiscStatus(): -> \"%s\"", QCC_StatusText(m_discStatus)));
+        printf("Exit GetDiscStatus. Return m_discStatus\n");
         return m_discStatus;
     }
 
@@ -2821,6 +3011,7 @@ class ArdpStream : public qcc::Stream {
      */
     void Disconnect(bool sudden, QStatus status)
     {
+        printf("Enter Disconnect\n");
         QCC_DbgTrace(("ArdpStream::Disconnect(sudden==%d., status==\"%s\")", sudden, QCC_StatusText(status)));
         QCC_DbgPrintf(("ArdpStream::Disconnect(): ConnId == %d.", m_connId));
 
@@ -3025,6 +3216,7 @@ class ArdpStream : public qcc::Stream {
 #endif
 
         m_lock.Unlock(MUTEX_CONTEXT);
+        printf("Exit Disconnect\n");
     }
 
     /**
@@ -3035,6 +3227,7 @@ class ArdpStream : public qcc::Stream {
      */
     void SendCb(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, uint32_t len, QStatus status)
     {
+        printf("Enter SendCb\n");
         QCC_UNUSED(handle);
         QCC_UNUSED(conn);
         QCC_UNUSED(len);
@@ -3072,6 +3265,7 @@ class ArdpStream : public qcc::Stream {
             QCC_DbgPrintf(("ArdpStream::SendCb(): Condition::Signal()"));
             m_writeCondition->Signal();
         }
+        printf("Exit SendCb\n");
     }
 
     class ThreadEntry {
@@ -3162,11 +3356,14 @@ class MessagePump {
         : m_transport(transport), m_lock(LOCK_LEVEL_UDPTRANSPORT_MESSAGEPUMP_LOCK),
         m_activeThread(NULL), m_pastThreads(), m_queue(), m_condition(), m_spawnedThreads(0), m_stopping(false)
     {
+        printf("Enter MessagePump\n");
         QCC_DbgTrace(("MessagePump::MessagePump()"));
+        printf("Exit MessagePump\n");
     }
 
     virtual ~MessagePump()
     {
+        printf("Enter ~MessagePump\n");
         QCC_DbgTrace(("MessagePump::~MessagePump()"));
         QCC_DbgTrace(("MessagePump::~MessagePump(): Dealing with threads"));
         Stop();
@@ -3186,6 +3383,7 @@ class MessagePump {
         QCC_ASSERT(m_pastThreads.empty() && "MessagePump::~MessagePump(): Past threads must be gone here");
 
         QCC_DbgTrace(("MessagePump::~MessagePump(): Done"));
+        printf("Exit ~MessagePump\n");
     }
 
     /*
@@ -3194,9 +3392,11 @@ class MessagePump {
      */
     bool IsActive()
     {
+        printf("Enter IsActive\n");
         QCC_DbgTrace(("MessagePump::IsActive()"));
         bool ret = m_activeThread != NULL;
         QCC_DbgPrintf(("MessagePump::IsActive() => \"%s\"", ret ? "true" : "false"));
+        printf("Exit IsActive. Return ret\n");
         return ret;
     }
 
@@ -3208,6 +3408,7 @@ class MessagePump {
      */
     QStatus Stop()
     {
+        printf("Enter Stop\n");
         QCC_DbgTrace(("MessagePump::Stop()"));
         QStatus status = ER_OK;
 
@@ -3235,6 +3436,7 @@ class MessagePump {
         m_lock.Unlock(MUTEX_CONTEXT);
 
         QCC_DbgTrace(("MessagePump::Stop() => \"%s\"", QCC_StatusText(status)));
+        printf("Exit Stop. Return status\n");
         return status;
     }
 
@@ -3247,7 +3449,9 @@ class MessagePump {
      */
     QStatus Join()
     {
+        printf("Enter Join\n");
         QCC_DbgTrace(("MessagePump::Join()"));
+        printf("Exit Join. Return DoJoin(true)\n");
         return DoJoin(true);
     }
 
@@ -3261,7 +3465,9 @@ class MessagePump {
      */
     QStatus JoinPast()
     {
+        printf("Enter JoinPast\n");
         QCC_DbgTrace(("MessagePump::JoinPast()"));
+        printf("Exit JoinPast. Return DoJoin(false)\n");
         return DoJoin(false);
     }
 
@@ -3270,6 +3476,7 @@ class MessagePump {
      */
     QStatus DoJoin(bool both)
     {
+        printf("Enter DoJoin\n");
         QCC_DbgTrace(("MessagePump::DoJoin(both=\"%s\")", both ? "true" : "false"));
         QStatus status = ER_OK;
 
@@ -3361,11 +3568,13 @@ class MessagePump {
 
         QCC_DbgPrintf(("MessagePump::DoJoin(): m_spawnedThreads=%d. at return", m_spawnedThreads));
         QCC_DbgPrintf(("MessagePump::DoJoin() => \"%s\"", QCC_StatusText(status)));
+        printf("Exit DoJoin. Return status\n");
         return status;
     }
 
     void RecvCb(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t connId, ArdpRcvBuf* rcv, QStatus status)
     {
+        printf("Enter RecvCb\n");
         QCC_DbgTrace(("MessagePump::RecvCb(handle=%p, conn=%p, connId=%d., rcv=%p, status=%s)", handle, conn, connId, rcv, QCC_StatusText(status)));
 
         QCC_ASSERT(status == ER_OK && "MessagePump::RecvCb(): Asked to dispatch an error!?");
@@ -3390,6 +3599,7 @@ class MessagePump {
         if (m_stopping) {
             QCC_DbgPrintf(("MessagePump::RecvCb(): Stopping"));
             m_lock.Unlock(MUTEX_CONTEXT);
+            printf("Exit RecvCb\n");
             return;
         }
 
@@ -3429,6 +3639,7 @@ class MessagePump {
                 delete m_activeThread;
                 m_activeThread = NULL;
                 m_lock.Unlock(MUTEX_CONTEXT);
+                printf("Exit RecvCb\n");
                 return;
             } else {
                 ++m_spawnedThreads;
@@ -3465,6 +3676,7 @@ class MessagePump {
          */
         m_condition.Signal();
         m_lock.Unlock(MUTEX_CONTEXT);
+        printf("Exit RecvCb\n");
     }
 
   private:
@@ -3504,6 +3716,7 @@ class MessagePump {
 
 _UDPEndpoint::~_UDPEndpoint()
 {
+    printf("Enter ~_UDPEndpoint\n");
     QCC_DbgHLPrintf(("_UDPEndpoint::~_UDPEndpoint()"));
     QCC_DbgHLPrintf(("_UDPEndpoint::~_UDPEndpoint(): m_refCount==%d.", m_refCount));
     QCC_DbgHLPrintf(("_UDPEndpoint::~_UDPEndpoint(): m_pushCount==%d.", m_pushCount));
@@ -3541,10 +3754,12 @@ _UDPEndpoint::~_UDPEndpoint()
     }
 
     DestroyStream();
+    printf("Exit ~_UDPEndpoint\n");
 }
 
 QStatus _UDPEndpoint::Start()
 {
+    printf("Enter _UDPEndpoint::Start\n");
     IncrementAndFetch(&m_refCount);
 
     /*
@@ -3581,6 +3796,7 @@ QStatus _UDPEndpoint::Start()
             m_stateLock.Unlock(MUTEX_CONTEXT);
             m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
             DecrementAndFetch(&m_refCount);
+            printf("Exit _UDPEndpoint::Start. Return ER_FAIL\n");
             return ER_FAIL;
         }
     }
@@ -3647,11 +3863,13 @@ QStatus _UDPEndpoint::Start()
     }
 
     DecrementAndFetch(&m_refCount);
+    printf("Exit _UDPEndpoint::Start. Return status\n");
     return status;
 }
 
 QStatus _UDPEndpoint::Stop()
 {
+    printf("Enter _UDPEndpoint::Stop\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("_UDPEndpoint::Stop()"));
     QCC_DbgPrintf(("_UDPEndpoint::Stop(): Unique name == %s, connId == %d.", GetUniqueName().c_str(), GetConnId()));
@@ -3705,6 +3923,7 @@ QStatus _UDPEndpoint::Stop()
         m_transport->Alert();
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit _UDPEndpoint::Stop. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -3721,6 +3940,7 @@ QStatus _UDPEndpoint::Stop()
         m_stateLock.Unlock(MUTEX_CONTEXT);
         m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_refCount);
+        printf("Exit _UDPEndpoint::Stop. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -3770,11 +3990,13 @@ QStatus _UDPEndpoint::Stop()
     m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
 
     DecrementAndFetch(&m_refCount);
+    printf("Exit _UDPEndpoint::Stop. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus _UDPEndpoint::Join()
 {
+    printf("Enter _UDPEndpoint::Join\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("_UDPEndpoint::Join()"));
     QCC_DbgPrintf(("_UDPEndpoint::Join(): Unique name == %s", GetUniqueName().c_str()));
@@ -3826,6 +4048,7 @@ QStatus _UDPEndpoint::Join()
         m_stateLock.Unlock(MUTEX_CONTEXT);
         m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_refCount);
+        printf("Exit _UDPEndpoint::Join. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -3843,6 +4066,7 @@ QStatus _UDPEndpoint::Join()
         m_stateLock.Unlock(MUTEX_CONTEXT);
         m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_refCount);
+        printf("Exit _UDPEndpoint::Join. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -3954,11 +4178,13 @@ QStatus _UDPEndpoint::Join()
     m_stateLock.Unlock(MUTEX_CONTEXT);
     m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit _UDPEndpoint::Join. Return ER_OK\n");
     return ER_OK;
 }
 
 void _UDPEndpoint::CreateStream(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t dataTimeout, uint32_t dataRetries)
 {
+    printf("Enter _UDPEndpoint::CreateStream\n");
     QCC_UNUSED(dataTimeout);
     QCC_UNUSED(dataRetries);
 
@@ -3988,10 +4214,12 @@ void _UDPEndpoint::CreateStream(ArdpHandle* handle, ArdpConnRecord* conn, uint32
     SetStream(m_stream);
     m_transport->m_ardpLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit _UDPEndpoint::CreateStream\n");
 }
 
 void _UDPEndpoint::DestroyStream()
 {
+    printf("Enter _UDPEndpoint::DestroyStream\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("_UDPEndpoint::DestroyStream()"));
     if (m_stream) {
@@ -4002,10 +4230,12 @@ void _UDPEndpoint::DestroyStream()
     m_stream = NULL;
     m_conn = NULL;
     DecrementAndFetch(&m_refCount);
+    printf("Exit _UDPEndpoint::DestroyStream\n");
 }
 
 void _UDPEndpoint::DisconnectCb(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t connId, QStatus status)
 {
+    printf("Enter _UDPEndpoint::DisconnectCb\n");
     QCC_UNUSED(handle);
     QCC_UNUSED(conn);
     QCC_UNUSED(connId);
@@ -4051,6 +4281,7 @@ void _UDPEndpoint::DisconnectCb(ArdpHandle* handle, ArdpConnRecord* conn, uint32
     if (found == 0) {
         QCC_DbgHLPrintf(("_UDPEndpoint::DisconnectCb(): endpoint with conn ID == %d. not found on on m_endpointList", connId));
         m_transport->m_endpointListLock.Unlock(MUTEX_CONTEXT);
+        printf("Exit _UDPEndpoint::DisconnectCb\n");
         return;
     }
 
@@ -4147,10 +4378,12 @@ void _UDPEndpoint::DisconnectCb(ArdpHandle* handle, ArdpConnRecord* conn, uint32
     Stop();
 
     DecrementAndFetch(&m_refCount);
+    printf("Exit _UDPEndpoint::DisconnectCb\n");
 }
 
 void _UDPEndpoint::SendCb(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t connId, uint8_t* buf, uint32_t len, QStatus status)
 {
+    printf("Enter _UDPEndpoint::SendCb\n");
     QCC_UNUSED(connId);
 
     IncrementAndFetch(&m_refCount);
@@ -4213,6 +4446,7 @@ void _UDPEndpoint::SendCb(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t con
     }
 
     DecrementAndFetch(&m_refCount);
+    printf("Exit _UDPEndpoint::SendCb\n");
 }
 
 /*
@@ -4220,6 +4454,7 @@ void _UDPEndpoint::SendCb(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t con
  */
 ThreadReturn STDCALL MessagePump::PumpThread::Run(void* arg)
 {
+    printf("Enter MessagePump::PumpThread::Run\n");
     QCC_UNUSED(arg);
 
     QCC_DbgTrace(("MessagePump::PumpThread::Run()"));
@@ -4395,6 +4630,7 @@ ThreadReturn STDCALL MessagePump::PumpThread::Run(void* arg)
     QCC_DbgPrintf(("MessagePump::PumpThread::Run(): Alert()"));
     m_pump->m_transport->Alert();
     QCC_DbgPrintf(("MessagePump::PumpThread::Run(): Return"));
+    printf("Exit MessagePump::PumpThread::Run. Return 0\n");
     return 0;
 }
 
@@ -4436,6 +4672,7 @@ UDPTransport::UDPTransport(BusAttachment& bus) :
 #endif
 {
     QCC_DbgTrace(("UDPTransport::UDPTransport()"));
+    printf("Enter UDPTransport::UDPTransport\n");
 
     /*
      * We know we are daemon code, so we'd better be running with a daemon
@@ -4530,6 +4767,7 @@ UDPTransport::UDPTransport(BusAttachment& bus) :
 #endif
 
     m_ardpLock.Unlock(MUTEX_CONTEXT);
+    printf("Exit UDPTransport::UDPTransport\n");
 }
 
 /**
@@ -4537,6 +4775,7 @@ UDPTransport::UDPTransport(BusAttachment& bus) :
  */
 UDPTransport::~UDPTransport()
 {
+    printf("Enter UDPTransport::~UDPTransport\n");
     QCC_DbgTrace(("UDPTransport::~UDPTransport()"));
 
     Stop();
@@ -4556,6 +4795,7 @@ UDPTransport::~UDPTransport()
     QCC_ASSERT(m_preList.size() + m_authList.size() + m_endpointList.size() == 0 &&
                "UDPTransport::~UDPTransport(): Destroying with enlisted endpoints");
     //QCC_ASSERT(IncrementAndFetch(&m_refCount) == 1 && "UDPTransport::~UDPTransport(): non-zero reference count");
+    printf("Exit UDPTransport::~UDPTransport\n");
 }
 
 /**
@@ -4567,8 +4807,10 @@ UDPTransport::~UDPTransport()
  */
 void UDPTransport::EndpointExit(RemoteEndpoint& ep)
 {
+    printf("Enter UDPTransport::EndpointExit\n");
     QCC_UNUSED(ep);
     QCC_DbgTrace(("UDPTransport::EndpointExit()"));
+    printf("Exit UDPTransport::EndpointExit\n");
 }
 
 /*
@@ -4576,6 +4818,7 @@ void UDPTransport::EndpointExit(RemoteEndpoint& ep)
  */
 ThreadReturn STDCALL UDPTransport::DispatcherThread::Run(void* arg)
 {
+    printf("Enter UDPTransport::DispatcherThread::Run\n");
     QCC_UNUSED(arg);
 
     IncrementAndFetch(&m_transport->m_refCount);
@@ -4888,6 +5131,7 @@ ThreadReturn STDCALL UDPTransport::DispatcherThread::Run(void* arg)
 
     QCC_DbgTrace(("UDPTransport::DispatcherThread::Run(): Exiting"));
     DecrementAndFetch(&m_transport->m_refCount);
+    printf("Exit UDPTransport::DispatcherThread::Run. Return 0\n");
     return 0;
 }
 
@@ -4897,6 +5141,7 @@ ThreadReturn STDCALL UDPTransport::DispatcherThread::Run(void* arg)
  */
 ThreadReturn STDCALL UDPTransport::ExitDispatcherThread::Run(void* arg)
 {
+    printf("Enter UDPTransport::ExitDispatcherThread::Run\n");
     QCC_UNUSED(arg);
     IncrementAndFetch(&m_transport->m_refCount);
     QCC_DbgTrace(("UDPTransport::ExitDispatcherThread::Run()"));
@@ -5034,6 +5279,7 @@ ThreadReturn STDCALL UDPTransport::ExitDispatcherThread::Run(void* arg)
 
     QCC_DbgTrace(("UDPTransport::ExitDispatcherThread::Run(): Exiting"));
     DecrementAndFetch(&m_transport->m_refCount);
+    printf("Exit UDPTransport::ExitDispatcherThread::Run. Return 0\n");
     return 0;
 }
 
@@ -5043,6 +5289,7 @@ ThreadReturn STDCALL UDPTransport::ExitDispatcherThread::Run(void* arg)
  */
 QStatus UDPTransport::Start()
 {
+    printf("Enter UDPTransport::Start\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("UDPTransport::Start()"));
 
@@ -5101,6 +5348,7 @@ QStatus UDPTransport::Start()
     if (status != ER_OK) {
         QCC_LogError(status, ("UDPTransport::Start(): Failed to Start() message dispatcher thread"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Start. Return status\n");
         return status;
     }
 
@@ -5110,6 +5358,7 @@ QStatus UDPTransport::Start()
     if (status != ER_OK) {
         QCC_LogError(status, ("UDPTransport::Start(): Failed to Start() exit dispatcher thread"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Start. Return status\n");
         return status;
     }
 
@@ -5122,6 +5371,7 @@ QStatus UDPTransport::Start()
     status = Thread::Start();
     m_dynamicScoreUpdater.Start();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::Start. Return status\n");
     return status;
 }
 
@@ -5136,6 +5386,7 @@ bool operator<(const UDPTransport::ConnectEntry& lhs, const UDPTransport::Connec
  */
 QStatus UDPTransport::Stop(void)
 {
+    printf("Enter UDPTransport::Stop\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::Stop()"));
 
@@ -5243,6 +5494,7 @@ QStatus UDPTransport::Stop(void)
      * will start the process.
      */
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::Stop. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -5254,6 +5506,7 @@ QStatus UDPTransport::Stop(void)
  */
 QStatus UDPTransport::Join(void)
 {
+    printf("Enter UDPTransport::Join\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::Join()"));
 
@@ -5320,6 +5573,7 @@ QStatus UDPTransport::Join(void)
     if (status != ER_OK) {
         QCC_LogError(status, ("UDPTransport::Join(): Failed to Stop() server thread"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Join\n");
         return status;
     }
 
@@ -5405,6 +5659,7 @@ QStatus UDPTransport::Join(void)
     if (status != ER_OK) {
         QCC_LogError(status, ("UDPTransport::Join(): Failed to Join() server thread"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Join. Return status\n");
         return status;
     }
 
@@ -5547,6 +5802,7 @@ QStatus UDPTransport::Join(void)
     m_stopping = false;
     m_preListLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::Join. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -5558,6 +5814,7 @@ QStatus UDPTransport::Join(void)
  */
 bool UDPTransport::SupportsOptions(const SessionOpts& opts) const
 {
+    printf("Enter UDPTransport::SupportsOptions\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::SupportsOptions()"));
 
@@ -5586,6 +5843,7 @@ bool UDPTransport::SupportsOptions(const SessionOpts& opts) const
 
     QCC_DbgPrintf(("UDPTransport::SupportsOptions(): returns \"%s\"", rc == true ? "true" : "false"));
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::SupportsOptions. Return rc\n");
     return rc;
 }
 
@@ -5606,6 +5864,7 @@ static const char* INTERFACES_DEFAULT = "*";
  */
 QStatus UDPTransport::GetListenAddresses(const SessionOpts& opts, std::vector<qcc::String>& busAddrs) const
 {
+    printf("Enter UDPTransport::GetListenAddresses\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::GetListenAddresses()"));
 
@@ -5617,6 +5876,7 @@ QStatus UDPTransport::GetListenAddresses(const SessionOpts& opts, std::vector<qc
     if (SupportsOptions(opts) == false) {
         QCC_DbgPrintf(("UDPTransport::GetListenAddresses(): Supported options mismatch"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::GetListenAddresses. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -5633,6 +5893,7 @@ QStatus UDPTransport::GetListenAddresses(const SessionOpts& opts, std::vector<qc
     if (IpNameService::Instance().Started() == false) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::GetListenAddresses(): NameService not started"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::GetListenAddresses. Return ER_BUS_TRANSPORT_NOT_STARTED\n");
         return ER_BUS_TRANSPORT_NOT_STARTED;
     }
 
@@ -5654,6 +5915,7 @@ QStatus UDPTransport::GetListenAddresses(const SessionOpts& opts, std::vector<qc
     if (status != ER_OK) {
         QCC_LogError(status, ("UDPTransport::GetListenAddresses(): IfConfig() failed"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::GetListenAddresses. Return status\n");
         return status;
     }
 
@@ -5808,6 +6070,7 @@ QStatus UDPTransport::GetListenAddresses(const SessionOpts& opts, std::vector<qc
      */
     QCC_DbgPrintf(("UDPTransport::GetListenAddresses(): done"));
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::GetListenAddresses. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -5821,6 +6084,7 @@ QStatus UDPTransport::GetListenAddresses(const SessionOpts& opts, std::vector<qc
  */
 void UDPTransport::EndpointDeletedHook()
 {
+    printf("Enter UDPTransport::EndpointDeletedHook\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::EndpointDeletedHook()"));
 
@@ -5844,10 +6108,12 @@ void UDPTransport::EndpointDeletedHook()
         m_reload = STATE_RELOADING;
         Alert();
     }
+    printf("Exit UDPTransport::EndpointDeletedHook\n");
 }
 
 void UDPTransport::ScheduleEndpointDeletedHook()
 {
+    printf("Enter UDPTransport::ScheduleEndpointDeletedHook\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgPrintf(("UDPTransport::SheduleEndpointDeletedHook()"));
 
@@ -5859,6 +6125,7 @@ void UDPTransport::ScheduleEndpointDeletedHook()
     if (m_exitDispatcher == NULL) {
         QCC_DbgPrintf(("UDPTransport::ScheduleEndpointDeletedHook(): m_exitDispatcher is NULL"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::ScheduleEndpointDeletedHook\n");
         return;
     }
 
@@ -5871,10 +6138,12 @@ void UDPTransport::ScheduleEndpointDeletedHook()
     m_exitWorkerCommandQueueLock.Unlock(MUTEX_CONTEXT);
     m_exitDispatcher->Alert();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::ScheduleEndpointDeletedHook\n");
 }
 
 void UDPTransport::EmitStallWarnings(UDPEndpoint& ep)
 {
+    printf("Enter UDPTransport::EmitStallWarnings\n");
     QCC_DbgTrace(("UDPTransport::EmitStallWarnings()"));
 
     ArdpStream* stream = ep->GetStream();
@@ -5902,6 +6171,7 @@ void UDPTransport::EmitStallWarnings(UDPEndpoint& ep)
         int32_t tDelay = tStalled + UDP_STALL_REPORT_INTERVAL - tNow;
 
         if (tDelay > 0) {
+            printf("Exit UDPTransport::EmitStallWarnings\n");
             return;
         }
 
@@ -5933,6 +6203,7 @@ void UDPTransport::EmitStallWarnings(UDPEndpoint& ep)
             QCC_LogError(ER_UDP_ENDPOINT_STALLED, ("UDPTransport::EmitStallWarnings(): stalled with threadSetEmpty and disconnected"));
         }
     }
+    printf("Exit UDPTransport::EmitStallWarnings\n");
 }
 
 /**
@@ -5951,6 +6222,7 @@ void UDPTransport::EmitStallWarnings(UDPEndpoint& ep)
  */
 void UDPTransport::ManageEndpoints(uint32_t authTimeout, uint32_t sessionSetupTimeout)
 {
+    printf("Enter UDPTransport::ManageEndpoints\n");
     QCC_UNUSED(sessionSetupTimeout);
 
     QCC_DbgTrace(("UDPTransport::ManageEndpoints()"));
@@ -6558,6 +6830,7 @@ void UDPTransport::ManageEndpoints(uint32_t authTimeout, uint32_t sessionSetupTi
     if (managed) {
         m_dynamicScoreUpdater.Alert();
     }
+    printf("Exit UDPTransport::ManageEndpoints\n");
 }
 
 #if ARDP_TESTHOOKS
@@ -6567,31 +6840,37 @@ void UDPTransport::ManageEndpoints(uint32_t authTimeout, uint32_t sessionSetupTi
  */
 void UDPTransport::ArdpSendToSGHook(ArdpHandle* handle, ArdpConnRecord* conn, TesthookSource source, qcc::ScatterGatherList& msgSG)
 {
+    printf("Enter UDPTransport::ArdpSendToSGHook\n");
     QCC_UNUSED(handle);
     QCC_UNUSED(conn);
     QCC_UNUSED(source);
     QCC_UNUSED(msgSG);
     QCC_DbgTrace(("UDPTransport::ArdpSendToSGHook(handle=%p, conn=%p, source=%d., msgSG=%p)", handle, conn, source, &msgSG));
+    printf("Exit UDPTransport::ArdpSendToSGHook\n");
 }
 
 void UDPTransport::ArdpSendToHook(ArdpHandle* handle, ArdpConnRecord* conn, TesthookSource source, void* buf, uint32_t len)
 {
+    printf("Enter UDPTransport::ArdpSendToHook\n");
     QCC_UNUSED(handle);
     QCC_UNUSED(conn);
     QCC_UNUSED(source);
     QCC_UNUSED(buf);
     QCC_UNUSED(len);
     QCC_DbgTrace(("UDPTransport::ArdpSendToHook(handle=%p, conn=%p, source=%d., buf=%p, len=%d.)", handle, conn, buf, len));
+    printf("Exit UDPTransport::ArdpSendToHook\n");
 }
 
 void UDPTransport::ArdpRecvFromHook(ArdpHandle* handle, ArdpConnRecord* conn, TesthookSource source, void* buf, uint32_t len)
 {
+    printf("Enter UDPTransport::ArdpRecvFromHook\n");
     QCC_UNUSED(handle);
     QCC_UNUSED(conn);
     QCC_UNUSED(source);
     QCC_UNUSED(buf);
     QCC_UNUSED(len);
     QCC_DbgTrace(("UDPTransport::ArdpSendToSGHook(handle=%p, conn=%p, source=%d., buf=%p, len=%d.)", handle, conn, buf, len));
+    printf("Exit UDPTransport::ArdpRecvFromHook\n");
 }
 
 #endif
@@ -6608,9 +6887,11 @@ void UDPTransport::ArdpRecvFromHook(ArdpHandle* handle, ArdpConnRecord* conn, Te
  */
 bool UDPTransport::ArdpAcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint16_t ipPort, ArdpConnRecord* conn, uint8_t* buf, uint16_t len, QStatus status)
 {
+    printf("Enter UDPTransport::ArdpAcceptCb\n");
     QCC_DbgTrace(("UDPTransport::ArdpAcceptCb(handle=%p, ipAddr=\"%s\", port=%d., conn=%p, buf =%p, len = %d)",
                   ardpHandle, ipAddr.ToString().c_str(), ipPort, conn, buf, len));
     UDPTransport* const transport = static_cast<UDPTransport* const>(ARDP_GetHandleContext(ardpHandle));
+    printf("Exit UDPTransport::ArdpAcceptCb. Return transport->AcceptCb\n");
     return transport->AcceptCb(ardpHandle, ipAddr, ipPort, conn, buf, len, status);
 }
 
@@ -6626,10 +6907,12 @@ bool UDPTransport::ArdpAcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, u
  */
 void UDPTransport::ArdpConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, bool passive, uint8_t* buf, uint16_t len, QStatus status)
 {
+    printf("Enter UDPTransport::ArdpConnectCb\n");
     QCC_DbgTrace(("UDPTransport::ArdpConnectCb(handle=%p, conn=%p, passive=%s, buf = %p, len = %d, status=%s)",
                   ardpHandle, conn, passive ? "true" : "false", buf, len, QCC_StatusText(status)));
     UDPTransport* const transport = static_cast<UDPTransport* const>(ARDP_GetHandleContext(ardpHandle));
     transport->ConnectCb(ardpHandle, conn, passive, buf, len, status);
+    printf("Exit UDPTransport::ArdpConnectCb\n");
 }
 
 /**
@@ -6644,9 +6927,11 @@ void UDPTransport::ArdpConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, b
  */
 void UDPTransport::ArdpDisconnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, QStatus status)
 {
+    printf("Enter UDPTransport::ArdpDisconnectCb\n");
     QCC_DbgTrace(("UDPTransport::ArdpDisconnectCb(handle=%p, conn=%p, status=\"%s\")", ardpHandle, conn, QCC_StatusText(status)));
     UDPTransport* const transport = static_cast<UDPTransport* const>(ARDP_GetHandleContext(ardpHandle));
     transport->DisconnectCb(ardpHandle, conn, status);
+    printf("Exit UDPTransport::ArdpDisconnectCb\n");
 }
 
 /**
@@ -6661,10 +6946,12 @@ void UDPTransport::ArdpDisconnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn
  */
 void UDPTransport::ArdpRecvCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, ArdpRcvBuf* rcv, QStatus status)
 {
+    printf("Enter UDPTransport::ArdpRecvCb\n");
     QCC_DbgTrace(("UDPTransport::ArdpRecvCb(handle=%p, conn=%p, buf=%p, status=%s)",
                   ardpHandle, conn, rcv, QCC_StatusText(status)));
     UDPTransport* const transport = static_cast<UDPTransport* const>(ARDP_GetHandleContext(ardpHandle));
     transport->RecvCb(ardpHandle, conn, rcv, status);
+    printf("Exit UDPTransport::ArdpRecvCb\n");
 }
 
 /**
@@ -6679,9 +6966,11 @@ void UDPTransport::ArdpRecvCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, Ardp
  */
 void UDPTransport::ArdpSendCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uint8_t* buf, uint32_t len, QStatus status)
 {
+    printf("Enter UDPTransport::ArdpSendCb\n");
     QCC_DbgTrace(("UDPTransport::ArdpSendCb(handle=%p, conn=%p, buf=%p, len=%d.)", ardpHandle, conn, buf, len));
     UDPTransport* const transport = static_cast<UDPTransport* const>(ARDP_GetHandleContext(ardpHandle));
     transport->SendCb(ardpHandle, conn, buf, len, status);
+    printf("Exit UDPTransport::ArdpSendCb\n");
 }
 
 /**
@@ -6696,9 +6985,11 @@ void UDPTransport::ArdpSendCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uint
  */
 void UDPTransport::ArdpSendWindowCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uint16_t window, QStatus status)
 {
+    printf("Enter UDPTransport::ArdpSendWindowCb\n");
     QCC_DbgTrace(("UDPTransport::ArdpSendWindowCb(handle=%p, conn=%p, window=%d.)", ardpHandle, conn, window));
     UDPTransport* const transport = static_cast<UDPTransport* const>(ARDP_GetHandleContext(ardpHandle));
     transport->SendWindowCb(ardpHandle, conn, window, status);
+    printf("Exit UDPTransport::ArdpSendWindowCb\n");
 }
 
 /*
@@ -6731,6 +7022,7 @@ void UDPTransport::ArdpSendWindowCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn
  */
 bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint16_t ipPort, ArdpConnRecord* conn, uint8_t* buf, uint16_t len, QStatus status)
 {
+    printf("Enter UDPTransport::AcceptCb\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("UDPTransport::AcceptCb(handle=%p, ipAddr=\"%s\", ipPort=%d., conn=%p)", ardpHandle, ipAddr.ToString().c_str(), ipPort, conn));
 
@@ -6740,12 +7032,14 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
     if (IsRunning() == false || m_stopping == true) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::AcceptCb(): Stopping or not running"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
     if (buf == NULL || len == 0) {
         QCC_LogError(ER_UDP_INVALID, ("UDPTransport::AcceptCb(): No BusHello with SYN"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6793,6 +7087,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         QCC_LogError(ER_CONNECTION_LIMIT_EXCEEDED, ("UDPTransport::AcceptCb(): No slot for new connection"));
         m_connLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6818,6 +7113,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6839,6 +7135,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6856,6 +7153,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6869,6 +7167,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6883,6 +7182,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6897,6 +7197,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6916,6 +7217,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6929,6 +7231,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
             --m_currConn;
             m_connLock.Unlock(MUTEX_CONTEXT);
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::AcceptCb. Return false\n");
             return false;
         } else {
             ++m_numUntrustedClients;
@@ -6956,6 +7259,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -6979,6 +7283,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -7000,6 +7305,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -7101,6 +7407,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb\n");
         return false;
     }
 
@@ -7170,6 +7477,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -7210,6 +7518,7 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
         m_connLock.Unlock(MUTEX_CONTEXT);
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::AcceptCb. Return false\n");
         return false;
     }
 
@@ -7226,12 +7535,14 @@ bool UDPTransport::AcceptCb(ArdpHandle* ardpHandle, qcc::IPAddress ipAddr, uint1
     Alert();
     m_dynamicScoreUpdater.Alert();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::AcceptCb. Return true\n");
     return true;
 }
 
 #ifndef NDEBUG
 void UDPTransport::DebugAuthListCheck(UDPEndpoint uep)
 {
+    printf("Enter UDPTransport::DebugAuthListCheck\n");
     QCC_DbgTrace(("UDPTransport::DebugAuthListCheck()"));
     m_endpointListLock.Lock(MUTEX_CONTEXT);
     for (set<UDPEndpoint>::iterator i = m_authList.begin(); i != m_authList.end(); ++i) {
@@ -7242,10 +7553,12 @@ void UDPTransport::DebugAuthListCheck(UDPEndpoint uep)
         }
     }
     m_endpointListLock.Unlock(MUTEX_CONTEXT);
+    printf("Exit UDPTransport::DebugAuthListCheck\n");
 }
 
 void UDPTransport::DebugEndpointListCheck(UDPEndpoint uep)
 {
+    printf("Enter UDPTransport::DebugEndpointListCheck\n");
     QCC_DbgTrace(("UDPTransport::DebugEndpointListCheck()"));
     m_endpointListLock.Lock(MUTEX_CONTEXT);
     for (set<UDPEndpoint>::iterator i = m_endpointList.begin(); i != m_endpointList.end(); ++i) {
@@ -7256,6 +7569,7 @@ void UDPTransport::DebugEndpointListCheck(UDPEndpoint uep)
         }
     }
     m_endpointListLock.Unlock(MUTEX_CONTEXT);
+    printf("Exit UDPTransport::DebugEndpointListCheck\n");
 }
 #endif
 
@@ -7297,6 +7611,7 @@ void UDPTransport::DebugEndpointListCheck(UDPEndpoint uep)
  */
 void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uint32_t connId, bool passive, uint8_t* buf, uint16_t len, QStatus status)
 {
+    printf("Enter UDPTransport::DoConnectCb\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("UDPTransport::DoConnectCb(handle=%p, conn=%p)", ardpHandle, conn));
 
@@ -7311,6 +7626,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
         status = ER_UDP_STOPPING;
         QCC_LogError(status, ("ArdpStream::PushBytes(): UDP Transport not running or stopping"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::DoConnectCb\n");
         return;
     }
 
@@ -7416,6 +7732,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
         m_ardpLock.Unlock(MUTEX_CONTEXT);
         if (cidFromConn == ARDP_CONN_ID_INVALID) {
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -7526,6 +7843,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_endpointListLock.Unlock(MUTEX_CONTEXT);
         }
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::DoConnectCb\n");
         return;
     } else {
         /*
@@ -7583,6 +7901,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_connLock.Unlock(MUTEX_CONTEXT);
 
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -7635,6 +7954,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_connLock.Unlock(MUTEX_CONTEXT);
 
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -7657,6 +7977,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_connLock.Unlock(MUTEX_CONTEXT);
 
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -7679,6 +8000,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_connLock.Unlock(MUTEX_CONTEXT);
 
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -7702,6 +8024,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_connLock.Unlock(MUTEX_CONTEXT);
 
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -7730,6 +8053,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_connLock.Unlock(MUTEX_CONTEXT);
 
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -7752,6 +8076,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_connLock.Unlock(MUTEX_CONTEXT);
 
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -7779,6 +8104,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_connLock.Unlock(MUTEX_CONTEXT);
 
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -7807,6 +8133,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
             m_connLock.Unlock(MUTEX_CONTEXT);
 
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::DoConnectCb\n");
             return;
         }
 
@@ -8006,6 +8333,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
 
         m_endpointListLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::DoConnectCb\n");
         return;
     }
 }
@@ -8039,6 +8367,7 @@ void UDPTransport::DoConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uin
  */
 void UDPTransport::ExitEndpoint(uint32_t connId)
 {
+    printf("Enter UDPTransport::ExitEndpoint\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("UDPTransport::ExitEndpoint(connId=%d.)", connId));
 
@@ -8050,6 +8379,7 @@ void UDPTransport::ExitEndpoint(uint32_t connId)
     if (m_exitDispatcher == NULL) {
         QCC_DbgPrintf(("UDPTransport::ExitEndpoint(): m_exitDispatcher is NULL"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::ExitEndpoint\n");
         return;
     }
 
@@ -8063,6 +8393,7 @@ void UDPTransport::ExitEndpoint(uint32_t connId)
     m_exitWorkerCommandQueueLock.Unlock(MUTEX_CONTEXT);
     m_exitDispatcher->Alert();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::ExitEndpoint\n");
 }
 
 /*
@@ -8087,6 +8418,7 @@ void UDPTransport::ExitEndpoint(uint32_t connId)
  */
 void UDPTransport::ConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, bool passive, uint8_t* buf, uint16_t len, QStatus status)
 {
+    printf("Enter UDPTransport::ConnectCb\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("UDPTransport::ConnectCb(handle=%p, conn=%p, passive=%d., buf=%p, len=%d., status=\"%s\")",
                      ardpHandle, conn, passive, buf, len, QCC_StatusText(status)));
@@ -8099,6 +8431,7 @@ void UDPTransport::ConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, bool 
     if (m_dispatcher == NULL) {
         QCC_DbgPrintf(("UDPTransport::ConnectCb(): m_dispatcher is NULL"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::ConnectCb\n");
         return;
     }
 
@@ -8124,6 +8457,7 @@ void UDPTransport::ConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, bool 
     m_workerCommandQueueLock.Unlock(MUTEX_CONTEXT);
     m_dispatcher->Alert();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::ConnectCb\n");
 }
 
 /*
@@ -8147,6 +8481,7 @@ void UDPTransport::ConnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, bool 
  */
 void UDPTransport::DisconnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, QStatus status)
 {
+    printf("Enter UDPTransport::DisconnectCb\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("UDPTransport::DisconnectCb(handle=%p, conn=%p, status=\"%s\")", ardpHandle, conn, QCC_StatusText(status)));
 
@@ -8158,6 +8493,7 @@ void UDPTransport::DisconnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, QS
     if (m_dispatcher == NULL) {
         QCC_DbgPrintf(("UDPTransport::DisconnectCb(): m_dispatcher is NULL"));
         DecrementAndFetch(&m_refCount);
+        printf("Enter UDPTransport::DisconnectCb\n");
         return;
     }
 
@@ -8174,6 +8510,7 @@ void UDPTransport::DisconnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, QS
     m_workerCommandQueueLock.Unlock(MUTEX_CONTEXT);
     m_dispatcher->Alert();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::DisconnectCb\n");
 }
 
 /*
@@ -8198,6 +8535,7 @@ void UDPTransport::DisconnectCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, QS
  */
 void UDPTransport::RecvCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, ArdpRcvBuf* rcv, QStatus status)
 {
+    printf("Enter UDPTransport::RecvCb\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("UDPTransport::RecvCb(handle=%p, conn=%p, rcv=%p, status=%s)",
                      ardpHandle, conn, rcv, QCC_StatusText(status)));
@@ -8235,6 +8573,7 @@ void UDPTransport::RecvCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, ArdpRcvB
 #endif // not RETURN_ORPHAN_BUFS
 
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::RecvCb\n");
         return;
     }
 
@@ -8252,6 +8591,7 @@ void UDPTransport::RecvCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, ArdpRcvB
     m_workerCommandQueueLock.Unlock(MUTEX_CONTEXT);
     m_dispatcher->Alert();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::RecvCb\n");
 }
 
 /*
@@ -8277,6 +8617,7 @@ void UDPTransport::RecvCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, ArdpRcvB
  */
 void UDPTransport::SendCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uint8_t* buf, uint32_t len, QStatus status)
 {
+    printf("Enter UDPTransport::SendCb\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgHLPrintf(("UDPTransport::SendCb(handle=%p, conn=%p, buf=%p, len=%d.)", ardpHandle, conn, buf, len));
 
@@ -8288,6 +8629,7 @@ void UDPTransport::SendCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uint8_t*
     if (m_dispatcher == NULL) {
         QCC_DbgPrintf(("UDPTransport::SendCb(): m_dispatcher is NULL"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::SendCb\n");
         return;
     }
 
@@ -8306,6 +8648,7 @@ void UDPTransport::SendCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uint8_t*
     m_workerCommandQueueLock.Unlock(MUTEX_CONTEXT);
     m_dispatcher->Alert();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::SendCb\n");
 }
 
 /**
@@ -8327,6 +8670,7 @@ void UDPTransport::SendCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uint8_t*
  */
 void UDPTransport::SendWindowCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, uint16_t window, QStatus status)
 {
+    printf("Enter UDPTransport::SendWindowCb\n");
     QCC_UNUSED(ardpHandle);
     QCC_UNUSED(conn);
     QCC_UNUSED(window);
@@ -8336,6 +8680,7 @@ void UDPTransport::SendWindowCb(ArdpHandle* ardpHandle, ArdpConnRecord* conn, ui
     QCC_DbgTrace(("UDPTransport::SendWindowCb(handle=%p, conn=%p, window=%d.)", ardpHandle, conn, window));
     QCC_DbgPrintf(("UDPTransport::SendWindowCb(): callback from conn ID == %d", ARDP_GetConnId(ardpHandle, conn)));
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::SendWindowCb\n");
 }
 
 /**
@@ -8359,6 +8704,7 @@ struct WriteEntry {
  */
 void* UDPTransport::Run(void* arg)
 {
+    printf("Enter UDPTransport::Run\n");
     QCC_UNUSED(arg);
 
     QCC_DbgTrace(("UDPTransport::Run()"));
@@ -8737,6 +9083,7 @@ void* UDPTransport::Run(void* arg)
     m_listenFdsLock.Unlock(MUTEX_CONTEXT);
 
     QCC_DbgPrintf(("UDPTransport::Run is exiting status=%s", QCC_StatusText(status)));
+    printf("Exit UDPTransport::Run. Return (void*) status\n");
     return (void*) status;
 }
 
@@ -8864,6 +9211,7 @@ void* UDPTransport::Run(void* arg)
  */
 void UDPTransport::RunListenMachine(ListenRequest& listenRequest)
 {
+    printf("Enter UDPTransport::RunListenMachine\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::RunListenMachine()"));
 
@@ -8901,10 +9249,12 @@ void UDPTransport::RunListenMachine(ListenRequest& listenRequest)
         break;
     }
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::RunListenMachine\n");
 }
 
 void UDPTransport::StartListenInstance(ListenRequest& listenRequest)
 {
+    printf("Enter UDPTransport::StartListenInstance\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::StartListenInstance()"));
 
@@ -8942,10 +9292,12 @@ void UDPTransport::StartListenInstance(ListenRequest& listenRequest)
         DoStartListen(listenRequest.m_requestParam);
     }
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::StartListenInstance\n");
 }
 
 void UDPTransport::StopListenInstance(ListenRequest& listenRequest)
 {
+    printf("Enter UDPTransport::StopListenInstance\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::StopListenInstance()"));
 
@@ -8978,10 +9330,12 @@ void UDPTransport::StopListenInstance(ListenRequest& listenRequest)
      */
     DoStopListen(listenRequest.m_requestParam);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::StopListenInstance\n");
 }
 
 void UDPTransport::EnableAdvertisementInstance(ListenRequest& listenRequest)
 {
+    printf("Enter UDPTransport::EnableAdvertisementInstance\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::EnableAdvertisementInstance()"));
 
@@ -9033,6 +9387,7 @@ void UDPTransport::EnableAdvertisementInstance(ListenRequest& listenRequest)
                 if (listenRequest.m_requestParam == it->m_requestParam) {
                     m_listenFdsLock.Unlock(MUTEX_CONTEXT);
                     DecrementAndFetch(&m_refCount);
+                    printf("Exit UDPTransport::EnableAdvertisementInstance\n");
                     return;
                 }
             }
@@ -9040,6 +9395,7 @@ void UDPTransport::EnableAdvertisementInstance(ListenRequest& listenRequest)
         m_pendingAdvertisements.push_back(listenRequest);
         m_listenFdsLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::EnableAdvertisementInstance\n");
         return;
     }
 
@@ -9060,10 +9416,12 @@ void UDPTransport::EnableAdvertisementInstance(ListenRequest& listenRequest)
     QCC_DbgPrintf(("UDPTransport::EnableAdvertisementInstance(): Done"));
     m_isAdvertising = true;
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::EnableAdvertisementInstance\n");
 }
 
 void UDPTransport::DisableAdvertisementInstance(ListenRequest& listenRequest)
 {
+    printf("Enter UDPTransport::DisableAdvertisementInstance\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::DisableAdvertisementInstance()"));
 
@@ -9156,10 +9514,12 @@ void UDPTransport::DisableAdvertisementInstance(ListenRequest& listenRequest)
         m_isAdvertising = false;
     }
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::DisableAdvertisementInstance\n");
 }
 
 void UDPTransport::EnableDiscoveryListen()
 {
+    printf("Enter UDPTransport::EnableDiscoveryListen\n");
     QCC_DbgTrace(("UDPTransport::EnableDiscoveryListen()"));
 
     /*
@@ -9171,10 +9531,12 @@ void UDPTransport::EnableDiscoveryListen()
             DoStartListen(*i);
         }
     }
+    printf("Exit UDPTransport::EnableDiscoveryListen\n");
 }
 
 void UDPTransport::EnableDiscoveryInstance(ListenRequest& listenRequest)
 {
+    printf("Enter UDPTransport::EnableDiscoveryInstance\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::EnableDiscoveryInstance()"));
 
@@ -9205,6 +9567,7 @@ void UDPTransport::EnableDiscoveryInstance(ListenRequest& listenRequest)
                     QCC_DbgPrintf(("UDPTransport::EnableDiscoveryInstance(): Dup"));
                     m_listenFdsLock.Unlock(MUTEX_CONTEXT);
                     DecrementAndFetch(&m_refCount);
+                    printf("Exit UDPTransport::EnableDiscoveryInstance\n");
                     return;
                 }
             }
@@ -9213,6 +9576,7 @@ void UDPTransport::EnableDiscoveryInstance(ListenRequest& listenRequest)
         m_pendingDiscoveries.push_back(listenRequest);
         m_listenFdsLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::EnableDiscoveryInstance\n");
         return;
     }
 
@@ -9234,10 +9598,12 @@ void UDPTransport::EnableDiscoveryInstance(ListenRequest& listenRequest)
     QCC_DbgPrintf(("UDPTransport::EnableDiscoveryInstance(): m_isDiscovering = true"));
     m_isDiscovering = true;
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::EnableDiscoveryInstance\n");
 }
 
 void UDPTransport::DisableDiscoveryInstance(ListenRequest& listenRequest)
 {
+    printf("Enter UDPTransport::DisableDiscoveryInstance\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::DisableDiscoveryInstance()"));
 
@@ -9315,33 +9681,43 @@ void UDPTransport::DisableDiscoveryInstance(ListenRequest& listenRequest)
         m_isDiscovering = false;
     }
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::DisableDiscoveryInstance\n");
 }
 
 bool UDPTransport::EnableRouterAdvertisement() {
+    printf("Enter UDPTransport::EnableRouterAdvertisement\n");
     if (m_routerNameAdvertised == false && !m_routerName.empty() && m_numUntrustedClients < m_maxRemoteClientsUdp &&
         (m_maxAuth - m_currAuth) > 0 &&  (m_maxConn - m_currConn) > 0) {
+        printf("Exit UDPTransport::EnableRouterAdvertisement. Return true\n");
         return true;
     }
+    printf("Exit UDPTransport::EnableRouterAdvertisement. Return false\n");
     return false;
 }
 
 bool UDPTransport::DisableRouterAdvertisement() {
+    printf("Enter UDPTransport::DisableRouterAdvertisement\n");
     if (m_routerNameAdvertised == true && !m_routerName.empty() &&
         ((m_numUntrustedClients >= m_maxRemoteClientsUdp) ||
          (m_maxAuth - m_currAuth <= 0) || (m_maxConn - m_currConn <= 0))) {
+         
+        printf("Exit UDPTransport::DisableRouterAdvertisement\n");
         return true;
     }
+    printf("Exit UDPTransport::DisableRouterAdvertisement\n");
     return false;
 }
 
 void UDPTransport::UpdateDynamicScoreInstance(ListenRequest& listenRequest)
 {
+    printf("Enter UDPTransport::UpdateDynamicScoreInstance\n");
     QCC_UNUSED(listenRequest);
 
     uint32_t availConn = m_maxConn -  m_currConn;
     uint32_t availRemoteClientsUdp = m_maxRemoteClientsUdp - m_numUntrustedClients;
     availRemoteClientsUdp = std::min(availRemoteClientsUdp, availConn);
     IpNameService::Instance().UpdateDynamicScore(TRANSPORT_UDP, availConn, m_maxConn, availRemoteClientsUdp, m_maxRemoteClientsUdp);
+    printf("Exit UDPTransport::UpdateDynamicScoreInstance\n");
 }
 
 /*
@@ -9358,6 +9734,7 @@ static const uint16_t PORT_DEFAULT = 9955;
 
 QStatus UDPTransport::NormalizeListenSpec(const char* inSpec, qcc::String& outSpec, map<qcc::String, qcc::String>& argMap) const
 {
+    printf("Enter UDPTransport::NormalizeListenSpec\n");
     qcc::String family;
 
     /*
@@ -9382,6 +9759,7 @@ QStatus UDPTransport::NormalizeListenSpec(const char* inSpec, qcc::String& outSp
      */
     QStatus status = ParseArguments(GetTransportName(), inSpec, argMap);
     if (status != ER_OK) {
+        printf("Exit UDPTransport::NormalizeListenSpec. Return status\n");
         return status;
     }
 
@@ -9499,6 +9877,7 @@ QStatus UDPTransport::NormalizeListenSpec(const char* inSpec, qcc::String& outSp
                     QCC_LogError(ER_BUS_BAD_TRANSPORT_ARGS,
                                  ("UDPTransport::NormalizeListenSpec(): The addr \"%s\" is not a legal IPv4 address.",
                                   iter->second.c_str()));
+                    printf("Exit UDPTransport::NormalizeListenSpec. Return ER_BUS_BAD_TRANSPORT_ARGS\n");
                     return ER_BUS_BAD_TRANSPORT_ARGS;
                 }
                 iter->second = addr.ToString();
@@ -9507,6 +9886,7 @@ QStatus UDPTransport::NormalizeListenSpec(const char* inSpec, qcc::String& outSp
                 QCC_LogError(ER_BUS_BAD_TRANSPORT_ARGS,
                              ("UDPTransport::NormalizeListenSpec(): The addr \"%s\" is not a legal IPv4 address.",
                               iter->second.c_str()));
+                printf("Exit UDPTransport::NormalizeListenSpec. Return ER_BUS_BAD_TRANSPORT_ARGS\n");
                 return ER_BUS_BAD_TRANSPORT_ARGS;
             }
         }
@@ -9570,11 +9950,13 @@ QStatus UDPTransport::NormalizeListenSpec(const char* inSpec, qcc::String& outSp
         argMap["port"] = portString;
     }
 
+    printf("Exit UDPTransport::NormalizeListenSpec. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus UDPTransport::NormalizeTransportSpec(const char* inSpec, qcc::String& outSpec, map<qcc::String, qcc::String>& argMap) const
 {
+    printf("Enter UDPTransport::NormalizeTransportSpec\n");
     QCC_DbgTrace(("UDPTransport::NormalizeTransportSpec()"));
 
     QStatus status;
@@ -9589,6 +9971,7 @@ QStatus UDPTransport::NormalizeTransportSpec(const char* inSpec, qcc::String& ou
      */
     status = NormalizeListenSpec(inSpec, outSpec, argMap);
     if (status != ER_OK) {
+        printf("Exit UDPTransport::NormalizeTransportSpec. Return status\n");
         return status;
     }
 
@@ -9603,9 +9986,10 @@ QStatus UDPTransport::NormalizeTransportSpec(const char* inSpec, qcc::String& ou
     if ((i->second == ADDR4_DEFAULT)) {
         QCC_LogError(ER_BUS_BAD_TRANSPORT_ARGS,
                      ("UDPTransport::NormalizeTransportSpec(): The addr may not be the default address"));
+        printf("Exit UDPTransport::NormalizeTransportSpec. Return ER_BUS_BAD_TRANSPORT_ARGS\n");
         return ER_BUS_BAD_TRANSPORT_ARGS;
     }
-
+    printf("Exit UDPTransport::NormalizeTransportSpec. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -9616,6 +10000,7 @@ QStatus UDPTransport::NormalizeTransportSpec(const char* inSpec, qcc::String& ou
  */
 QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, BusEndpoint& newEp)
 {
+    printf("Enter UDPTransport::Connect\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::Connect(connectSpec=%s, opts=%p, newEp-%p)", connectSpec, &opts, &newEp));
 
@@ -9628,6 +10013,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
         QStatus status = ER_BUS_BAD_SESSION_OPTS;
         QCC_LogError(status, ("UDPTransport::Connect(): Supported options mismatch"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return status\n");
         return status;
     }
 
@@ -9647,6 +10033,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
     if (IsRunning() == false || m_stopping == true) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::Connect(): Not running or stopping; exiting"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return ER_BUS_TRANSPORT_NOT_STARTED\n");
         return ER_BUS_TRANSPORT_NOT_STARTED;
     }
 
@@ -9667,6 +10054,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
         status = ER_UDP_UNSUPPORTED;
         QCC_LogError(status, ("UDPTransport::Connect(): UDP Transport does not support raw traffic"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return status\n");
         return status;
     }
 
@@ -9681,6 +10069,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
     if (ER_OK != status) {
         QCC_LogError(status, ("UDPTransport::Connect(): Invalid UDP connect spec \"%s\"", connectSpec));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return status\n");
         return status;
     }
 
@@ -9741,6 +10130,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
     if (ER_OK != status) {
         QCC_LogError(status, ("UDPTransport::Connect(): Invalid INADDR_ANY connect spec"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return status\n");
         return status;
     }
 
@@ -9821,6 +10211,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
             QCC_DbgPrintf(("UDPTransport::Connect(): Explicit connection to self"));
             DecrementAndFetch(&m_connecting);
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::Connect. Return ER_BUS_ALREADY_LISTENING\n");
             return ER_BUS_ALREADY_LISTENING;
         }
 
@@ -9842,6 +10233,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
         QCC_LogError(status, ("UDPTransport::Connect(): Unable to read network interface configuration"));
         DecrementAndFetch(&m_connecting);
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return status\n");
         return status;
     }
 
@@ -9862,6 +10254,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
             QCC_DbgPrintf(("UDPTransport::Connect(): Attempted connection to self through loopback; exiting"));
             DecrementAndFetch(&m_connecting);
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::Connect. Return ER_BUS_ALREADY_LISTENING\n");
             return ER_BUS_ALREADY_LISTENING;
         }
 
@@ -9884,6 +10277,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
                     QCC_DbgPrintf(("UDPTransport::Connect(): Attempted connection to self; exiting"));
                     DecrementAndFetch(&m_connecting);
                     DecrementAndFetch(&m_refCount);
+                    printf("Exit UDPTransport::Connect. Return ER_BUS_ALREADY_LISTENING\n");
                     return ER_BUS_ALREADY_LISTENING;
                 }
             }
@@ -10037,6 +10431,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
         m_connLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_connecting);
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return status\n");
         return status;
     }
 
@@ -10064,6 +10459,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
 
         DecrementAndFetch(&m_connecting);
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return status\n");
         return status;
     }
 
@@ -10148,6 +10544,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
 
         DecrementAndFetch(&m_connecting);
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return status\n");
         return status;
     }
 
@@ -10261,6 +10658,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
         m_endpointListLock.Unlock(MUTEX_CONTEXT);
         DecrementAndFetch(&m_connecting);
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::Connect. Return status\n");
         return status;
     }
 
@@ -10337,6 +10735,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
     m_dynamicScoreUpdater.Alert();
     DecrementAndFetch(&m_connecting);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::Connect. Return status\n");
     return status;
 }
 
@@ -10346,6 +10745,7 @@ QStatus UDPTransport::Connect(const char* connectSpec, const SessionOpts& opts, 
  */
 QStatus UDPTransport::StartListen(const char* listenSpec)
 {
+    printf("Enter UDPTransport::StartListen\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::StartListen(\"%s\")", listenSpec));
 
@@ -10365,6 +10765,7 @@ QStatus UDPTransport::StartListen(const char* listenSpec)
     if (IsRunning() == false || m_stopping == true) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::StartListen(): Not running or stopping; exiting"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::StartListen. Return ER_BUS_TRANSPORT_NOT_STARTED\n");
         return ER_BUS_TRANSPORT_NOT_STARTED;
     }
 
@@ -10379,6 +10780,7 @@ QStatus UDPTransport::StartListen(const char* listenSpec)
     if (status != ER_OK) {
         QCC_LogError(status, ("UDPTransport::StartListen(): Invalid UDP listen spec \"%s\"", listenSpec));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::StartListen. Return status\n");
         return status;
     }
 
@@ -10407,6 +10809,7 @@ QStatus UDPTransport::StartListen(const char* listenSpec)
             status = ER_INVALID_ADDRESS;
             QCC_LogError(status, ("UDPTransport::StartListen(): IPv6 address (\"%s\") in \"u4addr\" not allowed", argMap["u4addr"].c_str()));
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::StartListen. Return status\n");
             return status;
         }
     }
@@ -10439,6 +10842,7 @@ QStatus UDPTransport::StartListen(const char* listenSpec)
         if (*i == normSpec) {
             m_listenSpecsLock.Unlock(MUTEX_CONTEXT);
             DecrementAndFetch(&m_refCount);
+            printf("Exit UDPTransport::StartListen. Return ER_BUS_ALREADY_LISTENING\n");
             return ER_BUS_ALREADY_LISTENING;
         }
     }
@@ -10447,11 +10851,13 @@ QStatus UDPTransport::StartListen(const char* listenSpec)
     QCC_DbgTrace(("UDPTransport::StartListen(): QueueStartListen(\"%s\")", normSpec.c_str()));
     QueueStartListen(normSpec);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::StartListen. Return ER_OK\n");
     return ER_OK;
 }
 
 void UDPTransport::QueueStartListen(qcc::String& normSpec)
 {
+    printf("Enter UDPTransport::QueueStartListen\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::QueueStartListen(\"%s\")", normSpec.c_str()));
 
@@ -10469,10 +10875,12 @@ void UDPTransport::QueueStartListen(qcc::String& normSpec)
     RunListenMachine(listenRequest);
     m_listenRequestsLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::QueueStartListen\n");
 }
 
 QStatus UDPTransport::DoStartListen(qcc::String& normSpec)
 {
+    printf("Enter UDPTransport::DoStartListen\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgPrintf(("UDPTransport::DoStartListen(\"%s\")", normSpec.c_str()));
 
@@ -10616,6 +11024,7 @@ QStatus UDPTransport::DoStartListen(qcc::String& normSpec)
     }
 
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::DoStartListen. Return status\n");
     return status;
 }
 
@@ -10627,6 +11036,7 @@ QStatus UDPTransport::DoStartListen(qcc::String& normSpec)
  */
 QStatus UDPTransport::StopListen(const char* listenSpec)
 {
+    printf("Enter UDPTransport::StopListen\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::StopListen()"));
 
@@ -10646,6 +11056,7 @@ QStatus UDPTransport::StopListen(const char* listenSpec)
     if (IsRunning() == false || m_stopping == true) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::StopListen(): Not running or stopping; exiting"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::StopListen. Return ER_BUS_TRANSPORT_NOT_STARTED\n");
         return ER_BUS_TRANSPORT_NOT_STARTED;
     }
 
@@ -10660,6 +11071,7 @@ QStatus UDPTransport::StopListen(const char* listenSpec)
     if (status != ER_OK) {
         QCC_LogError(status, ("UDPTransport::StopListen(): Invalid UDP listen spec \"%s\"", listenSpec));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::StopListen. Return status\n");
         return status;
     }
 
@@ -10695,11 +11107,13 @@ QStatus UDPTransport::StopListen(const char* listenSpec)
     m_listenSpecsLock.Unlock(MUTEX_CONTEXT);
 
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::StopListen. Return ER_OK\n");
     return ER_OK;
 }
 
 void UDPTransport::QueueStopListen(qcc::String& normSpec)
 {
+    printf("Enter UDPTransport::QueueStopListen\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::QueueStopListen()"));
 
@@ -10717,10 +11131,12 @@ void UDPTransport::QueueStopListen(qcc::String& normSpec)
     RunListenMachine(listenRequest);
     m_listenRequestsLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::QueueStopListen\n");
 }
 
 void UDPTransport::DoStopListen(qcc::String& normSpec)
 {
+    printf("Enter UDPTransport::DoStopListen\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::DoStopListen()"));
 
@@ -10749,10 +11165,12 @@ void UDPTransport::DoStopListen(qcc::String& normSpec)
 
     m_listenFdsLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::DoStopListen\n");
 }
 
 bool UDPTransport::NewDiscoveryOp(DiscoveryOp op, qcc::String namePrefix, bool& isFirst)
 {
+    printf("Enter UDPTransport::NewDiscoveryOp\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::NewDiscoveryOp()"));
 
@@ -10777,11 +11195,13 @@ bool UDPTransport::NewDiscoveryOp(DiscoveryOp op, qcc::String namePrefix, bool& 
     isFirst = first;
     bool rc = m_discovering.empty();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::NewDiscoveryOp. Return rc\n");
     return rc;
 }
 
 bool UDPTransport::NewAdvertiseOp(qcc::String name,  bool quietly)
 {
+    printf("Enter UDPTransport::NewAdvertiseOp\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::NewAdvertiseOp()"));
 
@@ -10800,11 +11220,13 @@ bool UDPTransport::NewAdvertiseOp(qcc::String name,  bool quietly)
         m_advertising.push_back(AdvEntry(name, quietly));
     }
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::NewAdvertiseOp\n");
     return first;
 }
 
 bool UDPTransport::CancelAdvertiseOp(qcc::String name,  bool& quietly)
 {
+    printf("Enter UDPTransport::CancelAdvertiseOp\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::CancelAdvertiseOp()"));
 
@@ -10827,11 +11249,13 @@ bool UDPTransport::CancelAdvertiseOp(qcc::String name,  bool& quietly)
 
     bool rc = m_advertising.empty();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::CancelAdvertiseOp. Return rc\n");
     return rc;
 }
 
 bool UDPTransport::NewListenOp(ListenOp op, qcc::String normSpec)
 {
+    printf("Enter UDPTransport::NewListenOp\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::NewListenOp()"));
 
@@ -10850,11 +11274,13 @@ bool UDPTransport::NewListenOp(ListenOp op, qcc::String normSpec)
 
     bool rc = m_listening.empty();
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::NewListenOp. Return rc\n");
     return rc;
 }
 
 void UDPTransport::EnableDiscovery(const char* namePrefix, TransportMask transports)
 {
+    printf("Enter UDPTransport::EnableDiscovery\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::EnableDiscovery()"));
 
@@ -10874,6 +11300,7 @@ void UDPTransport::EnableDiscovery(const char* namePrefix, TransportMask transpo
     if (IsRunning() == false || m_stopping == true) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::EnableDiscovery(): Not running or stopping; exiting"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::EnableDiscovery\n");
         return;
     }
 
@@ -10889,10 +11316,12 @@ void UDPTransport::EnableDiscovery(const char* namePrefix, TransportMask transpo
 
     QueueEnableDiscovery(namePrefix, transports);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::EnableDiscovery\n");
 }
 
 void UDPTransport::QueueEnableDiscovery(const char* namePrefix, TransportMask transports)
 {
+    printf("Enter UDPTransport::QueueEnableDiscovery\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::QueueEnableDiscovery()"));
 
@@ -10906,10 +11335,12 @@ void UDPTransport::QueueEnableDiscovery(const char* namePrefix, TransportMask tr
     RunListenMachine(listenRequest);
     m_listenRequestsLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::QueueEnableDiscovery\n");
 }
 
 void UDPTransport::DisableDiscovery(const char* namePrefix, TransportMask transports)
 {
+    printf("Enter UDPTransport::DisableDiscovery\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::DisableDiscovery()"));
 
@@ -10929,15 +11360,18 @@ void UDPTransport::DisableDiscovery(const char* namePrefix, TransportMask transp
     if (IsRunning() == false || m_stopping == true) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::DisbleDiscovery(): Not running or stopping; exiting"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::DisableDiscovery\n");
         return;
     }
 
     QueueDisableDiscovery(namePrefix, transports);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::DisableDiscovery\n");
 }
 
 void UDPTransport::QueueDisableDiscovery(const char* namePrefix, TransportMask transports)
 {
+    printf("Enter UDPTransport::QueueDisableDiscovery\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::QueueDisableDiscovery()"));
 
@@ -10951,10 +11385,12 @@ void UDPTransport::QueueDisableDiscovery(const char* namePrefix, TransportMask t
     RunListenMachine(listenRequest);
     m_listenRequestsLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::QueueDisableDiscovery\n");
 }
 
 QStatus UDPTransport::EnableAdvertisement(const qcc::String& advertiseName, bool quietly, TransportMask transports)
 {
+    printf("Enter UDPTransport::EnableAdvertisement\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::EnableAdvertisement()"));
 
@@ -10974,6 +11410,7 @@ QStatus UDPTransport::EnableAdvertisement(const qcc::String& advertiseName, bool
     if (IsRunning() == false || m_stopping == true) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::EnableAdvertisement(): Not running or stopping; exiting"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::EnableAdvertisement. Return ER_BUS_TRANSPORT_NOT_STARTED\n");
         return ER_BUS_TRANSPORT_NOT_STARTED;
     }
 
@@ -10989,12 +11426,14 @@ QStatus UDPTransport::EnableAdvertisement(const qcc::String& advertiseName, bool
 
     QueueEnableAdvertisement(advertiseName, quietly, transports);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::EnableAdvertisement. Return ER_OK\n");
     return ER_OK;
 }
 
 
 void UDPTransport::QueueEnableAdvertisement(const qcc::String& advertiseName, bool quietly, TransportMask transports)
 {
+    printf("Enter UDPTransport::QueueEnableAdvertisement\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::QueueEnableAdvertisement()"));
 
@@ -11008,10 +11447,12 @@ void UDPTransport::QueueEnableAdvertisement(const qcc::String& advertiseName, bo
     RunListenMachine(listenRequest);
     m_listenRequestsLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::QueueEnableAdvertisement\n");
 }
 
 void UDPTransport::DisableAdvertisement(const qcc::String& advertiseName, TransportMask transports)
 {
+    printf("Enter UDPTransport::DisableAdvertisement\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::DisableAdvertisement()"));
 
@@ -11031,15 +11472,18 @@ void UDPTransport::DisableAdvertisement(const qcc::String& advertiseName, Transp
     if (IsRunning() == false || m_stopping == true) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::DisableAdvertisement(): Not running or stopping; exiting"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::DisableAdvertisement\n");
         return;
     }
 
     QueueDisableAdvertisement(advertiseName, transports);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::DisableAdvertisement\n");
 }
 
 void UDPTransport::QueueDisableAdvertisement(const qcc::String& advertiseName, TransportMask transports)
 {
+    printf("Enter UDPTransport::QueueDisableAdvertisement\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgTrace(("UDPTransport::QueueDisableAdvertisement()"));
 
@@ -11052,10 +11496,12 @@ void UDPTransport::QueueDisableAdvertisement(const qcc::String& advertiseName, T
     RunListenMachine(listenRequest);
     m_listenRequestsLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::QueueDisableAdvertisement\n");
 }
 
 void UDPTransport::UpdateRouterAdvertisementAndDynamicScore()
 {
+    printf("Enter UDPTransport::UpdateRouterAdvertisementAndDynamicScore\n");
     QCC_DbgPrintf(("UDPTransport::UpdateRouterAdvertisementAndDynamicScore()"));
 
     /*
@@ -11073,14 +11519,17 @@ void UDPTransport::UpdateRouterAdvertisementAndDynamicScore()
      */
     if (IsRunning() == false || m_stopping == true) {
         QCC_DbgPrintf(("UDPTransport::UpdateRouterAdvertisementAndDynamicScore(): Not running or stopping; exiting"));
+        printf("Exit UDPTransport::UpdateRouterAdvertisementAndDynamicScore\n");
         return;
     }
 
     QueueUpdateRouterAdvertisementAndDynamicScore();
+    printf("Exit UDPTransport::UpdateRouterAdvertisementAndDynamicScore\n");
 }
 
 void UDPTransport::QueueUpdateRouterAdvertisementAndDynamicScore()
 {
+    printf("Enter UDPTransport::QueueUpdateRouterAdvertisementAndDynamicScore\n");
     QCC_DbgPrintf(("UDPTransport::QueueUpdateRouterAdvertisementAndDynamicScore()"));
 
     ListenRequest updateScoreListenRequest;
@@ -11108,6 +11557,7 @@ void UDPTransport::QueueUpdateRouterAdvertisementAndDynamicScore()
         m_routerNameAdvertised = false;
     }
     m_listenRequestsLock.Unlock(MUTEX_CONTEXT);
+    printf("Exit UDPTransport::QueueUpdateRouterAdvertisementAndDynamicScore\n");
 }
 
 void UDPTransport::FoundCallback::Found(const qcc::String& busAddr, const qcc::String& guid,
@@ -11116,6 +11566,7 @@ void UDPTransport::FoundCallback::Found(const qcc::String& busAddr, const qcc::S
 //  Makes lots of noise!
     //QCC_DbgTrace(("UDPTransport::FoundCallback::Found(): busAddr = \"%s\" nameList %d", busAddr.c_str(), nameList.size()));
 
+    printf("Enter UDPTransport::FoundCallback::Found\n");
     qcc::String addr("addr=");
     qcc::String port("port=");
     qcc::String comma(",");
@@ -11123,6 +11574,7 @@ void UDPTransport::FoundCallback::Found(const qcc::String& busAddr, const qcc::S
     size_t i = busAddr.find(addr);
     if (i == qcc::String::npos) {
         QCC_DbgPrintf(("UDPTransport::FoundCallback::Found(): No addr in busaddr."));
+        printf("Exit UDPTransport::FoundCallback::Found\n");
         return;
     }
     i += addr.size();
@@ -11130,12 +11582,14 @@ void UDPTransport::FoundCallback::Found(const qcc::String& busAddr, const qcc::S
     size_t j = busAddr.find(comma, i);
     if (j == qcc::String::npos) {
         QCC_DbgPrintf(("UDPTransport::FoundCallback::Found(): No comma after addr in busaddr."));
+        printf("Exit UDPTransport::FoundCallback::Found\n");
         return;
     }
 
     size_t k = busAddr.find(port);
     if (k == qcc::String::npos) {
         QCC_DbgPrintf(("UDPTransport::FoundCallback::Found(): No port in busaddr."));
+        printf("Exit UDPTransport::FoundCallback::Found\n");
         return;
     }
     k += port.size();
@@ -11152,10 +11606,12 @@ void UDPTransport::FoundCallback::Found(const qcc::String& busAddr, const qcc::S
     if (m_listener) {
         m_listener->FoundNames(newBusAddr, guid, TRANSPORT_UDP, &nameList, timer);
     }
+    printf("Exit UDPTransport::FoundCallback::Found\n");
 }
 
 void UDPTransport::NetworkEventCallback::Handler(const std::map<qcc::String, qcc::IPAddress>& ifMap)
 {
+    printf("Enter UDPTransport::NetworkEventCallback::Handler\n");
     IncrementAndFetch(&m_transport.m_refCount);
     QCC_DbgPrintf(("UDPTransport::NetworkEventCallback::Handler()"));
 
@@ -11174,15 +11630,18 @@ void UDPTransport::NetworkEventCallback::Handler(const std::map<qcc::String, qcc
      */
     if (m_transport.IsRunning() == false || m_transport.m_stopping == true) {
         QCC_LogError(ER_BUS_TRANSPORT_NOT_STARTED, ("UDPTransport::NetworkEventCallback::Handler(): Not running or stopping; exiting"));
+        printf("Exit UDPTransport::NetworkEventCallback::Handler\n");
         return;
     }
 
     m_transport.QueueHandleNetworkEvent(ifMap);
     DecrementAndFetch(&m_transport.m_refCount);
+    printf("Exit UDPTransport::NetworkEventCallback::Handler\n");
 }
 
 void UDPTransport::QueueHandleNetworkEvent(const std::map<qcc::String, qcc::IPAddress>& ifMap)
 {
+    printf("Enter UDPTransport::QueueHandleNetworkEvent\n");
     IncrementAndFetch(&m_refCount);
     QCC_DbgPrintf(("UDPTransport::QueueHandleNetworkEvent()"));
 
@@ -11195,6 +11654,7 @@ void UDPTransport::QueueHandleNetworkEvent(const std::map<qcc::String, qcc::IPAd
     RunListenMachine(listenRequest);
     m_listenRequestsLock.Unlock(MUTEX_CONTEXT);
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::QueueHandleNetworkEvent");
 }
 
 /* This is the callback handler that is invoked when the name service detects that a network interface
@@ -11208,6 +11668,7 @@ void UDPTransport::QueueHandleNetworkEvent(const std::map<qcc::String, qcc::IPAd
  */
 void UDPTransport::HandleNetworkEventInstance(ListenRequest& listenRequest)
 {
+    printf("Enter UDPTransport::HandleNetworkEventInstance\n");
     QCC_DbgTrace(("UDPTransport::HandleNetworkEventInstance()"));
 
     std::map<qcc::String, qcc::IPAddress>& ifMap = listenRequest.ifMap;
@@ -11229,6 +11690,7 @@ void UDPTransport::HandleNetworkEventInstance(ListenRequest& listenRequest)
          (wildcardAddressRequested && m_wildcardAddressProcessed))) {
         QCC_DbgPrintf(("UDPTransport::HandleNetworkEventInstance(): Listening on INADDR_ANY"));
         DecrementAndFetch(&m_refCount);
+        printf("Exit UDPTransport::HandleNetworkEventInstance\n");
         return;
     }
 
@@ -11647,10 +12109,12 @@ void UDPTransport::HandleNetworkEventInstance(ListenRequest& listenRequest)
     m_pendingDiscoveries.clear();
 
     DecrementAndFetch(&m_refCount);
+    printf("Exit UDPTransport::HandleNetworkEventInstance\n");
 }
 
 void UDPTransport::CheckEndpointLocalMachine(UDPEndpoint endpoint)
 {
+    printf("Enter UDPTransport::CheckEndpointLocalMachine\n");
 #ifdef QCC_OS_GROUP_WINDOWS
     String ipAddrStr;
     endpoint->GetRemoteIp(ipAddrStr);
@@ -11667,15 +12131,19 @@ void UDPTransport::CheckEndpointLocalMachine(UDPEndpoint endpoint)
 #else
     QCC_UNUSED(endpoint);
 #endif
+    printf("Exit UDPTransport::CheckEndpointLocalMachine\n");
 }
 
 ThreadReturn STDCALL UDPTransport::DynamicScoreUpdater::Run(void* arg) {
+    
+    printf("Enter UDPTransport::DynamicScoreUpdater::Run\n");
     QCC_UNUSED(arg);
     while (!IsStopping()) {
         Event::Wait(Event::neverSet);
         GetStopEvent().ResetEvent();
         m_transport.UpdateRouterAdvertisementAndDynamicScore();
     }
+    printf("Exit UDPTransport::DynamicScoreUpdater::Run. Return 0\n");
     return 0;
 }
 } // namespace ajn

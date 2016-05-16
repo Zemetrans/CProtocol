@@ -75,24 +75,25 @@ class _DaemonEndpoint : public _RemoteEndpoint {
      *
      * @param   processId   Process ID number.
      */
-    void SetProcessId(uint32_t processId) { this->processId = processId; }
+    void SetProcessId(uint32_t processId) { printf("Enter SetProcessId\n"); this->processId = processId; printf("Exit SetProcessId\n"); }
 
     /**
      * Return the process id of the endpoint.
      *
      * @return  Process ID number.
      */
-    uint32_t GetProcessId() const { return processId; }
+    uint32_t GetProcessId() const {printf("Enter and Exit GetProcessId. Return processId\n"); return processId; }
 
     /**
      * Indicates if the endpoint supports reporting UNIX style user, group, and process IDs.
      *
      * @return  'true' if UNIX IDs supported, 'false' if not supported.
      */
-    bool SupportsUnixIDs() const { return true; }
+    bool SupportsUnixIDs() const {printf("Enter SupportUnixIDs. And exit. Return true\n"); return true; }
 
     QStatus SetIdleTimeouts(uint32_t& reqIdleTimeout, uint32_t& reqProbeTimeout)
     {
+        printf("Enter SetIdleTimeouts\n");
         uint32_t maxIdleProbes = m_transport->m_numHbeatProbes;
 
         /* If reqProbeTimeout == 0, Make no change to Probe timeout. */
@@ -117,6 +118,7 @@ class _DaemonEndpoint : public _RemoteEndpoint {
         if (reqIdleTimeout > m_transport->m_maxHbeatIdleTimeout) {
             reqIdleTimeout = m_transport->m_maxHbeatIdleTimeout;
         }
+        printf("Exit SetIdleTimeouts. Return _RemoteEndpoint::SetIdleTimeouts(***) \n");
         return _RemoteEndpoint::SetIdleTimeouts(reqIdleTimeout, reqProbeTimeout, maxIdleProbes);
     }
 
@@ -130,6 +132,7 @@ static const int CRED_TIMEOUT = 5000;  /**< Times out credentials exchange to av
 
 static QStatus GetSocketCreds(SocketFd sockFd, uid_t* uid, gid_t* gid, pid_t* pid)
 {
+    printf("Enter GetSocketCreds\n");
     QStatus status = ER_OK;
 #if defined(QCC_OS_DARWIN)
     *pid = 0;
@@ -198,12 +201,13 @@ static QStatus GetSocketCreds(SocketFd sockFd, uid_t* uid, gid_t* gid, pid_t* pi
         }
     }
 #endif
-
+    printf("Exit GetSocketCreds. Return status\n");
     return status;
 }
 
 void* DaemonTransport::Run(void* arg)
 {
+    printf("Enter DaemonTransport::Run\n");
     SocketFd listenFd = (SocketFd)(ptrdiff_t)arg;
     QStatus status = ER_OK;
 
@@ -283,11 +287,13 @@ void* DaemonTransport::Run(void* arg)
     qcc::Close(listenFd);
 
     QCC_DbgPrintf(("DaemonTransport::Run is exiting status=%s\n", QCC_StatusText(status)));
+    printf("Exit DaemonTransport::Run. Return (void*)status\n");
     return (void*) status;
 }
 
 QStatus DaemonTransport::NormalizeTransportSpec(const char* inSpec, qcc::String& outSpec, map<qcc::String, qcc::String>& argMap) const
 {
+    printf("Enter DaemonTransport::NormalizeTransportSpec\n");
     QStatus status = ParseArguments(DaemonTransport::TransportName, inSpec, argMap);
     qcc::String path = Trim(argMap["path"]);
     qcc::String abstract = Trim(argMap["abstract"]);
@@ -305,15 +311,17 @@ QStatus DaemonTransport::NormalizeTransportSpec(const char* inSpec, qcc::String&
             status = ER_BUS_BAD_TRANSPORT_ARGS;
         }
     }
-
+    printf("Exit DaemonTransport::NormalizeTransportSpec. Return status\n");
     return status;
 }
 
 static QStatus ListenFd(map<qcc::String, qcc::String>& serverArgs, SocketFd& listenFd)
 {
+    printf("Enter ListenFd\n");
     QStatus status = Socket(QCC_AF_UNIX, QCC_SOCK_STREAM, listenFd);
     if (status != ER_OK) {
         QCC_LogError(status, ("DaemonTransport::ListenFd(): Socket() failed"));
+        printf("Exit ListenFd. Return status\n");
         return status;
     }
 
@@ -327,6 +335,7 @@ static QStatus ListenFd(map<qcc::String, qcc::String>& serverArgs, SocketFd& lis
         } else {
             status = ER_BUS_BAD_TRANSPORT_ARGS;
             QCC_LogError(status, ("DaemonTransport::ListenFd(): Invalid listen spec for unix transport"));
+            printf("Exit ListenFd. Return status\n");
             return status;
         }
     }
@@ -346,16 +355,20 @@ static QStatus ListenFd(map<qcc::String, qcc::String>& serverArgs, SocketFd& lis
             QCC_LogError(status, ("DaemonTransport::ListenFd(): Listen failed"));
         }
     }
+    printf("Exit ListenFd. Return status\n");
     return status;
 }
 
 QStatus DaemonTransport::StartListen(const char* listenSpec)
 {
 
+    printf("Enter DaemonTransport::StartListen\n");
     if (stopping == true) {
+    	printf("Exit DaemonTransport::StartListen. Return ER_BUS_TRANSPORT_NOT_STARTED\n");
         return ER_BUS_TRANSPORT_NOT_STARTED;
     }
     if (IsRunning()) {
+    	printf("Exit DaemonTransport::StartListen. Return ER_BUS_ALREADY_LISTENING\n");
         return ER_BUS_ALREADY_LISTENING;
     }
     /* Normalize the listen spec. */
@@ -365,6 +378,7 @@ QStatus DaemonTransport::StartListen(const char* listenSpec)
     status = NormalizeTransportSpec(listenSpec, normSpec, serverArgs);
     if (status != ER_OK) {
         QCC_LogError(status, ("DaemonTransport::StartListen(): Invalid Unix listen spec \"%s\"", listenSpec));
+        printf("Exit DaemonTransport::StartListen. Return status\n");
         return status;
     }
     SocketFd listenFd = qcc::INVALID_SOCKET_FD;
@@ -375,12 +389,15 @@ QStatus DaemonTransport::StartListen(const char* listenSpec)
     if ((listenFd != qcc::INVALID_SOCKET_FD) && (status != ER_OK)) {
         qcc::Close(listenFd);
     }
+    printf("Exit DaemonTransport::StartListen. Return status\n");
     return status;
 }
 
 QStatus DaemonTransport::StopListen(const char* listenSpec)
 {
+    printf("Enter DaemonTransport::StopListen\n");
     QCC_UNUSED(listenSpec);
+    printf("Exit DaemonTransport::StopListen. Return Thread::Stop()\n");
     return Thread::Stop();
 }
 

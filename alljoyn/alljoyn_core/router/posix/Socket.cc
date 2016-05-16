@@ -20,6 +20,7 @@
  *    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  ******************************************************************************/
 
+#include <stdio.h>
 #include <qcc/platform.h>
 
 #include <algorithm>
@@ -62,6 +63,7 @@ extern QStatus GetSockAddr(const sockaddr_storage* addrBuf, socklen_t addrSize, 
 static QStatus SendSGCommon(SocketFd sockfd, struct sockaddr_storage* addr, socklen_t addrLen,
                             const ScatterGatherList& sg, size_t& sent, SendMsgFlags flags)
 {
+    printf("Enter SendSGCommon\n");
     QStatus status = ER_OK;
     ssize_t ret;
     struct msghdr msg;
@@ -98,20 +100,23 @@ static QStatus SendSGCommon(SocketFd sockfd, struct sockaddr_storage* addr, sock
         sent = static_cast<size_t>(ret);
     }
     delete[] iov;
+    printf("Exit SendSGCommon. Return status\n");
     return status;
 }
 
 QStatus SendSG(SocketFd sockfd, const ScatterGatherList& sg, size_t& sent, SendMsgFlags flags)
 {
+    printf("Enter SendSG\n");
     QCC_DbgTrace(("SendSG(sockfd = %d, sg[%u:%u/%u], sent = <>, flags = 0x%x)",
                   sockfd, sg.Size(), sg.DataSize(), sg.MaxDataSize(), flags));
-
+    printf("Exit SendSG. Return SendSGCommon(***)\n");
     return SendSGCommon(sockfd, NULL, 0, sg, sent, flags);
 }
 
 QStatus SendToSG(SocketFd sockfd, IPAddress& remoteAddr, uint16_t remotePort,
                  const ScatterGatherList& sg, size_t& sent, SendMsgFlags flags)
 {
+    printf("Enter SendToSG\n");
     struct sockaddr_storage addr;
     socklen_t addrLen = sizeof(addr);
 
@@ -121,15 +126,17 @@ QStatus SendToSG(SocketFd sockfd, IPAddress& remoteAddr, uint16_t remotePort,
 
     QStatus status = MakeSockAddr(remoteAddr, remotePort, &addr, addrLen);
     if (status != ER_OK) {
+        printf("Exit SendToSG. Return status\n");
         return status;
     }
-
+    printf("Exit SendToSG. Return SendSGCommon(***)\n");
     return SendSGCommon(sockfd, &addr, addrLen, sg, sent, flags);
 }
 
 static QStatus RecvSGCommon(SocketFd sockfd, struct sockaddr_storage* addr, socklen_t* addrLen,
                             ScatterGatherList& sg, size_t& received)
 {
+    printf("Enter RecvSGCommon\n");
     QStatus status = ER_OK;
     ssize_t ret;
     struct msghdr msg;
@@ -175,15 +182,18 @@ static QStatus RecvSGCommon(SocketFd sockfd, struct sockaddr_storage* addr, sock
     }
 #endif
 
+    printf("Exit RecvSGCommon. Return status\n");
     return status;
 }
 
 
 QStatus RecvSG(SocketFd sockfd, ScatterGatherList& sg, size_t& received)
 {
+    printf("Enter RecvSG\n");
     socklen_t addrLen = 0;
     QCC_DbgTrace(("RecvSG(sockfd = %d, sg = <>, received = <>)", sockfd));
 
+    printf("Exit RecvSG. Return RecvSGCommon(***)\n");
     return RecvSGCommon(sockfd, NULL, &addrLen, sg, received);
 }
 
@@ -191,6 +201,7 @@ QStatus RecvSG(SocketFd sockfd, ScatterGatherList& sg, size_t& received)
 QStatus RecvFromSG(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& remotePort,
                    ScatterGatherList& sg, size_t& received)
 {
+    printf("Enter RecvFromSG\n");
     QStatus status;
     struct sockaddr_storage addr;
     socklen_t addrLen = sizeof(addr);
@@ -201,6 +212,7 @@ QStatus RecvFromSG(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& remotePort,
         QCC_DbgTrace(("RecvFromSG(sockfd = %d, remoteAddr = %s, remotePort = %u, sg = <>, sent = <>)",
                       sockfd, remoteAddr.ToString().c_str(), remotePort));
     }
+    printf("Exit RecvFromSG. Return status\n");
     return status;
 }
 } // namespace qcc

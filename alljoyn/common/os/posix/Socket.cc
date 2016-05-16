@@ -65,14 +65,17 @@ const int CONNECT_TIMEOUT = 5;
 
 static void DisableSigPipe(SocketFd socket)
 {
+    printf("Enter DisableSigPip\n");
     int disableSigPipe = 1;
     setsockopt(socket, SOL_SOCKET, SO_NOSIGPIPE, &disableSigPipe, sizeof(disableSigPipe));
+    printf("Exit DisableSigPip\n");
 }
 #endif
 
 QStatus MakeSockAddr(const char* path,
                      struct sockaddr_storage* addrBuf, socklen_t& addrSize)
 {
+    printf("Enter MakeSockAddr\n");
     size_t pathLen = strlen(path);
     struct sockaddr_un sa;
     QCC_ASSERT((size_t)addrSize >= sizeof(sa));
@@ -89,12 +92,14 @@ QStatus MakeSockAddr(const char* path,
         addrSize = offsetof(struct sockaddr_un, sun_path) + pathLen;
 #else /* Non-linux platforms */
         QCC_LogError(ER_NOT_IMPLEMENTED, ("Abstract socket paths are not supported"));
+        printf("Exit MakeSockAddr. Return ER_NOT_IMPLEMENTED\n");
         return ER_NOT_IMPLEMENTED;
 #endif
     } else {
         addrSize = sizeof(sa);
     }
     memcpy(addrBuf, &sa, sizeof(sa));
+    printf("Exit MakeSockAddr. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -102,6 +107,7 @@ QStatus MakeSockAddr(const char* path,
 QStatus MakeSockAddr(const IPAddress& addr, uint16_t port, uint32_t scopeId,
                      struct sockaddr_storage* addrBuf, socklen_t& addrSize)
 {
+    printf("Enter MakeSockAddr\n");
     if (addr.IsIPv4()) {
         struct sockaddr_in sa;
         QCC_ASSERT((size_t)addrSize >= sizeof(sa));
@@ -123,18 +129,21 @@ QStatus MakeSockAddr(const IPAddress& addr, uint16_t port, uint32_t scopeId,
         addrSize = sizeof(sa);
         memcpy(addrBuf, &sa, sizeof(sa));
     }
+    printf("Exit MakeSockAddr. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus MakeSockAddr(const IPAddress& addr, uint16_t port,
                      struct sockaddr_storage* addrBuf, socklen_t& addrSize)
 {
+    printf("Enter and Exit MakeSockAddr. Return MakeSockAddr(addr, port, 0, addrBuf, addrSize); \n");
     return MakeSockAddr(addr, port, 0, addrBuf, addrSize);
 }
 
 QStatus GetSockAddr(const sockaddr_storage* addrBuf, socklen_t addrSize,
                     IPAddress& addr, uint16_t& port)
 {
+    printf("Enter GetSockAddr\n");
     QStatus status = ER_OK;
     char hostname[NI_MAXHOST];
     char servInfo[NI_MAXSERV];
@@ -162,22 +171,25 @@ QStatus GetSockAddr(const sockaddr_storage* addrBuf, socklen_t addrSize,
         addr = IPAddress(hostname);
         port = atoi(servInfo);
     }
-
+    printf("Exit GetSockAddr. Return status\n");
     return status;
 }
 
 uint32_t GetLastError()
 {
+    printf("Enter and Exit GetLastError. Return errno\n");
     return errno;
 }
 
 qcc::String GetLastErrorString()
 {
+    printf("Enter and Exit GetLastErrorString. Return strerror(errno)\n");
     return strerror(errno);
 }
 
 QStatus Socket(AddressFamily addrFamily, SocketType type, SocketFd& sockfd)
 {
+    printf("Enter Socket\n");
     QStatus status = ER_OK;
     int ret;
 
@@ -193,12 +205,14 @@ QStatus Socket(AddressFamily addrFamily, SocketType type, SocketFd& sockfd)
         DisableSigPipe(sockfd);
 #endif
     }
+    printf("Exit Socket. Return status\n");
     return status;
 }
 
 
 QStatus Connect(SocketFd sockfd, const IPAddress& remoteAddr, uint16_t remotePort)
 {
+    printf("Enter Connect\n");
     QStatus status = ER_OK;
     int ret;
     struct sockaddr_storage addr;
@@ -208,6 +222,7 @@ QStatus Connect(SocketFd sockfd, const IPAddress& remoteAddr, uint16_t remotePor
 
     status = MakeSockAddr(remoteAddr, remotePort, &addr, addrLen);
     if (status != ER_OK) {
+        printf("Exit Connect. Return status\n");
         return status;
     }
 
@@ -288,11 +303,13 @@ QStatus Connect(SocketFd sockfd, const IPAddress& remoteAddr, uint16_t remotePor
         }
     }
 #endif
+    printf("Exit Connect. Return status\n");
     return status;
 }
 
 QStatus Connect(SocketFd sockfd, const char* pathName)
 {
+    printf("Enter Connect\n");
     QStatus status = ER_OK;
     int ret;
     struct sockaddr_storage addr;
@@ -302,6 +319,7 @@ QStatus Connect(SocketFd sockfd, const char* pathName)
 
     status = MakeSockAddr(pathName, &addr, addrLen);
     if (status != ER_OK) {
+        printf("Exit Connect. Return status\n");
         return status;
     }
 
@@ -321,12 +339,14 @@ QStatus Connect(SocketFd sockfd, const char* pathName)
             /* Higher level code is responsible for closing the socket */
         }
     }
+    printf("Exit Connect. Return status\n");
     return status;
 }
 
 
 QStatus Bind(SocketFd sockfd, const IPAddress& localAddr, uint16_t localPort)
 {
+    printf("Enter Bind\n");
     QStatus status = ER_OK;
     int ret;
     struct sockaddr_storage addr;
@@ -337,6 +357,7 @@ QStatus Bind(SocketFd sockfd, const IPAddress& localAddr, uint16_t localPort)
 
     status = MakeSockAddr(localAddr, localPort, &addr, addrLen);
     if (status != ER_OK) {
+        printf("Exit Bind. Return status\n");
         return status;
     }
 
@@ -346,12 +367,14 @@ QStatus Bind(SocketFd sockfd, const IPAddress& localAddr, uint16_t localPort)
         QCC_LogError(status, ("Binding (sockfd = %u) to %s %d: %d - %s", sockfd,
                               localAddr.ToString().c_str(), localPort, errno, strerror(errno)));
     }
+    printf("Exit Bind. Return status\n");
     return status;
 }
 
 
 QStatus Bind(SocketFd sockfd, const char* pathName)
 {
+    printf("Enter Bind\n");
     QStatus status = ER_OK;
     int ret;
     struct sockaddr_storage addr;
@@ -361,6 +384,7 @@ QStatus Bind(SocketFd sockfd, const char* pathName)
 
     status = MakeSockAddr(pathName, &addr, addrLen);
     if (status != ER_OK) {
+        printf("Exit Bind. Return status\n");
         return status;
     }
 
@@ -370,12 +394,14 @@ QStatus Bind(SocketFd sockfd, const char* pathName)
         QCC_LogError(status, ("Binding (sockfd = %u) to %s: %d - %s", sockfd,
                               pathName, errno, strerror(errno)));
     }
+    printf("Exit Bind. Return status\n");
     return status;
 }
 
 
 QStatus Listen(SocketFd sockfd, int backlog)
 {
+    printf("Enter Listen\n");
     QStatus status = ER_OK;
     int ret;
 
@@ -386,12 +412,14 @@ QStatus Listen(SocketFd sockfd, int backlog)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("Listening (sockfd = %u): %d - %s", sockfd, errno, strerror(errno)));
     }
+    printf("Exit Listen. Return status\n");
     return status;
 }
 
 
 QStatus Accept(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& remotePort, SocketFd& newSockfd)
 {
+    printf("Enter Accept\n");
     QStatus status = ER_OK;
     int ret;
     struct sockaddr_storage addr;
@@ -439,20 +467,24 @@ QStatus Accept(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& remotePort, Soc
             qcc::Close(newSockfd);
         }
     }
+    printf("Exit Accept. Return status\n");
     return status;
 }
 
 
 QStatus Accept(SocketFd sockfd, SocketFd& newSockfd)
 {
+    printf("Enter Accept\n");
     IPAddress addr;
     uint16_t port;
+    printf("Exit Accept. Return Accept(sockfd, addr, port, newSockfd);\n");
     return Accept(sockfd, addr, port, newSockfd);
 }
 
 
 QStatus Shutdown(SocketFd sockfd, ShutdownHow how)
 {
+    printf("Enter Shutdown\n");
     QStatus status = ER_OK;
     int ret;
 
@@ -467,22 +499,27 @@ QStatus Shutdown(SocketFd sockfd, ShutdownHow how)
         }
         QCC_LogError(status, ("Shutdown socket (sockfd = %u): %d - %s", sockfd, errno, strerror(errno)));
     }
+    printf("Exit Shutdown. Return status\n");
     return status;
 }
 
 QStatus Shutdown(SocketFd sockfd)
 {
+    printf("Enter and exit Shutdown. return Shutdown(sockfd, QCC_SHUTDOWN_RDWR);\n");
     return Shutdown(sockfd, QCC_SHUTDOWN_RDWR);
 }
 
 void Close(SocketFd sockfd)
 {
+    printf("Enter Close\n");
     QCC_ASSERT(sockfd >= 0);
     close(static_cast<int>(sockfd));
+    printf("Exit Close\n");
 }
 
 QStatus SocketDup(SocketFd sockfd, SocketFd& dupSock)
 {
+    printf("Enter SocketDup\n");
     QStatus status = ER_OK;
 
     dupSock = dup(sockfd);
@@ -490,11 +527,13 @@ QStatus SocketDup(SocketFd sockfd, SocketFd& dupSock)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("SocketDup of %d failed %d - %s", sockfd, errno, strerror(errno)));
     }
+    printf("Exit SocketDup. Return status\n");
     return status;
 }
 
 QStatus GetLocalAddress(SocketFd sockfd, IPAddress& addr, uint16_t& port)
 {
+    printf("Enter GetLocalAddress\n");
     QStatus status = ER_OK;
     struct sockaddr_storage addrBuf;
     socklen_t addrLen = sizeof(addrBuf);
@@ -524,12 +563,13 @@ QStatus GetLocalAddress(SocketFd sockfd, IPAddress& addr, uint16_t& port)
         }
         QCC_DbgPrintf(("Local Address (sockfd = %u): %s - %u", sockfd, addr.ToString().c_str(), port));
     }
-
+    printf("Exit GetLocalAddress\n");
     return status;
 }
 
 QStatus Send(SocketFd sockfd, const void* buf, size_t len, size_t& sent)
 {
+    printf("Enter Send\n");
     QStatus status = ER_OK;
     ssize_t ret;
 
@@ -554,12 +594,14 @@ QStatus Send(SocketFd sockfd, const void* buf, size_t len, size_t& sent)
         }
         break;
     }
+    printf("Exit Send. Return status\n");
     return status;
 }
 
 QStatus SendTo(SocketFd sockfd, IPAddress& remoteAddr, uint16_t remotePort, uint32_t scopeId,
                const void* buf, size_t len, size_t& sent, SendMsgFlags flags)
 {
+    printf("Enter SendTo\n");
     QStatus status = ER_OK;
     struct sockaddr_storage addr;
     socklen_t addrLen = sizeof(addr);
@@ -574,6 +616,7 @@ QStatus SendTo(SocketFd sockfd, IPAddress& remoteAddr, uint16_t remotePort, uint
 
     status = MakeSockAddr(remoteAddr, remotePort, scopeId, &addr, addrLen);
     if (status != ER_OK) {
+        printf("Exit SendTo. Return status\n");
         return status;
     }
 
@@ -594,17 +637,20 @@ QStatus SendTo(SocketFd sockfd, IPAddress& remoteAddr, uint16_t remotePort, uint
     } else {
         sent = static_cast<size_t>(ret);
     }
+    printf("Exit SendTo. Return status\n");
     return status;
 }
 
 QStatus SendTo(SocketFd sockfd, IPAddress& remoteAddr, uint16_t remotePort,
                const void* buf, size_t len, size_t& sent, SendMsgFlags flags)
 {
+    printf("Enter and exit SendTo. Return SendTo(***)\n");
     return SendTo(sockfd, remoteAddr, remotePort, 0, buf, len, sent, flags);
 }
 
 QStatus Recv(SocketFd sockfd, void* buf, size_t len, size_t& received)
 {
+    printf("Enter Recv\n");
     QStatus status = ER_OK;
     ssize_t ret;
 
@@ -614,6 +660,7 @@ QStatus Recv(SocketFd sockfd, void* buf, size_t len, size_t& received)
 
     ret = recv(static_cast<int>(sockfd), buf, len, 0);
     if ((ret == -1) && (errno == EWOULDBLOCK)) {
+        printf("Exit Recv. Return ER_WOULDBLOCK\n");
         return ER_WOULDBLOCK;
     }
 
@@ -624,13 +671,14 @@ QStatus Recv(SocketFd sockfd, void* buf, size_t len, size_t& received)
         received = static_cast<size_t>(ret);
         QCC_DbgRemoteData(buf, received);
     }
-
+    printf("Exit Recv. Return status\n");
     return status;
 }
 
 QStatus RecvFrom(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& remotePort,
                  void* buf, size_t len, size_t& received)
 {
+    printf("Enter RecvFrom\n");
     QStatus status = ER_OK;
     struct sockaddr_storage addr;
     socklen_t addrLen = sizeof(addr);
@@ -655,13 +703,14 @@ QStatus RecvFrom(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& remotePort,
     }
 
     QCC_DbgRemoteData(buf, received);
-
+    printf("Exit RecvFrom. Return status\n");
     return status;
 }
 
 QStatus RecvWithAncillaryData(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& remotePort, IPAddress& localAddr,
                               void* buf, size_t len, size_t& received, int32_t& interfaceIndex)
 {
+    printf("Enter RecvWithAncillaryData\n");
     QStatus status = ER_OK;
     received = 0;
     interfaceIndex = -1;
@@ -702,6 +751,7 @@ QStatus RecvWithAncillaryData(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& 
     } else {
         status = ER_OS_ERROR;
         QCC_LogError(status, ("RecvWithAncillaryData (sockfd = %u): unknown address family", sockfd));
+        printf("Exit RecvWithAncillaryData. Return status\n");
         return status;
     }
 
@@ -744,21 +794,24 @@ QStatus RecvWithAncillaryData(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& 
         }
     }
     QCC_DbgRemoteData(buf, received);
-
+    printf("Exit RecvWithAncillaryData. Return status\n");
     return status;
 }
 
 QStatus RecvWithFds(SocketFd sockfd, void* buf, size_t len, size_t& received, SocketFd* fdList, size_t maxFds, size_t& recvdFds)
 {
+    printf("Enter RecvWithFds\n");
     QStatus status = ER_OK;
 
     QCC_DbgHLPrintf(("RecvWithFds"));
     IncrementPerfCounter(PERF_COUNTER_SOCKET_RECV_WITH_FDS);
 
     if (!fdList) {
+        printf("Exit RecvWithFds. Return ER_BAD_ARG_5\n");
         return ER_BAD_ARG_5;
     }
     if (!maxFds) {
+        printf("Exit RecvWithFds. Return ER_BAD_ARG_6\n");
         return ER_BAD_ARG_6;
     }
 
@@ -806,11 +859,13 @@ QStatus RecvWithFds(SocketFd sockfd, void* buf, size_t len, size_t& received, So
         }
         received = static_cast<size_t>(ret);
     }
+    printf("Exit RecvWithFds. Return status\n");
     return status;
 }
 
 QStatus SendWithFds(SocketFd sockfd, const void* buf, size_t len, size_t& sent, SocketFd* fdList, size_t numFds, uint32_t pid)
 {
+    printf("Enter SendWithFds\n");
     QCC_UNUSED(pid);
     QStatus status = ER_OK;
 
@@ -818,9 +873,11 @@ QStatus SendWithFds(SocketFd sockfd, const void* buf, size_t len, size_t& sent, 
     IncrementPerfCounter(PERF_COUNTER_SOCKET_SEND_WITH_FDS);
 
     if (!fdList) {
+        printf("Exit SendWithFds. Return ER_BAD_ARG_5\n");
         return ER_BAD_ARG_5;
     }
     if (!numFds || (numFds > SOCKET_MAX_FILE_DESCRIPTORS)) {
+        printf("Exit SendWithFds. Return ER_BAD_ARG_6\n");
         return ER_BAD_ARG_6;
     }
 
@@ -860,11 +917,13 @@ QStatus SendWithFds(SocketFd sockfd, const void* buf, size_t len, size_t& sent, 
 
     delete [] cbuf;
 
+    printf("Exit SendWithFds. Return status\n");
     return status;
 }
 
 QStatus SocketPair(SocketFd(&sockets)[2])
 {
+    printf("Enter SocketPair\n");
     QStatus status = ER_OK;
     int ret = socketpair(AF_UNIX, SOCK_STREAM, 0, sockets);
     if (ret == -1) {
@@ -876,11 +935,13 @@ QStatus SocketPair(SocketFd(&sockets)[2])
         DisableSigPipe(sockets[1]);
 #endif
     }
+    printf("Exit SocketPair\n");
     return status;
 }
 
 QStatus SetBlocking(SocketFd sockfd, bool blocking)
 {
+    printf("Enter SetBlocking\n");
     int flags = fcntl(sockfd, F_GETFL, 0);
     ssize_t ret;
     if (blocking) {
@@ -889,14 +950,17 @@ QStatus SetBlocking(SocketFd sockfd, bool blocking)
         ret = fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
     }
     if (ret == -1) {
+        printf("Exit SetBlocking. ER_OS_ERROR\n");
         return ER_OS_ERROR;
     } else {
+        printf("Exit SetBlocking. Return ER_OK\n");
         return ER_OK;
     }
 }
 
 QStatus SetSndBuf(SocketFd sockfd, size_t bufSize)
 {
+    printf("Enter SetSndBuf\n");
     QStatus status = ER_OK;
     int arg = bufSize;
     int r = setsockopt(sockfd, SOL_SOCKET, SO_SNDBUF, (void*)&arg, sizeof(arg));
@@ -904,11 +968,13 @@ QStatus SetSndBuf(SocketFd sockfd, size_t bufSize)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("Setting SO_SNDBUF failed: (%d) %s", errno, strerror(errno)));
     }
+    printf("Exit SetSndBuf. Return status\n");
     return status;
 }
 
 QStatus GetSndBuf(SocketFd sockfd, size_t& bufSize)
 {
+    printf("Enter GetSndBuf\n");
     QStatus status = ER_OK;
     int arg = 0;
     socklen_t len = sizeof(arg);
@@ -918,11 +984,13 @@ QStatus GetSndBuf(SocketFd sockfd, size_t& bufSize)
         QCC_LogError(status, ("Getting SO_SNDBUF failed: (%d) %s", errno, strerror(errno)));
     }
     bufSize = arg;
+    printf("Exit GetSndBuf. Return status\n");
     return status;
 }
 
 QStatus SetRcvBuf(SocketFd sockfd, size_t bufSize)
 {
+    printf("Enter SetRcvBuf\n");
     QStatus status = ER_OK;
     int arg = bufSize;
     int r = setsockopt(sockfd, SOL_SOCKET, SO_RCVBUF, (void*)&arg, sizeof(arg));
@@ -930,11 +998,13 @@ QStatus SetRcvBuf(SocketFd sockfd, size_t bufSize)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("Setting SO_RCVBUF failed: (%d) %s", errno, strerror(errno)));
     }
+    printf("Exit SetRcvBuf. Return status\n");
     return status;
 }
 
 QStatus GetRcvBuf(SocketFd sockfd, size_t& bufSize)
 {
+    printf("Enter GetRcvBuf\n");
     QStatus status = ER_OK;
     int arg = 0;
     socklen_t len = sizeof(arg);
@@ -944,11 +1014,13 @@ QStatus GetRcvBuf(SocketFd sockfd, size_t& bufSize)
         QCC_LogError(status, ("Getting SO_RCVBUF failed: (%d) %s", errno, strerror(errno)));
     }
     bufSize = arg;
+    printf("Exit GetRcvBuf. Return status\n");
     return status;
 }
 
 QStatus SetLinger(SocketFd sockfd, bool onoff, uint32_t linger)
 {
+    printf("Enter SetLinger\n");
     QStatus status = ER_OK;
     struct linger l;
     l.l_onoff = onoff;
@@ -959,11 +1031,13 @@ QStatus SetLinger(SocketFd sockfd, bool onoff, uint32_t linger)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("Setting SO_LINGER failed: (%d) %s", errno, strerror(errno)));
     }
+    printf("Exit SetLinger. Return status\n");
     return status;
 }
 
 QStatus SetNagle(SocketFd sockfd, bool useNagle)
 {
+    printf("Enter SetNagle\n");
     QStatus status = ER_OK;
     int arg = useNagle ? 1 : -0;
     int r = setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, (void*)&arg, sizeof(int));
@@ -971,6 +1045,7 @@ QStatus SetNagle(SocketFd sockfd, bool useNagle)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("Setting TCP_NODELAY failed: (%d) %s", errno, strerror(errno)));
     }
+    printf("Exit SetNagle\n");
     return status;
 }
 
@@ -984,6 +1059,7 @@ QStatus SetNagle(SocketFd sockfd, bool useNagle)
  */
 QStatus SetReuseAddress(SocketFd sockfd, bool reuse)
 {
+    printf("Enter SetReuseAddress\n");
     QStatus status = ER_OK;
     int arg = reuse ? 1 : 0;
 
@@ -994,6 +1070,7 @@ QStatus SetReuseAddress(SocketFd sockfd, bool reuse)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("Setting SO_REUSEADDR failed: (%d) %s", errno, strerror(errno)));
     }
+    printf("Exit SetReuseAddress. Return status\n");
     return status;
 }
 
@@ -1001,6 +1078,7 @@ QStatus SetReuseAddress(SocketFd sockfd, bool reuse)
 
 QStatus SetReusePort(SocketFd sockfd, bool reuse)
 {
+    printf("Enter SetReusePort\n");
 #if defined(QCC_OS_DARWIN)
     QStatus status = ER_OK;
     int arg = reuse ? 1 : 0;
@@ -1009,8 +1087,10 @@ QStatus SetReusePort(SocketFd sockfd, bool reuse)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("Setting SO_REUSEPORT failed: (%d) %s", errno, strerror(errno)));
     }
+    printf("Exit SetReusePort. Return status\n");
     return status;
 #else
+    printf("Exit SetReusePort. Return SetReuseAddress(sockfd, reuse)\n");
     return SetReuseAddress(sockfd, reuse);
 #endif
 }
@@ -1036,6 +1116,7 @@ QStatus MulticastGroupOpInternal(SocketFd sockFd, AddressFamily family, String m
      * We assume that no external API will be trying to call here and so asserts
      * are appropriate when checking for completely bogus parameters.
      */
+    printf("Enter MulticastGroupOpInternal\n");
     QCC_ASSERT(sockFd >= 0);
     QCC_ASSERT(family == AF_INET || family == AF_INET6);
     QCC_ASSERT(multicastGroup.size());
@@ -1063,6 +1144,7 @@ QStatus MulticastGroupOpInternal(SocketFd sockFd, AddressFamily family, String m
         int rc = ioctl(sockFd, SIOCGIFADDR, &ifr);
         if (rc == -1) {
             QCC_LogError(ER_OS_ERROR, ("ioctl(SIOCGIFADDR) failed: (%d) %s", errno, strerror(errno)));
+            printf("Exit MulticastGroupOpInternal. Return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
 
@@ -1072,6 +1154,7 @@ QStatus MulticastGroupOpInternal(SocketFd sockFd, AddressFamily family, String m
         rc = inet_pton(AF_INET, multicastGroup.c_str(), &mreq.imr_multiaddr);
         if (rc != 1) {
             QCC_LogError(ER_OS_ERROR, ("inet_pton() failed: %d - %s", errno, strerror(errno)));
+            printf("Exit MulticastGroupOpInternal. Return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
 
@@ -1079,6 +1162,7 @@ QStatus MulticastGroupOpInternal(SocketFd sockFd, AddressFamily family, String m
         rc = setsockopt(sockFd, IPPROTO_IP, opt, reinterpret_cast<const char*>(&mreq), sizeof(mreq));
         if (rc == -1) {
             QCC_LogError(ER_OS_ERROR, ("setsockopt(%s) failed: %d - %s", op == JOIN ? "IP_ADD_MEMBERSHIP" : "IP_DROP_MEMBERSHIP", errno, strerror(errno)));
+            printf("Exit MulticastGroupOpInternal. Return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
     } else if (family == QCC_AF_INET6) {
@@ -1092,12 +1176,14 @@ QStatus MulticastGroupOpInternal(SocketFd sockFd, AddressFamily family, String m
         mreq.ipv6mr_interface = if_nametoindex(iface.c_str());
         if (mreq.ipv6mr_interface == 0) {
             QCC_LogError(ER_OS_ERROR, ("if_nametoindex() failed: unknown interface"));
+            printf("Exit MulticastGroupOpInternal. Return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
 
         int rc = inet_pton(AF_INET6, multicastGroup.c_str(), &mreq.ipv6mr_multiaddr);
         if (rc != 1) {
             QCC_LogError(ER_OS_ERROR, ("inet_pton() failed: %d - %s", errno, strerror(errno)));
+            printf("Exit MulticastGroupOpInternal. Return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
 
@@ -1105,19 +1191,23 @@ QStatus MulticastGroupOpInternal(SocketFd sockFd, AddressFamily family, String m
         rc = setsockopt(sockFd, IPPROTO_IPV6, opt, reinterpret_cast<const char*>(&mreq), sizeof(mreq));
         if (rc == -1) {
             QCC_LogError(ER_OS_ERROR, ("setsockopt(IP_ADD_MEMBERSHIP) failed: %d - %s", errno, strerror(errno)));
+            printf("Exit MulticastGroupOpInternal. Return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
     }
+    printf("Exit MulticastGroupOpInternal. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus JoinMulticastGroup(SocketFd sockFd, AddressFamily family, String multicastGroup, String iface)
 {
+    printf("Enter and Exit JoinMulticastGroup. Return MulticastGroupOpInternal(sockFd, family, multicastGroup, iface, JOIN)\n");
     return MulticastGroupOpInternal(sockFd, family, multicastGroup, iface, JOIN);
 }
 
 QStatus LeaveMulticastGroup(SocketFd sockFd, AddressFamily family, String multicastGroup, String iface)
 {
+    printf("Enter and Exit JoinMulticastGroup. Return MulticastGroupOpInternal(sockFd, family, multicastGroup, iface, LEAVE)\n");
     return MulticastGroupOpInternal(sockFd, family, multicastGroup, iface, LEAVE);
 }
 
@@ -1127,6 +1217,7 @@ QStatus SetMulticastInterface(SocketFd sockFd, AddressFamily family, qcc::String
      * We assume that no external API will be trying to call here and so asserts
      * are appropriate when checking for completely bogus parameters.
      */
+    printf("Enter SetMulticastInterface\n");
     QCC_ASSERT(sockFd >= 0);
     QCC_ASSERT(family == AF_INET || family == AF_INET6);
     QCC_ASSERT(iface.size());
@@ -1153,6 +1244,7 @@ QStatus SetMulticastInterface(SocketFd sockFd, AddressFamily family, qcc::String
         int rc = ioctl(sockFd, SIOCGIFADDR, &ifr);
         if (rc == -1) {
             QCC_LogError(ER_OS_ERROR, ("ioctl(SIOCGIFADDR) failed: (%d) %s", errno, strerror(errno)));
+            printf("Exit SetMulticastInterface. Return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
 
@@ -1162,6 +1254,7 @@ QStatus SetMulticastInterface(SocketFd sockFd, AddressFamily family, qcc::String
         rc = setsockopt(sockFd, IPPROTO_IP, IP_MULTICAST_IF, reinterpret_cast<const char*>(&addr), sizeof(addr));
         if (rc == -1) {
             QCC_LogError(ER_OS_ERROR, ("setsockopt(IP_MULTICAST_IF) failed: %d - %s", errno, strerror(errno)));
+            printf("Exit SetMulticastInterface. Return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
     } else if (family == QCC_AF_INET6) {
@@ -1174,9 +1267,11 @@ QStatus SetMulticastInterface(SocketFd sockFd, AddressFamily family, qcc::String
         int rc = setsockopt(sockFd, IPPROTO_IPV6, IPV6_MULTICAST_IF, reinterpret_cast<const char*>(&index), sizeof(index));
         if (rc == -1) {
             QCC_LogError(ER_OS_ERROR, ("setsockopt(IP_MULTICAST_IF) failed: %d - %s", errno, strerror(errno)));
+            printf("Exit SetMulticastInterface. Return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
     }
+    printf("Exit SetMulticastInterface. Return ER_OK\n");
     return ER_OK;
 }
 
@@ -1186,6 +1281,7 @@ QStatus SetMulticastHops(SocketFd sockFd, AddressFamily family, uint32_t hops)
      * We assume that no external API will be trying to call here and so asserts
      * are appropriate when checking for completely bogus parameters.
      */
+    printf("Enter SetMulticastHops\n");
     QCC_ASSERT(sockFd >= 0);
     QCC_ASSERT(family == AF_INET || family == AF_INET6);
 
@@ -1196,20 +1292,24 @@ QStatus SetMulticastHops(SocketFd sockFd, AddressFamily family, uint32_t hops)
         int rc = setsockopt(sockFd, IPPROTO_IP, IP_MULTICAST_TTL, reinterpret_cast<const char*>(&hops), sizeof(hops));
         if (rc == -1) {
             QCC_LogError(ER_OS_ERROR, ("setsockopt(IP_MULTICAST_TTL) failed: %d - %s", errno, strerror(errno)));
+            printf("Exit SetMulticastHops. return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
     } else if (family == QCC_AF_INET6) {
         int rc = setsockopt(sockFd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, reinterpret_cast<const char*>(&hops), sizeof(hops));
         if (rc == -1) {
             QCC_LogError(ER_OS_ERROR, ("setsockopt(IP_MULTICAST_HOPS) failed: %d - %s", errno, strerror(errno)));
+            printf("Exit SetMulticastHops. return ER_OS_ERROR\n");
             return ER_OS_ERROR;
         }
     }
+    printf("Exit SetMulticastHops. return ER_OK\n");
     return ER_OK;
 }
 
 QStatus SetBroadcast(SocketFd sockfd, bool broadcast)
 {
+    printf("Enter SetBroadcast\n");
     QStatus status = ER_OK;
     int arg = broadcast ? 1 : -0;
     int r = setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, (void*)&arg, sizeof(arg));
@@ -1217,6 +1317,7 @@ QStatus SetBroadcast(SocketFd sockfd, bool broadcast)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("Setting SO_BROADCAST failed: (%d) %s", errno, strerror(errno)));
     }
+    printf("Exit SetBroadcast. Return status\n");
     return status;
 }
 
@@ -1226,6 +1327,7 @@ QStatus SetRecvPktAncillaryData(SocketFd sockfd, AddressFamily addrFamily, bool 
      * We assume that no external API will be trying to call here and so asserts
      * are appropriate when checking for completely bogus parameters.
      */
+    printf("Enter SetRecvPktAncillaryData\n");
     QCC_ASSERT(sockfd >= 0);
     QCC_ASSERT(addrFamily == AF_INET || addrFamily == AF_INET6);
 
@@ -1244,11 +1346,13 @@ QStatus SetRecvPktAncillaryData(SocketFd sockfd, AddressFamily addrFamily, bool 
             QCC_LogError(status, ("Setting IPV6_RECVPKTINFO failed: (%d) %s", errno, strerror(errno)));
         }
     }
+    printf("Exit SetRecvPktAncillaryData. Return status\n");
     return status;
 }
 
 QStatus SetRecvIPv6Only(SocketFd sockfd, bool recv)
 {
+    printf("Enter SetRecvIPv6Only\n");
     QStatus status = ER_OK;
     int arg = recv ? 1 : -0;
     int r = setsockopt(sockfd, IPPROTO_IPV6, IPV6_V6ONLY, (void*)&arg, sizeof(arg));
@@ -1256,6 +1360,7 @@ QStatus SetRecvIPv6Only(SocketFd sockfd, bool recv)
         status = ER_OS_ERROR;
         QCC_LogError(status, ("Setting IPV6_V6ONLY failed: (%d) %s", errno, strerror(errno)));
     }
+    printf("Exit SetRecvIPv6Only. Return status\n");
     return status;
 }
 

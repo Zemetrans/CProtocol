@@ -27,25 +27,31 @@ namespace ajn {
 
 QStatus TransportPermission::FilterTransports(BusEndpoint& srcEp, const qcc::String& sender, TransportMask& transports, const char* callerName)
 {
+    printf("Enter TransportPermission::FilterTransports\n");
     QCC_UNUSED(srcEp);
     QCC_UNUSED(sender);
     QCC_UNUSED(transports);
     QCC_UNUSED(callerName);
+    printf("Exit TransportPermission::FilterTransports. Return ER_OK\n");
     return ER_OK;
 }
 
 uint32_t PermissionMgr::AddAliasUnixUser(BusEndpoint& srcEp, qcc::String& sender, uint32_t origUID, uint32_t aliasUID)
 {
+    printf("Enter PermissionMgr::AddAliasUnixUser\n");
     QCC_UNUSED(srcEp);
     QCC_UNUSED(sender);
     QCC_UNUSED(origUID);
     QCC_UNUSED(aliasUID);
+    printf("Exit PermissionMgr::AddAliasUnixUser. Return ALLJOYN_ALIASUNIXUSER_REPLY_NO_SUPPORT\n");
     return ALLJOYN_ALIASUNIXUSER_REPLY_NO_SUPPORT;
 }
 
 QStatus PermissionMgr::CleanPermissionCache(BusEndpoint& endpoint)
 {
+    printf("Enter PermissionMgr::CleanPermissionCache\n");
     QCC_UNUSED(endpoint);
+    printf("Exit PermissionMgr::CleanPermissionCache. Return ER_OK\n");
     return ER_OK;
 }
 

@@ -39,23 +39,29 @@ static IpNameService* singletonIpNameService = NULL;
 
 void IpNameService::Init()
 {
+    printf("Enter IpNameService::Init()\n");
     singletonIpNameService = new IpNameService();
+    printf("Exit IpNameService::Init()\n");
 }
 
 void IpNameService::Shutdown()
 {
+    printf("Enter IpNameService::Shutdown()\n");
     delete singletonIpNameService;
     singletonIpNameService = NULL;
+    printf("Exit IpNameService::Shutdown()\n");
 }
 
 IpNameService& IpNameService::Instance()
 {
+    printf("Enter and Exit IpNameService::Instance(). return *singletonIpNameService\n");
     return *singletonIpNameService;
 }
 
 IpNameService::IpNameService()
     : m_constructed(false), m_destroyed(false), m_refCount(0), m_pimpl(NULL)
 {
+    printf("Enter IpNameService::IpNameService()\n");
     //
     // AllJoyn is a multithreaded system.  Since the name service instance is
     // created on first use, the first use is in the Start() method of each
@@ -66,10 +72,12 @@ IpNameService::IpNameService()
     //
     m_pimpl = new IpNameServiceImpl;
     m_constructed = true;
+    printf("Exit IpNameService::IpNameService()\n");
 }
 
 IpNameService::~IpNameService()
 {
+    printf("Enter IpNameService::~IpNameService()\n");
     //
     // We get here (on Linux) because when main() returns, the function
     // __run_exit_handlers() is called which, in turn, calls the destructors of
@@ -130,6 +138,7 @@ IpNameService::~IpNameService()
         delete m_pimpl;
         m_pimpl = NULL;
     }
+    printf("Exit IpNameService::~IpNameService()\n");
 }
 
 #define ASSERT_STATE(function) \
@@ -141,6 +150,7 @@ IpNameService::~IpNameService()
 
 void IpNameService::Acquire(const qcc::String& guid, bool loopback)
 {
+    printf("Enter IpNameService::Acquire()\n");
     //
     // If the entry gate has been closed, we do not allow an Acquire to actually
     // acquire a reference.  The singleton is going away and so we assume we are
@@ -149,6 +159,7 @@ void IpNameService::Acquire(const qcc::String& guid, bool loopback)
     // may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::Acquire()\n");
         return;
     }
 
@@ -170,10 +181,12 @@ void IpNameService::Acquire(const qcc::String& guid, bool loopback)
         Init(guid, loopback);
         Start();
     }
+    printf("Exit IpNameService::Acquire()\n");
 }
 
 void IpNameService::Release()
 {
+    printf("Enter IpNameService::Release()\n");
     //
     // If the entry gate has been closed, we do not allow a Release to actually
     // release a reference.  The singleton is going away and so we assume we are
@@ -182,6 +195,7 @@ void IpNameService::Release()
     // may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::Release()\n");
         return;
     }
 
@@ -197,10 +211,12 @@ void IpNameService::Release()
         Stop();
         Join();
     }
+    printf("Exit IpNameService::Release()\n");
 }
 
 QStatus IpNameService::Start()
 {
+    printf("Enter IpNameService::Start()\n");
     //
     // If the entry gate has been closed, we do not allow a Start to actually
     // start anything.  The singleton is going away and so we assume we are
@@ -209,15 +225,18 @@ QStatus IpNameService::Start()
     // may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Enter IpNameService::Start()\n");
         return ER_OK;
     }
 
     ASSERT_STATE("Start");
+    printf("Enter IpNameService::Start()\n");
     return m_pimpl->Start();
 }
 
 bool IpNameService::Started()
 {
+    printf("Enter IpNameService::Started()\n");
     //
     // If the entry gate has been closed, we do not allow a Started to actually
     // test anything.  We just return false.  The singleton is going away and so
@@ -226,15 +245,18 @@ bool IpNameService::Started()
     // tricking callers who may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::Started(). Return false\n");
         return false;
     }
 
     ASSERT_STATE("Started");
+    printf("Exit IpNameService::Started(). return m_pimpl -> Started()\n");
     return m_pimpl->Started();
 }
 
 QStatus IpNameService::Stop()
 {
+    printf("Enter IpNameService::Stop()\n");
     //
     // If the entry gate has been closed, we do not allow a Stop to actually
     // stop anything.  The singleton is going away and so we assume we are
@@ -244,15 +266,18 @@ QStatus IpNameService::Stop()
     // the actual Stop() and Join().
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::Stop(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("Stop");
+    printf("Exit IpNameService::Stop(). m_pimpl -> Stop()\n");
     return m_pimpl->Stop();
 }
 
 QStatus IpNameService::Join()
 {
+    printf("Enter IpNameService::Join()\n");
     //
     // If the entry gate has been closed, we do not allow a Join to actually
     // join anything.  The singleton is going away and so we assume we are
@@ -262,15 +287,18 @@ QStatus IpNameService::Join()
     // the actual Stop() and Join().
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::Join(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("Join");
+    printf("Enter IpNameService::Join(). Return m_pimpl -> Join()\n");
     return m_pimpl->Join();
 }
 
 QStatus IpNameService::Init(const qcc::String& guid, bool loopback)
 {
+    printf("Enter IpNameService::Init()\n");
     //
     // If the entry gate has been closed, we do not allow an Init to actually
     // init anything.  The singleton is going away and so we assume we are
@@ -279,16 +307,19 @@ QStatus IpNameService::Init(const qcc::String& guid, bool loopback)
     // may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::Init()\n");
         return ER_OK;
     }
 
     ASSERT_STATE("Init");
+    printf("Exit IpNameService::Init(). Return m_pimpl -> Init(guid, loopback)\n");
     return m_pimpl->Init(guid, loopback);
 }
 
 void IpNameService::SetCallback(TransportMask transportMask,
                                 Callback<void, const qcc::String&, const qcc::String&, std::vector<qcc::String>&, uint32_t>* cb)
 {
+    printf("Enter IpNameService::SetCallback()\n");
     //
     // If the entry gate has been closed, we do not allow a SetCallback to actually
     // set anything.  The singleton is going away and so we assume we are
@@ -304,26 +335,32 @@ void IpNameService::SetCallback(TransportMask transportMask,
     // to NULL has already been done.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::SetCallback()\n");
         return;
     }
 
     ASSERT_STATE("SetCallback");
     m_pimpl->SetCallback(transportMask, cb);
+    printf("Exit IpNameService::SetCallback()\n");
 }
 
 void IpNameService::SetNetworkEventCallback(TransportMask transportMask,
                                             Callback<void, const std::map<qcc::String, qcc::IPAddress>&>* cb)
 {
+    printf("Enter IpNameService::SetNetworkEventCallback()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::SetNetworkEventCallback()\n");
         return;
     }
 
     ASSERT_STATE("SetNetworkEventCallback");
     m_pimpl->SetNetworkEventCallback(transportMask, cb);
+    printf("Exit IpNameService::SetNetworkEventCallback()\n");
 }
 
 QStatus IpNameService::CreateVirtualInterface(const qcc::IfConfigEntry& entry)
 {
+    printf("Enter IpNameService::CreateVirtualInterface()\n");
     //
     // If the entry gate has been closed, we do not allow an OpenInterface to
     // actually open anything.  The singleton is going away and so we assume we
@@ -332,15 +369,18 @@ QStatus IpNameService::CreateVirtualInterface(const qcc::IfConfigEntry& entry)
     // callers who may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::CreateVirtualInterface(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("CreateVirtualInterface");
+    printf("Exit IpNameService::CreateVirtualInterface(). m_pimpl -> CreateVirtualInterface(entry)\n");
     return m_pimpl->CreateVirtualInterface(entry);
 }
 
 QStatus IpNameService::DeleteVirtualInterface(const qcc::String& ifceName)
 {
+    printf("Enter IpNameService::DeleteVirtualInterface()\n");
     //
     // If the entry gate has been closed, we do not allow an OpenInterface to
     // actually open anything.  The singleton is going away and so we assume we
@@ -349,10 +389,12 @@ QStatus IpNameService::DeleteVirtualInterface(const qcc::String& ifceName)
     // callers who may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::DeleteVirtualInterface(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("DeleteVirtualInterface");
+    printf("Exit IpNameService::DeleteVirtualInterface(). Return m_pimpl -> DeleteVirtualInterface(ifceName)\n");
     return m_pimpl->DeleteVirtualInterface(ifceName);
 }
 
@@ -365,16 +407,20 @@ QStatus IpNameService::OpenInterface(TransportMask transportMask, const qcc::Str
     // definitely shutting down, and the process is going to exit, so tricking
     // callers who may be temporarily running is okay.
     //
+    printf("Enter IpNameService::OpenInterface()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::OpenInterface(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("OpenInterface");
+    printf("Exit IpNameService::OpenInterface(). Return m_pimpl -> OpenInterface(transportMask, name)\n");
     return m_pimpl->OpenInterface(transportMask, name);
 }
 
 QStatus IpNameService::OpenInterface(TransportMask transportMask, const qcc::IPAddress& address)
 {
+    printf("Enter IpNameService::OpenInterface()\n");
     //
     // If the entry gate has been closed, we do not allow an OpenInterface to
     // actually open anything.  The singleton is going away and so we assume we
@@ -383,15 +429,18 @@ QStatus IpNameService::OpenInterface(TransportMask transportMask, const qcc::IPA
     // callers who may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::OpenInterface(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("OpenInterface");
+    printf("Exit IpNameService::OpenInterface(). return m_pibpl -> OpenInterface(transportMask, address)\n");
     return m_pimpl->OpenInterface(transportMask, address);
 }
 
 QStatus IpNameService::CloseInterface(TransportMask transportMask, const qcc::String& name)
 {
+    printf("Enter IpNameService::CloseInterface()\n");
     //
     // If the entry gate has been closed, we do not allow a CloseInterface to
     // actually close anything.  The singleton is going away and so we assume we
@@ -400,15 +449,18 @@ QStatus IpNameService::CloseInterface(TransportMask transportMask, const qcc::St
     // callers who may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::CloseInterface(). return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("CloseInterface");
+    printf("Exit IpNameService::CloseInterface(). return m_pimpl -> CloseInterface(transportMask, name)\n");
     return m_pimpl->CloseInterface(transportMask, name);
 }
 
 QStatus IpNameService::CloseInterface(TransportMask transportMask, const qcc::IPAddress& address)
 {
+    printf("Enter IpNameService::CloseInterface()\n");
     //
     // If the entry gate has been closed, we do not allow a CloseInterface to
     // actually close anything.  The singleton is going away and so we assume we
@@ -417,9 +469,11 @@ QStatus IpNameService::CloseInterface(TransportMask transportMask, const qcc::IP
     // callers who may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::CloseInterface(). Return ER_OK\n");
         return ER_OK;
     }
     ASSERT_STATE("CloseInterface");
+    printf("Exit IpNameService::CloseInterface(). Return m_pimpl -> CloseInterface(transportMask, address)\n");
     return m_pimpl->CloseInterface(transportMask, address);
 }
 
@@ -429,6 +483,7 @@ QStatus IpNameService::Enable(TransportMask transportMask,
                               bool enableReliableIPv4, bool enableReliableIPv6,
                               bool enableUnreliableIPv4, bool enableUnreliableIPv6)
 {
+    printf("Enter IpNameService::Enable()\n");
     //
     // If the entry gate has been closed, we do not allow an Enable to actually
     // enable anything.  The singleton is going away and so we assume we are
@@ -437,20 +492,24 @@ QStatus IpNameService::Enable(TransportMask transportMask,
     // may be temporarily running is okay.
     //
     if (m_destroyed) {
+        printf("Exit IpNameService::Enable(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("Enable");
     m_pimpl->Enable(transportMask, reliableIPv4PortMap, reliableIPv6Port, unreliableIPv4PortMap, unreliableIPv6Port,
                     enableReliableIPv4, enableReliableIPv6, enableUnreliableIPv4, enableUnreliableIPv6);
+    printf("Exit IpNameService::Enable(). Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus IpNameService::UpdateDynamicScore(TransportMask transportMask, uint32_t availableTransportConnections, uint32_t maximumTransportConnections,
                                           uint32_t availableTransportRemoteClients, uint32_t maximumTransportRemoteClients)
 {
+    printf("Enter IpNameService::UpdateDynamicScore()\n");
     ASSERT_STATE("UpdateDynamicScore");
     m_pimpl->UpdateDynamicScore(transportMask, availableTransportConnections, maximumTransportConnections, availableTransportRemoteClients, maximumTransportRemoteClients);
+    printf("Exit IpNameService::UpdateDynamicScore(). Return ER_OK\n");
     return ER_OK;
 }
 
@@ -465,14 +524,17 @@ QStatus IpNameService::Enabled(TransportMask transportMask,
     // shutting down, and the process is going to exit, so tricking callers who
     // may be temporarily running is okay.
     //
+    printf("Enter IpNameService::Enabled()\n");
     if (m_destroyed) {
         reliableIPv6Port = unreliableIPv6Port = 0;
         reliableIPv4PortMap.clear();
         unreliableIPv4PortMap.clear();
+        printf("Exit IpNameService::Enabled(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("Enabled");
+    printf("Exot IpNameService::Enabled(). Return m_pimpl->Enabled(***)\n");
     return m_pimpl->Enabled(transportMask, reliableIPv4PortMap, reliableIPv6Port, unreliableIPv4PortMap, unreliableIPv6Port);
 }
 
@@ -485,29 +547,38 @@ QStatus IpNameService::FindAdvertisement(TransportMask transportMask, const qcc:
     // definitely shutting down, and the process is going to exit, so tricking
     // callers who may be temporarily running is okay.
     //
+    printf("Enter IpNameService::FindAdvertisement()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::FindAdvertisement(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("FindAdvertisement");
+    printf("Exit IpNameService::FindAdvertisement(). Return m_pimpl -> FindAdvertisement(***)\n");
     return m_pimpl->FindAdvertisement(transportMask, matching, IpNameServiceImpl::ALWAYS_RETRY, completeTransportMask);
 }
 
 QStatus IpNameService::CancelFindAdvertisement(TransportMask transportMask, const qcc::String& matching, TransportMask completeTransportMask)
 {
+    printf("Enter IpNameService::CancelFindAdvertisement()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::CancelFindAdvertisement(). Return ER_OK\n");
         return ER_OK;
     }
     ASSERT_STATE("CancelFindAdvertisement");
+    printf("Exit IpNameService::CancelFindAdvertisement(). return m_pimpl ->CancelFIndAdvertisement(***)\n");
     return m_pimpl->CancelFindAdvertisement(transportMask, matching, IpNameServiceImpl::ALWAYS_RETRY, completeTransportMask);
 }
 
 QStatus IpNameService::RefreshCache(TransportMask transportMask, const qcc::String& guid, const qcc::String& matching)
 {
+    printf("Enter IpNameService::RefreshCache()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::RefreshCache(). Return ER_OK\n");
         return ER_OK;
     }
     ASSERT_STATE("RefreshCache");
+    printf("Exit IpNameService::RefreshCache(). Return m_pimpl ->RefreshCache(***)\n");
     return m_pimpl->RefreshCache(transportMask, guid, matching);
 }
 
@@ -520,11 +591,14 @@ QStatus IpNameService::AdvertiseName(TransportMask transportMask, const qcc::Str
     // are definitely shutting down, and the process is going to exit, so
     // tricking callers who may be temporarily running is okay.
     //
+    printf("Enter IpNameService::AdvertiseName()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::AdvertiseName(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("AdvertiseName");
+    printf("Exit IpNameService::AdvertiseName(). Return m_pimpl->AdvertiseName(***)\n");
     return m_pimpl->AdvertiseName(transportMask, wkn, quietly, completeTransportMask);
 }
 
@@ -537,83 +611,110 @@ QStatus IpNameService::CancelAdvertiseName(TransportMask transportMask, const qc
     // are definitely shutting down, and the process is going to exit, so
     // tricking callers who may be temporarily running is okay.
     //
+    printf("Enter IpNameService::CancelAdvertiseName()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::CancelAdvertiseName(). Return ER_OK\n");
         return ER_OK;
     }
 
     ASSERT_STATE("CancelAdvertiseName");
+    printf("Exit IpNameService::CancelAdvertiseName(). Return m_pimpl ->CancelAdvertiseName(***)\n");
     return m_pimpl->CancelAdvertiseName(transportMask, wkn, quietly, completeTransportMask);
 }
 
 QStatus IpNameService::OnProcSuspend()
 {
+    printf("Enter IpNameService::OnProcSuspend()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::OnProcSuspend(). Return ER_OK\n");
         return ER_OK;
     }
     ASSERT_STATE("OnProcSuspend");
+    printf("Exit IpNameService::OnProcSuspend(). Return m_pimpl->OnProcSuspend(***)\n");
     return m_pimpl->OnProcSuspend();
 }
 
 QStatus IpNameService::OnProcResume()
 {
+    printf("Enter IpNameService::OnProcResume()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::OnProcResume(). Return ER_OK\n");
         return ER_OK;
     }
     ASSERT_STATE("OnProcResume");
+    printf("Exit IpNameService::OnProcResume(). Return m_pimpl->OnProcResume()\n");
     return m_pimpl->OnProcResume();
 }
 
 void IpNameService::RegisterListener(IpNameServiceListener& listener)
 {
+    printf("Enter IpNameService::RegisterListener()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::RegisterListener()\n");
         return;
     }
     ASSERT_STATE("RegisterListener");
     m_pimpl->RegisterListener(listener);
+    printf("Exit IpNameService::RegisterListener()\n");
 }
 
 void IpNameService::UnregisterListener(IpNameServiceListener& listener)
 {
+    printf("Enter IpNameService::UnregisterListener()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::UnregisterListener()\n");
         return;
     }
     ASSERT_STATE("UnregisterListener");
     m_pimpl->UnregisterListener(listener);
+    printf("Exit IpNameService::UnregisterListener()\n");
 }
 
 QStatus IpNameService::Ping(TransportMask transportMask, const qcc::String& guid, const qcc::String& name)
 {
+    printf("Enter IpNameService::Ping()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::Ping(). Return ER_OK\n");
         return ER_OK;
     }
     ASSERT_STATE("Ping");
+    printf("Exit IpNameService::Ping(). Return m_pimpl->Ping(***)\n");
     return m_pimpl->Ping(transportMask, guid, name);
 }
 
 QStatus IpNameService::Query(TransportMask transportMask, MDNSPacket mdnsPacket)
 {
+    printf("Enter IpNameService::Query()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::Query(). Return ER_OK\n");
         return ER_OK;
     }
     ASSERT_STATE("Query");
+    printf("Exit IpNameService::Query(). Return m_pimpl->Query(***)\n");
     return m_pimpl->Query(transportMask, mdnsPacket);
 }
 
 QStatus IpNameService::Response(TransportMask transportMask, uint32_t ttl, MDNSPacket mdnsPacket)
 {
+    printf("Enter IpNameService::Response()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::Response(). Return ER_OK\n");
         return ER_OK;
     }
     ASSERT_STATE("Response");
+    printf("Exit IpNameService::Response(). Return m_pimpl->Response(***)\n");
     return m_pimpl->Response(transportMask, ttl, mdnsPacket);
 }
 
 bool IpNameService::RemoveFromPeerInfoMap(const qcc::String& guid)
 {
+    printf("Enter IpNameService::RemoveFromPeerInfoMap()\n");
     if (m_destroyed) {
+        printf("Exit IpNameService::RemoveFromPeerInfoMap(). Return false\n");
         return false;
     }
     ASSERT_STATE("RemoveFromPeerInfoMap");
+    printf("Exit IpNameService::RemoveFromPeerInfoMap(). Return m_pimpl ->RemoveFromPeerInfoMap(guid)\n");
     return m_pimpl->RemoveFromPeerInfoMap(guid);
 }
 
