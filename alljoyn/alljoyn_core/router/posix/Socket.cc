@@ -100,7 +100,7 @@ static QStatus SendSGCommon(SocketFd sockfd, struct sockaddr_storage* addr, sock
         sent = static_cast<size_t>(ret);
     }
     delete[] iov;
-    printf("Exit SendSGCommon. Return status\n");
+    printf("Exit SendSGCommon. Return status. Sended: %lu\n", sizeof(msg));
     return status;
 }
 
@@ -182,7 +182,7 @@ static QStatus RecvSGCommon(SocketFd sockfd, struct sockaddr_storage* addr, sock
     }
 #endif
 
-    printf("Exit RecvSGCommon. Return status\n");
+    printf("Exit RecvSGCommon. Return status. Received: %lu\n", sizeof(msg));
     return status;
 }
 

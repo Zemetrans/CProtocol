@@ -571,7 +571,6 @@ static AJ_Status RewriteSenderInfo(AJ_IOBuffer* buf, uint32_t addr, uint16_t por
 AJ_Status AJ_Net_SendTo(AJ_IOBuffer* buf)
 {
     printf("Enter AJ_Net_SendTo\n");
-    printf("We use CAN!\n");
     ssize_t ret = -1;
     uint8_t sendSucceeded = FALSE;
     size_t tx = AJ_IO_BUF_AVAIL(buf);
@@ -610,6 +609,7 @@ AJ_Status AJ_Net_SendTo(AJ_IOBuffer* buf)
             sin6.sin6_port = htons(AJ_UDP_PORT);
             if (inet_pton(AF_INET6, AJ_IPV6_MULTICAST_GROUP, &sin6.sin6_addr) == 1) {
                 ret = sendto(context->udp6Sock, buf->readPtr, tx, MSG_NOSIGNAL, (struct sockaddr*) &sin6, sizeof(sin6));
+                printf("Thin Core AJ_Net_SendTo. Sent %lu bytes\n", ret);
                 if (tx == ret) {
                     sendSucceeded = TRUE;
                 } else {
@@ -638,6 +638,7 @@ AJ_Status AJ_Net_SendTo(AJ_IOBuffer* buf)
 
             if (inet_pton(AF_INET, MDNS_IPV4_MULTICAST_GROUP, &sin.sin_addr) == 1) {
                 ret = sendto(context->mDnsSock, buf->readPtr, tx, MSG_NOSIGNAL, (struct sockaddr*)&sin, sizeof(sin));
+                printf("Thin Core AJ_Net_SendTo. Sent %lu bytes\n", ret);
                 if (tx == ret) {
                     sendSucceeded = TRUE;
                 } else {
@@ -660,6 +661,7 @@ AJ_Status AJ_Net_SendTo(AJ_IOBuffer* buf)
             sin6.sin6_port = htons(MDNS_UDP_PORT);
             if (inet_pton(AF_INET6, MDNS_IPV6_MULTICAST_GROUP, &sin6.sin6_addr) == 1) {
                 ret = sendto(context->mDns6Sock, buf->readPtr, tx, MSG_NOSIGNAL, (struct sockaddr*) &sin6, sizeof(sin6));
+                printf("Thin Core AJ_Net_SendTo. Sent %lu bytes\n", ret);
                 if (tx == ret) {
                     sendSucceeded = TRUE;
                 } else {
@@ -686,7 +688,6 @@ AJ_Status AJ_Net_SendTo(AJ_IOBuffer* buf)
 AJ_Status AJ_Net_RecvFrom(AJ_IOBuffer* buf, uint32_t len, uint32_t timeout)
 {
     printf("Enter AJ_Net_RecvFrom\n");
-    printf("We use CAN!\n");
     MCastContext* context = (MCastContext*) buf->context;
     AJ_Status status = AJ_OK;
     ssize_t ret;
@@ -728,6 +729,7 @@ AJ_Status AJ_Net_RecvFrom(AJ_IOBuffer* buf, uint32_t len, uint32_t timeout)
         rx = min(rx, len);
         if (rx) {
             ret = recvfrom(context->mDnsRecvSock, buf->writePtr, rx, 0, NULL, 0);
+            printf("Thin Core AJ_Net_RecvFrom. Received %lu bytes\n", ret);
             if (ret == -1) {
                 AJ_ErrPrintf(("AJ_Net_RecvFrom(): mDnsRecvSock recvfrom() failed. errno=\"%s\"\n", strerror(errno)));
                 status = AJ_ERR_READ;
@@ -746,6 +748,7 @@ AJ_Status AJ_Net_RecvFrom(AJ_IOBuffer* buf, uint32_t len, uint32_t timeout)
         rx = min(rx, len);
         if (rx) {
             ret = recvfrom(context->udp6Sock, buf->writePtr, rx, 0, NULL, 0);
+            printf("Thin Core AJ_Net_RecvFrom. Received %lu bytes\n", ret);
             if (ret == -1) {
                 AJ_ErrPrintf(("AJ_Net_RecvFrom(): recvfrom() failed. errno=\"%s\"\n", strerror(errno)));
                 status = AJ_ERR_READ;
@@ -764,6 +767,7 @@ AJ_Status AJ_Net_RecvFrom(AJ_IOBuffer* buf, uint32_t len, uint32_t timeout)
         rx = min(rx, len);
         if (rx) {
             ret = recvfrom(context->udpSock, buf->writePtr, rx, 0, NULL, 0);
+            printf("Thin Core AJ_Net_RecvFrom. Received %lu bytes\n", ret);
             if (ret == -1) {
                 AJ_ErrPrintf(("AJ_Net_RecvFrom(): recvfrom() failed. errno=\"%s\"\n", strerror(errno)));
                 status = AJ_ERR_READ;

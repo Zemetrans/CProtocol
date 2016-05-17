@@ -579,7 +579,7 @@ QStatus Send(SocketFd sockfd, const void* buf, size_t len, size_t& sent)
     QCC_ASSERT(buf != NULL);
 
     QCC_DbgLocalData(buf, len);
-
+    printf("Function Send (common/os/Socket.cc). Need to send: %lu bytes\n", len);
     while (status == ER_OK) {
         ret = send(static_cast<int>(sockfd), buf, len, MSG_NOSIGNAL);
         if (ret == -1) {
@@ -624,6 +624,7 @@ QStatus SendTo(SocketFd sockfd, IPAddress& remoteAddr, uint16_t remotePort, uint
      * Always provide MSG_NOSIGNAL (request to not send SIGPIPE on error in
      * connected case)
      */
+    printf("Function SendTo (common/os/Socket.cc). Need to send: %lu\n", len);
     ret = sendto(static_cast<int>(sockfd), buf, len, flags | MSG_NOSIGNAL,
                  reinterpret_cast<struct sockaddr*>(&addr), addrLen);
     if (ret == -1) {
@@ -671,6 +672,7 @@ QStatus Recv(SocketFd sockfd, void* buf, size_t len, size_t& received)
         received = static_cast<size_t>(ret);
         QCC_DbgRemoteData(buf, received);
     }
+    printf("Function Recv (common/os/Socket.cc). Received %lu bytes\n", ret);
     printf("Exit Recv. Return status\n");
     return status;
 }
@@ -692,6 +694,7 @@ QStatus RecvFrom(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& remotePort,
 
     ret = recvfrom(static_cast<int>(sockfd), buf, len, 0,
                    reinterpret_cast<struct sockaddr*>(&addr), &addrLen);
+    printf("Function RecvFrom (common/os/Socket.cc). Received %lu bytes\n", ret);
     if (ret == -1) {
         status = ER_OS_ERROR;
         QCC_DbgHLPrintf(("RecvFrom (sockfd = %u): %d - %s", sockfd, errno, strerror(errno)));
@@ -759,6 +762,7 @@ QStatus RecvWithAncillaryData(SocketFd sockfd, IPAddress& remoteAddr, uint16_t& 
 
     ssize_t ret = recvmsg(static_cast<int>(sockfd), &msg, 0);
 
+    printf("Function RecvWithAncillaryData (common/os/Socket.cc). Received %lu bytes\n", ret);
     if (ret < 0) {
         status = ER_OS_ERROR;
         QCC_LogError(status, ("RecvWithAncillaryData (sockfd = %u): %d - %s", sockfd, errno, strerror(errno)));
@@ -832,6 +836,7 @@ QStatus RecvWithFds(SocketFd sockfd, void* buf, size_t len, size_t& received, So
     msg.msg_controllen = CMSG_LEN(sz);
 
     ssize_t ret = recvmsg(sockfd, &msg, 0);
+    printf("Function RecvWithFds (common/os/Socket.cc). Received %lu bytes\n", ret);
     if (ret == -1) {
         if (errno == EWOULDBLOCK) {
             status = ER_WOULDBLOCK;
@@ -904,6 +909,7 @@ QStatus SendWithFds(SocketFd sockfd, const void* buf, size_t len, size_t& sent, 
     memcpy(CMSG_DATA(cmsg), fdList, sz);
 
     ssize_t ret = sendmsg(static_cast<int>(sockfd), &msg, MSG_NOSIGNAL);
+    printf("Function SendWithFds (common/os/Socket.cc). Sent %lu bytes\n", ret);
     if (ret == -1) {
         if (errno == EAGAIN || errno == EWOULDBLOCK) {
             status = ER_WOULDBLOCK;
