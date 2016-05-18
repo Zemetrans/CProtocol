@@ -29,6 +29,23 @@
 #include <sys/types.h>
 #include <sys/file.h>
 
+#include <net/if.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+
+#include <linux/can.h>
+#include <linux/can/raw.h>
+#include <linux/can/error.h>
+
+#include <linux/types.h>
+#include <inttypes.h>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+
 #define QCC_MODULE "UART"
 
 using namespace qcc;
@@ -205,15 +222,39 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
         return ER_BAD_ARG_5;
     }
 
-    int ret = open(devName.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+    //int ret = open(devName.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+    
+    struct sockaddr_can addr;
+	struct can_frame frame;
+	struct ifreq ifr;
+	
+	int ret = socket(PF_CAN, SOCK_RAW, CAN_RAW);
     if (ret == -1) {
         QCC_LogError(ER_OS_ERROR, ("failed to open serial device %s. ret = %d, %d - %s", devName.c_str(), ret, errno, strerror(errno)));
         goto error;
     }
     fd = ret;
-
+    
+    strcpy(ifr.ifr_name, "vcan0");
+	ioctl(fd, SIOCGIFINDEX, &ifr);
+	
+    addr.can_family  = AF_CAN;
+	addr.can_ifindex = ifr.ifr_ifindex;
+	
+	if(bind(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		perror("Error in socket bind");
+		goto error;
+	}
+	
+	//Write Just for test. It will be delete later
+	frame.can_id = 0xFFB;
+	frame.can_dlc = 1;
+	frame.data[0] = 0xFF;
+	write(fd, &frame, sizeof(struct can_frame));
+	
+	
     /* Lock this FD, to ensure exclusive access to this serial port. */
-    ret = flock(fd, LOCK_EX | LOCK_NB);
+    /*ret = flock(fd, LOCK_EX | LOCK_NB);
     if (ret) {
         QCC_LogError(ER_OS_ERROR, ("Lock fd %d failed with '%s'", fd, strerror(errno)));
         goto error;
@@ -225,12 +266,12 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
     if (ret) {
         QCC_LogError(ER_OS_ERROR, ("Flush fd %d failed with '%s'", fd, strerror(errno)));
         goto error;
-    }
+    }*/
 
     /**
      * Set the new options on the port
      */
-    ret = tcsetattr(fd, TCSANOW, &ttySettings);
+    /*ret = tcsetattr(fd, TCSANOW, &ttySettings);
     if (ret) {
         QCC_LogError(ER_OS_ERROR, ("Set parameters fd %d failed with '%s'", fd, strerror(errno)));
         goto error;
@@ -240,7 +281,7 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
     if (ret) {
         QCC_LogError(ER_OS_ERROR, ("Flush fd %d failed with '%s'", fd, strerror(errno)));
         goto error;
-    }
+    }*/
 
     return ER_OK;
 

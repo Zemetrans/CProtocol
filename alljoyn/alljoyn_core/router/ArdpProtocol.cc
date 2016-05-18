@@ -26,7 +26,6 @@
 #include <qcc/SocketTypes.h>
 #include <qcc/time.h>
 #include <qcc/Util.h>
-#include <stdio.h>
 
 #include <alljoyn/Message.h>
 
@@ -311,43 +310,34 @@ static QStatus DoSendSyn(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf,
 
 static void SetEmpty(ListNode* node)
 {
-    printf("Enter SetEmpty \n");
     QCC_DbgTrace(("SetEmpty(node=%p)", node));
     node->fwd = node->bwd = node;
-    printf("Exit SetEmpty \n");
 }
 
 static bool IsEmpty(ListNode* node)
 {
-    printf("Enter isEmpty \n");
-    printf("Exit isEmpty \n");
     return (node->fwd == node);
 }
 
 static void EnList(ListNode* after, ListNode* node)
 {
-    printf("Enter EnList \n");
     QCC_DbgTrace(("EnList(after=%p, node=%p)", after, node));
     node->fwd = after->fwd;
     node->bwd = after;
     node->fwd->bwd = node;
     after->fwd = node;
-    printf("Exit EnList \n");
 }
 
 static void DeList(ListNode* node)
 {
-    printf("Enter DeList \n");
     QCC_DbgTrace(("DeList(node=%p)", node));
 
     if (IsEmpty(node)) {
-    	printf("Exit DeList (IsEmpty(node)) \n");
         return;
     }
     node->bwd->fwd = node->fwd;
     node->fwd->bwd = node->bwd;
     node->fwd = node->bwd = node;
-    printf("Exit DeList \n");
 }
 
 #ifndef NDEBUG
@@ -391,104 +381,75 @@ static void DumpBitMask(ArdpConnRecord* conn, uint32_t* msk, uint16_t sz, bool c
 #if !defined(NDEBUG) || defined(QCC_OS_GROUP_WINDOWS)
 static const char* State2Text(ArdpState state)
 {
-    printf("Enter State2Text \n");
     switch (state) {
-    case CLOSED: 
-    	printf("Exit State2Text. Return CLOSED \n");
-    	return "CLOSED";
-    case LISTEN: 
-    	printf("Exit State2Text. Return LISTEN \n");
-    	return "LISTEN";
+    case CLOSED: return "CLOSED";
 
-    case SYN_SENT: 
-    	printf("Exit State2Text. Return SYN_SENT \n");
-    	return "SYN_SENT";
+    case LISTEN: return "LISTEN";
 
-    case SYN_RCVD: 
-    	printf("Exit State2Text. Return SYN_RCVD \n");
-    	return "SYN_RCVD";
+    case SYN_SENT: return "SYN_SENT";
 
-    case OPEN: 
-	printf("Exit State2Text. Return OPEN \n");	
-	return "OPEN";
+    case SYN_RCVD: return "SYN_RCVD";
 
-    case CLOSE_WAIT: 
-    	printf("Exit State2Text. Return CLOSE_WAIT \n");
-    	return "CLOSE_WAIT";
+    case OPEN: return "OPEN";
 
-    default: 
-    	printf("Exit State2Text. Return State2Text \n");
-    	return "UNDEFINED";
+    case CLOSE_WAIT: return "CLOSE_WAIT";
+
+    default: return "UNDEFINED";
     }
 }
 #endif
 
 static inline void SetState(ArdpConnRecord* conn, ArdpState state)
 {
-    printf("Enter SetState\n");
     QCC_DbgTrace(("SetState: conn=%p %s=>%s", conn, State2Text(conn->state), State2Text(state)));
     conn->state = state;
-    printf("Exit SetState\n");
 }
 
 static uint32_t TimeNow(qcc::Timespec<qcc::MonotonicTime> base)
 {
-    printf("Enter TimeNow\n");
     qcc::Timespec<qcc::MonotonicTime> now;
     qcc::GetTimeNow(&now);
-    printf("Exit TimeNow. Return time\n");
     return 1000 * (now.seconds - base.seconds) + (now.mseconds - base.mseconds);
 }
 
 static bool IsConnValid(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter IsConnValid\n");
     if (conn == NULL) {
-    	printf("Exit isConnValid. Return false\n");
         return false;
     }
 
     if (IsEmpty(&handle->conns)) {
-    	printf("Exit is ConnValid. Return false\n");
         return false;
     }
 
     for (ListNode* ln = &handle->conns; (ln = ln->fwd) != &handle->conns;) {
         if (conn == (ArdpConnRecord*)ln) {
-            printf("Exit isConnValid. Return true\n");
             return true;
         }
     }
-    printf("Exit isConnValid. Return true\n");
     return false;
 }
 
 static bool IsConnValid(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t connId)
 {
-    printf("Enter isConnValid\n");
     if (conn == NULL) {
-    	printf("Exit isConnValid. Return false\n");
         return false;
     }
 
     if (IsEmpty(&handle->conns)) {
-    	printf("Exit isConnValid. Return false\n");
         return false;
     }
 
     for (ListNode* ln = &handle->conns; (ln = ln->fwd) != &handle->conns;) {
         if (conn == (ArdpConnRecord*)ln && (conn->id == connId)) {
-            printf("Exit isConnValid. Return true\n");
             return true;
         }
     }
-    printf("Exit isConnValid. Return false\n");
     return false;
 }
 
 static void moveAhead(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter moveAhead\n");
     ListNode* head = &handle->conns;
     ListNode* ln = (ListNode* ) conn;
 
@@ -496,12 +457,10 @@ static void moveAhead(ArdpHandle* handle, ArdpConnRecord* conn)
         DeList(ln);
         EnList(head, ln);
     }
-    printf("Exit moveAhead\n");
 }
 
 static void InitTimer(ArdpHandle* handle, ArdpConnRecord* conn, ArdpTimer* timer, ArdpTimeoutHandler handler, void*context, uint32_t timeout, uint16_t retry)
 {
-    printf("Enter InitTimer\n");
     QCC_DbgTrace(("InitTimer: conn=%p timer=%p handler=%p context=%p timeout=%u retry=%u",
                   conn, timer, handler, context, timeout, retry));
 
@@ -516,12 +475,10 @@ static void InitTimer(ArdpHandle* handle, ArdpConnRecord* conn, ArdpTimer* timer
         moveAhead(handle, conn);
         handle->msnext = timeout;
     }
-    printf("Exit InitTimer\n");
 }
 
 static void UpdateTimer(ArdpHandle* handle, ArdpConnRecord* conn, ArdpTimer* timer, uint32_t timeout, uint16_t retry)
 {
-    printf("Enter UpdateTimer\n");
     QCC_DbgTrace(("UpdateTimer: conn=%p timer=%p timeout=%u retry=%u", conn, timer, timeout, retry));
     timer->delta = timeout;
     timer->when = TimeNow(handle->tbase) + timeout;
@@ -530,7 +487,6 @@ static void UpdateTimer(ArdpHandle* handle, ArdpConnRecord* conn, ArdpTimer* tim
         moveAhead(handle, conn);
         handle->msnext = timeout;
     }
-    printf("Exit UpdateTimer\n");
 }
 
 static uint32_t CheckConnTimers(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t next, uint32_t now)
@@ -539,7 +495,6 @@ static uint32_t CheckConnTimers(ArdpHandle* handle, ArdpConnRecord* conn, uint32
      * Check connect/disconnect timer. This timer is alive only when the connection is being established or going away.
      * No other timers should be active on the connection.
      */
-    printf("Enter CheckConnTimers\n");
     if (conn->connectTimer.retry != 0) {
         if (conn->connectTimer.when <= now) {
             QCC_DbgPrintf(("CheckConnTimers: Fire connection( %p ) timer %p at %u (now=%u)",
@@ -554,13 +509,11 @@ static uint32_t CheckConnTimers(ArdpHandle* handle, ArdpConnRecord* conn, uint32
                 }
             }
         }
-        printf("Exit CheckConnTimers. Return next\n");
         return next;
     }
 
     /* If connection is not in OPEN state, return */
     if (conn->state != OPEN) {
-    	printf("Exit CheckConnTimers. Return next\n");
         return next;
     }
 
@@ -604,17 +557,15 @@ static uint32_t CheckConnTimers(ArdpHandle* handle, ArdpConnRecord* conn, uint32
         next = conn->persistTimer.when;
         moveAhead(handle, conn);
     }
-    printf("Exit CheckConnTimers. Return next\n");
+
     return next;
 }
 
 static bool IsValidRetransmit(ArdpConnRecord* conn, ArdpSndBuf* sBuf)
 {
-    printf("Enter IsValidRetransmit\n");
     uint32_t seq;
 
     if (!conn->modeSimple) {
-    	printf("Exit IsValidRetransmit. Return true\n");
         return true;
     }
 
@@ -622,15 +573,12 @@ static bool IsValidRetransmit(ArdpConnRecord* conn, ArdpSndBuf* sBuf)
 
     /* Check if this an actual retransmit of previously sent data */
     if ((conn->snd.thinWindow == 0) && SEQ32_LET(conn->snd.thinNXT, seq)) {
-    	printf("Exit IsValidRetransmit. Return false\n");
         return false;
     } else if ((seq - conn->snd.UNA) >= conn->snd.thinWindow) {
         /* Check if this the ARDP accounting stays in sync with the remote (bound window [SEQ : ACKNXT]).
          * If not, we'll need to wait for the remote to catch up. */
-        printf("Exit IsValidRetransmit. Return false\n");
         return false;
     } else {
-    	printf("Exit IsValidRetransmit. Return true\n");
         return true;
     }
 }
@@ -640,13 +588,11 @@ static bool IsValidRetransmit(ArdpConnRecord* conn, ArdpSndBuf* sBuf)
  */
 static uint32_t CheckTimers(ArdpHandle* handle)
 {
-    printf("Enter CheckTimers\n");
     uint32_t nextTime = ARDP_NO_TIMEOUT;
     uint32_t now = TimeNow(handle->tbase);
     ListNode* ln = &handle->conns;
 
     if (IsEmpty(ln)) {
-    	printf("Exit CheckTimers. Return nextTime\n");
         return nextTime;
     }
 
@@ -692,13 +638,12 @@ static uint32_t CheckTimers(ArdpHandle* handle)
             }
         }
     }
-    printf("Exit CheckTimers. return '(nextTime != ARDP_NO_TIMEOUT) ? nextTime - now : ARDP_NO_TIMEOUT;'\n");
+
     return (nextTime != ARDP_NO_TIMEOUT) ? nextTime - now : ARDP_NO_TIMEOUT;
 }
 
 static void DelConnRecord(ArdpHandle* handle, ArdpConnRecord* conn, bool forced)
 {
-    printf("Enter DelConnRecord\n");
     QCC_UNUSED(handle);
     QCC_DbgTrace(("DelConnRecord(handle=%p conn=%p forced=%s state=%s)",
                   handle, conn, forced ? "true" : "false", State2Text(conn->state)));
@@ -732,12 +677,10 @@ static void DelConnRecord(ArdpHandle* handle, ArdpConnRecord* conn, bool forced)
     }
 
     delete conn;
-    printf("Exit DelConnRecord\n");
 }
 
 static void FlushMessage(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBuf* sBuf, QStatus status)
 {
-    printf("Enter FlushMessage\n");
     ArdpHeader* h = (ArdpHeader*) sBuf->hdr;
     uint16_t fcnt = ntohs(h->fcnt);
     uint32_t len = 0;
@@ -769,7 +712,6 @@ static void FlushMessage(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBuf* s
     ++handle->stats.sendCbs;
 #endif
     handle->cb.SendCb(handle, conn, buf, len, status);
-    printf("Exit FlushMessage\n");
 }
 
 static void FlushSendQueue(ArdpHandle* handle, ArdpConnRecord* conn, QStatus status)
@@ -778,7 +720,6 @@ static void FlushSendQueue(ArdpHandle* handle, ArdpConnRecord* conn, QStatus sta
      * SendCb() for all pending messages so that the upper layer knows
      * to release the corresponding buffers
      */
-    printf("Enter FlushSendQueue\n");
     ArdpSndBuf* sBuf = &conn->snd.buf[(conn->snd.LCS + 1) % conn->snd.SEGMAX];
     for (uint32_t i = 0; i < conn->snd.SEGMAX; i++) {
         ArdpHeader* h = (ArdpHeader* ) sBuf->hdr;
@@ -787,27 +728,22 @@ static void FlushSendQueue(ArdpHandle* handle, ArdpConnRecord* conn, QStatus sta
         }
         sBuf = sBuf->next;
     }
-    printf("Exit FlushSendQueue\n");
 }
 
 static bool IsRcvQueueEmpty(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter IsRcvQueueEmpty\n");
     QCC_UNUSED(handle);
 
     for (uint32_t i = 0; i < conn->rcv.SEGMAX; i++) {
         if (conn->rcv.buf[i].flags & ARDP_BUFFER_DELIVERED) {
-            printf("Exit IsRcvQueueEmpty. Return false\n");
             return false;
         }
     }
-    printf("Exit IsRcvQueueEmpty. Return false\n");
     return true;
 }
 
 static void MarshalHeader(uint32_t* buf32, ArdpHeader* h)
 {
-    printf("Enter MarshalHeader\n");
     uint8_t* txbuf = reinterpret_cast<uint8_t*>(buf32);
 
     *(txbuf + FLAGS_OFFSET) = h->flags;
@@ -823,12 +759,10 @@ static void MarshalHeader(uint32_t* buf32, ArdpHeader* h)
     *reinterpret_cast<uint32_t*>(txbuf + SOM_OFFSET) = h->som;
     *reinterpret_cast<uint16_t*>(txbuf + FCNT_OFFSET) = h->fcnt;
     *reinterpret_cast<uint16_t*>(txbuf + RSRV_OFFSET) = 0;
-    printf("Exit MarshalHeader\n");
 }
 
 static void MarshalSynHeader(uint32_t* buf32, ArdpSynHeader* h)
 {
-    printf("Enter MarshalSynHeader\n");
     uint8_t* txbuf = reinterpret_cast<uint8_t*>(buf32);
 
     *(txbuf + FLAGS_OFFSET) = h->flags;
@@ -843,12 +777,10 @@ static void MarshalSynHeader(uint32_t* buf32, ArdpSynHeader* h)
     *reinterpret_cast<uint32_t*>(txbuf + DACKT_OFFSET) = h->dackt;
     *reinterpret_cast<uint16_t*>(txbuf + OPTIONS_OFFSET) = h->options;
     *reinterpret_cast<uint16_t*>(txbuf + SYN_RSRV_OFFSET) = 0;
-    printf("Exit MarshalSynHeader\n");
 }
 
 static QStatus SendMsgHeader(ArdpHandle* handle, ArdpConnRecord* conn, ArdpHeader* h)
 {
-    printf("Enter SendMsgHeader\n");
     qcc::ScatterGatherList msgSG;
     size_t sent;
     QStatus status;
@@ -894,13 +826,12 @@ static QStatus SendMsgHeader(ArdpHandle* handle, ArdpConnRecord* conn, ArdpHeade
         conn->ackPending = 0;
     }
     conn->sndFlags = qcc::QCC_MSG_NONE;
-    printf("Exit SendMsgHeader. Return status\n");
+
     return status;
 }
 
 static QStatus Send(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t flags, uint32_t seq, uint32_t ack)
 {
-    printf("Enter Send\n");
     ArdpHeader h;
     memset(&h, 0, sizeof (h));
 
@@ -917,14 +848,13 @@ static QStatus Send(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t flags, uin
     if (h.dst == 0) {
         QCC_DbgPrintf(("Send(): destination = 0"));
     }
-    printf("Exit Send\n");
+
     return SendMsgHeader(handle, conn, &h);
 }
 
 
 static void UnmarshalSynSegment(ArdpConnRecord* conn, uint8_t* buf, ArdpSeg* seg)
 {
-    printf("Enter UnmarshalSynSegment\n");
     uint16_t options = ntohs(*reinterpret_cast<uint16_t*>(buf + OPTIONS_OFFSET));
     conn->modeSimple = (options & ARDP_FLAG_SIMPLE_MODE);
     conn->foreign = ntohs(*reinterpret_cast<uint16_t*>(buf + SRC_OFFSET)); /* The source ARDP port */
@@ -940,12 +870,10 @@ static void UnmarshalSynSegment(ArdpConnRecord* conn, uint8_t* buf, ArdpSeg* seg
 
     /* Fixed size of EACK bitmask */
     conn->remoteMskSz = ((conn->snd.SEGMAX + 31) >> 5);
-    printf("Exit UnmarshalSynSegment\n");
 }
 
 static void DisconnectTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, void* context)
 {
-    printf("Enter DisconnectTimerHandler\n");
     QCC_DbgTrace(("DisconnectTimerHandler: handle=%p conn=%p", handle, conn));
 
     /* Tricking the compiler */
@@ -983,12 +911,10 @@ static void DisconnectTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, voi
                        handle, conn));
         UpdateTimer(handle, conn, &conn->connectTimer, ARDP_DISCONNECT_RETRY_TIMEOUT, ARDP_DISCONNECT_RETRY);
     }
-    printf("Exit DisconnectTimerHandler\n");
 }
 
 static void ConnectTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, void* context)
 {
-    printf("Enter ConnectTimerHandler\n");
     QCC_UNUSED(context);
 
     QCC_DbgTrace(("ConnectTimerHandler: handle=%p conn=%p", handle, conn));
@@ -1028,23 +954,19 @@ static void ConnectTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, void* 
     } else {
         timer->retry--;
     }
-    printf("Exit ConnectTimerHandler\n");
 }
 
 static void AckTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, void* context)
 {
-    printf("Enter AckTimerHandler\n");
     QCC_UNUSED(context);
     QStatus status = Send(handle, conn, ARDP_FLAG_ACK | ARDP_FLAG_VER, (conn->modeSimple) ? conn->snd.thinNXT : conn->snd.NXT, conn->rcv.CUR);
     if (status == ER_WOULDBLOCK) {
         conn->ackTimer.delta = 0;
     }
-    printf("Exit AckTimerHandler\n");
 }
 
 static void ExpireMessageSnd(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBuf* sBuf, uint32_t msElapsed)
 {
-    printf("Enter ExpireMessageSnd\n");
     QCC_UNUSED(msElapsed);
 
     ArdpHeader* h = (ArdpHeader*) sBuf->hdr;
@@ -1090,13 +1012,11 @@ static void ExpireMessageSnd(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBu
             UpdateTimer(handle, conn, &conn->ackTimer, ARDP_MIN_DELAYED_ACK_TIMEOUT, 1);
         }
     }
-    printf("Exit ExpireMessageSnd\n");
 }
 
 static QStatus SendMsgData(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBuf* sBuf, uint32_t ttl)
 {
 
-    printf("Enter SendMsgData\n");
     ArdpHeader* h = (ArdpHeader*) sBuf->hdr;
     qcc::ScatterGatherList msgSG;
     uint32_t buf32[ARDP_FIXED_HEADER_LEN >> 2];
@@ -1156,13 +1076,12 @@ static QStatus SendMsgData(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBuf*
         handle->trafficJam = true;
     }
     conn->sndFlags = qcc::QCC_MSG_NONE;
-    printf("Exit SendMsgData. Return status\n");
+
     return status;
 }
 
 static QStatus Disconnect(ArdpHandle* handle, ArdpConnRecord* conn, QStatus reason)
 {
-    printf("Enter Disconnect\n");
     QStatus status = ER_OK;
     uint32_t timeout = 0;
 
@@ -1171,12 +1090,10 @@ static QStatus Disconnect(ArdpHandle* handle, ArdpConnRecord* conn, QStatus reas
     if (conn->state == CLOSE_WAIT || conn->state == CLOSED) {
         QCC_DbgPrintf(("Disconnect(handle=%p, conn=%p, reason=%s) Already disconnect%s",
                        handle, conn, QCC_StatusText(reason), conn->state == CLOSED ? "ed" : "ing"));
-        printf("Exit Disconnect. Retunr ER_OK\n");
         return ER_OK;
     }
 
     if (!IsConnValid(handle, conn)) {
-    	printf("Exit Disconnect. Return ER_ARDP_INVALID_CONNECTION\n");
         return ER_ARDP_INVALID_CONNECTION;
     }
 
@@ -1212,7 +1129,7 @@ static QStatus Disconnect(ArdpHandle* handle, ArdpConnRecord* conn, QStatus reas
     }
 
     InitTimer(handle, conn, &conn->connectTimer, DisconnectTimerHandler, (void*) reason, timeout, ARDP_DISCONNECT_RETRY);
-    printf("Exit Disconnect. Return status\n");
+
     return status;
 }
 
@@ -1229,7 +1146,6 @@ static QStatus Disconnect(ArdpHandle* handle, ArdpConnRecord* conn, QStatus reas
  */
 static void AdjustRTT(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBuf* sBuf)
 {
-    printf("Enter AdjustRTT\n");
     uint32_t now = TimeNow(handle->tbase);
     uint16_t units = (sBuf->datalen + UDP_MTU - 1) / UDP_MTU;
     uint32_t rtt = now - sBuf->tStart;
@@ -1259,12 +1175,10 @@ static void AdjustRTT(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBuf* sBuf
     conn->backoff = 0;
 
     QCC_DbgHLPrintf(("AdjustRtt: New mean = %u, var =%u", conn->rttMean, conn->rttMeanVar));
-    printf("Exit AdjustRTT\n");
 }
 
 inline static uint32_t GetRTO(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter GetRTO\n");
     QCC_UNUSED(handle);
 
     /* RTO = (rttMean + (4 * rttMeanVar)) << backoff */
@@ -1272,25 +1186,22 @@ inline static uint32_t GetRTO(ArdpHandle* handle, ArdpConnRecord* conn)
     if (ms < conn->snd.DACKT) {
         ms += (conn->snd.DACKT >> 1);
     }
-    printf("Exit GetRTO. Return MIN(ms, (uint32_t)ARDP_MAX_RTO)\n");
+
     return MIN(ms, (uint32_t)ARDP_MAX_RTO);
 }
 
 inline static uint32_t GetDataTimeout(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter  GetDataTimeout\n");
     uint32_t timeout = handle->config.totalDataRetryTimeout;
 
     if (conn->rttInit) {
         timeout = MAX(timeout, (conn->snd.SEGMAX * conn->snd.SEGBMAX * (conn->rttMean >> 1)) / UDP_MTU);
     }
-    printf("Exit  GetDataTimeout. Return timeout\n");
     return timeout;
 }
 
 static void RetransmitTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, void* context)
 {
-    printf("Enter RetransmitTimerHandler\n");
     ArdpSndBuf* sBuf = (ArdpSndBuf*) context;
     ArdpTimer* timer = &sBuf->timer;
     uint32_t msElapsed = TimeNow(handle->tbase) - sBuf->tStart;
@@ -1330,7 +1241,6 @@ static void RetransmitTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, voi
 #endif
                 QCC_DbgPrintf(("RetransmitTimerHandler: segment %u expired", ntohl(((ArdpHeader*)sBuf->hdr)->seq)));
                 ExpireMessageSnd(handle, conn, sBuf, msElapsed);
-                printf("Exit RetransmitTimerHandler\n");
                 return;
             }
         } else {
@@ -1338,7 +1248,6 @@ static void RetransmitTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, voi
         }
 
         if (!IsValidRetransmit(conn, sBuf)) {
-            printf("Exit RetransmitTimerHandler\n");
             return;
         }
 
@@ -1374,18 +1283,15 @@ static void RetransmitTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, voi
             Disconnect(handle, conn, status);
         }
     }
-    printf("Exit RetransmitTimerHandler\n");
 }
 
 static inline bool IsDataRetransmitScheduled(ArdpConnRecord* conn)
 {
-    printf("Enter and Exit IsDataRetransmitScheduled. Return something big\n");
     return (((conn->snd.UNA + 1) != conn->snd.NXT) && (conn->snd.UNA != conn->snd.NXT));
 }
 
 static void PersistTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, void* context)
 {
-    printf("Enter PersistTimerHandler\n");
     QCC_UNUSED(context);
     ArdpTimer* timer = &conn->persistTimer;
     QStatus status;
@@ -1411,12 +1317,10 @@ static void PersistTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, void* 
             Disconnect(handle, conn, ER_ARDP_PERSIST_TIMEOUT);
         }
     }
-    printf("Exit PersistTimerHandler\n");
 }
 
 static void ProbeTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, void* context)
 {
-    printf("Enter ProbeTimerHandler\n");
     ArdpTimer* timer = &conn->probeTimer;
     QStatus status;
     uint32_t now = *((uint32_t* ) context);
@@ -1452,12 +1356,10 @@ static void ProbeTimerHandler(ArdpHandle* handle, ArdpConnRecord* conn, void* co
             }
         }
     }
-    printf("Exit ProbeTimerHandler\n");
 }
 
 ArdpHandle* ARDP_AllocHandle(ArdpGlobalConfig* config)
 {
-    printf("Enter ARDP_AllocHandle\n");
     QCC_DbgTrace(("ARDP_AllocHandle()"));
 
     srand(qcc::Rand32());
@@ -1469,13 +1371,11 @@ ArdpHandle* ARDP_AllocHandle(ArdpGlobalConfig* config)
     GetTimeNow(&handle->tbase);
     handle->msnext = ARDP_NO_TIMEOUT;
     memcpy(&handle->config, config, sizeof(ArdpGlobalConfig));
-    printf("Exit ARDP_AllocHandle. Return handle\n");
     return handle;
 }
 
 void ARDP_FreeHandle(ArdpHandle* handle)
 {
-    printf("Enter ARDP_FreeHandle\n");
     QCC_DbgTrace(("ARDP_FreeHandle(handle=0%p)", handle));
     if (!IsEmpty(&handle->conns)) {
         for (ListNode* ln = &handle->conns; (ln = ln->fwd) != &handle->conns;) {
@@ -1486,231 +1386,181 @@ void ARDP_FreeHandle(ArdpHandle* handle)
         }
     }
     delete handle;
-    printf("Exit ARDP_FreeHandle\n");
 }
 
 void ARDP_SetAcceptCb(ArdpHandle* handle, ARDP_ACCEPT_CB AcceptCb)
 {
-    printf("Enter ARDP_SetAcceptCb\n");
     QCC_DbgTrace(("ARDP_SetAcceptCb(handle=%p, AcceptCb=%p)", handle, AcceptCb));
     handle->cb.AcceptCb = AcceptCb;
-    printf("Exit ARDP_SetAcceptCb\n");
 }
 
 void ARDP_SetConnectCb(ArdpHandle* handle, ARDP_CONNECT_CB ConnectCb)
 {
-    printf("Enter ARDP_SetConnectCb\n");
     QCC_DbgTrace(("ARDP_SetConnectCb(handle=%p, ConnectCb=%p)", handle, ConnectCb));
     handle->cb.ConnectCb = ConnectCb;
-    printf("Exit ARDP_SetConnectCb\n");
 }
 
 void ARDP_SetDisconnectCb(ArdpHandle* handle, ARDP_DISCONNECT_CB DisconnectCb)
 {
-    printf("Enter ARDP_SetDisconnectCb\n");
     QCC_DbgTrace(("ARDP_SetDisconnectCb(handle=%p, DisconnectCb=%p)", handle, DisconnectCb));
     handle->cb.DisconnectCb = DisconnectCb;
-    printf("Exit ARDP_SetDisconnectCb\n");
 }
 
 void ARDP_SetRecvCb(ArdpHandle* handle, ARDP_RECV_CB RecvCb)
 {
-    printf("Enter ARDP_SetRecvCb\n");
     QCC_DbgTrace(("ARDP_SetRecvCb(handle=%p, RecvCb=%p)", handle, RecvCb));
     handle->cb.RecvCb = RecvCb;
-    printf("Exit ARDP_SetRecvCb\n");
 }
 
 void ARDP_SetSendCb(ArdpHandle* handle, ARDP_SEND_CB SendCb)
 {
-    printf("Enter ARDP_SetSendCb\n");
     QCC_DbgTrace(("ARDP_SetSendCb(handle=%p, SendCb=%p)", handle, SendCb));
     handle->cb.SendCb = SendCb;
-    printf("Exit ARDP_SetSendCb\n");
 }
 
 void ARDP_SetSendWindowCb(ArdpHandle* handle, ARDP_SEND_WINDOW_CB SendWindowCb)
 {
-    printf("Enter ARDP_SetSendWindowCb\n");
     QCC_DbgTrace(("ARDP_SetSendWindowCb(handle=%p, SendWindowCb=%p)", handle, SendWindowCb));
     handle->cb.SendWindowCb = SendWindowCb;
-    printf("Exit ARDP_SetSendWindowCb\n");
 }
 
 #if ARDP_TESTHOOKS
 void ARDP_HookSendToSG(ArdpHandle* handle, ARDP_SENDTOSG_TH SendToSG)
 {
-    printf("Enter ARDP_HookSendToSG\n");
     QCC_DbgTrace(("ARDP_HookSendToSG(handle=%p, RecvCb=%p)", handle, SendToSG));
     handle->th.SendToSG = SendToSG;
-    printf("Exit ARDP_HookSendToSG\n");
 }
 
 void ARDP_HookSendTo(ArdpHandle* handle, ARDP_SENDTO_TH SendTo)
 {
-    printf("Enter ARDP_HookSendTo\n");
     QCC_DbgTrace(("ARDP_HookSendTo(handle=%p, SendTo=%p)", handle, SendTo));
     handle->th.SendTo = SendTo;
-    printf("Exit ARDP_HookSendTo\n");
 }
 
 void ARDP_HookRecvFrom(ArdpHandle* handle, ARDP_RECVFROM_TH RecvFrom)
 {
-    printf("Enter ARDP_HookRecvFrom\n");
     QCC_DbgTrace(("ARDP_HookRecvFrom(handle=%p, RecvFrom=%p)", handle, RecvFrom));
     handle->th.RecvFrom = RecvFrom;
-    printf("Exit ARDP_HookRecvFrom\n");
 }
 #endif
 
 #if ARDP_STATS
 ArdpStats* ARDP_GetStats(ArdpHandle* handle)
 {
-    printf("Enter ARDP_GetStats\n");
     QCC_DbgTrace(("ARDP_GetStats(handle=%p)", handle));
-    printf("Exit ARDP_GetStats. Return &handle -> stats\n");
     return &handle->stats;
 }
 
 void ARDP_ResetStats(ArdpHandle* handle)
 {
-    printf("Enter ARDP_ResetStats\n");
     QCC_DbgTrace(("ARDP_ResetStats(handle=%p)", handle));
     memset(&handle->stats, 0, sizeof(handle->stats));
-    printf("Exit ARDP_ResetStats\n");
+
 }
 #endif
 
 void ARDP_SetHandleContext(ArdpHandle* handle, void* context)
 {
-    printf("Enter ARDP_SetHandleContext\n");
     QCC_DbgTrace(("ARDP_SetHandleContext(handle=%p, context=%p)", handle, context));
     handle->context = context;
-    printf("Exit ARDP_SetHandleContext\n");
 }
 
 void ARDP_ReleaseConnection(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter ARDP_ReleaseConnection\n");
     QCC_DbgTrace(("ARDP_ReleaseConnection(handle=%p, conn=%p)", handle, conn));
     if (!IsConnValid(handle, conn)) {
         QCC_LogError(ER_ARDP_INVALID_CONNECTION, ("ARDP_ReleaseConnection(handle=%p), context = %p", handle, handle->context));
         return;
     }
     DelConnRecord(handle, conn, true);
-    printf("Exit ARDP_ReleaseConnection\n");
 }
 
 void* ARDP_GetHandleContext(ArdpHandle* handle)
 {
-    printf("Enter ARDP_GetHandleContext\n");
     QCC_DbgTrace(("ARDP_GetHandleContext(handle=%p)", handle));
-    printf("Exit ARDP_GetHandleContext\n");
     return handle->context;
 }
 
 bool ARDP_IsConnValid(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t connId)
 {
-    printf("Enter ARDP_IsConnValid\n");
     QCC_DbgTrace(("ARDP_IsConnValid(handle=%p, conn=%p)", handle, conn));
     if (IsConnValid(handle, conn)) {
         if (conn->id == connId) {
-            printf("Exit ARDP_IsConnValid. Return true\n");
             return true;
         }
     }
-    printf("Exit ARDP_IsConnValid. Return false\n");
     return false;
 }
 
 QStatus ARDP_SetConnContext(ArdpHandle* handle, ArdpConnRecord* conn, void* context)
 {
-    printf("Enter ARDP_SetConnContext\n");
     QCC_DbgTrace(("ARDP_SetConnContext(handle=%p, conn=%p, context=%p)", handle, conn, context));
     if (!IsConnValid(handle, conn)) {
         QCC_LogError(ER_ARDP_INVALID_CONNECTION, ("ARDP_SetHandleContext(handle=%p), context = %p", handle, handle->context));
-        printf("Exit ARDP_SetConnContext. Return ER_ADRP_INVALID_CONNECTION\n");
         return ER_ARDP_INVALID_CONNECTION;
     }
     conn->context = context;
-    printf("Enter ARDP_SetConnContext. Return ER_OK\n");
     return ER_OK;
 }
 
 void* ARDP_GetConnContext(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter ARDP_GetConnContext\n");
     QCC_DbgTrace(("ARDP_GetConnContext(handle=%p, conn=%p)", handle, conn));
     if (!IsConnValid(handle, conn)) {
         QCC_LogError(ER_ARDP_INVALID_CONNECTION, ("ARDP_GetHandleContext(handle=%p), context = %p", handle, handle->context));
-        printf("Exit ARDP_GetConnContext. Return NULL\n");
         return NULL;
     }
-    printf("Exit ARDP_GetConnContext. Return conn->context\n");
     return conn->context;
 }
 
 uint32_t ARDP_GetConnId(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter ARDP_GetConnId\n");
     QCC_DbgTrace(("ARDP_GetConnId(handle=%p, conn=%p)", handle, conn));
     if (!IsConnValid(handle, conn)) {
         QCC_LogError(ER_ARDP_INVALID_CONNECTION, ("ARDP_GetConnId(handle=%p), context = %p", handle, handle->context));
-        printf("Exit ARDP_GetConnId. Return ARDP_CONN_ID_INVALID\n");
         return ARDP_CONN_ID_INVALID;
     }
-    printf("Exit ARDP_GetConnId. Return conn ->id\n");
     return conn->id;
 }
 
 uint32_t ARDP_GetConnPending(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter ARDP_GetConnPending\n");
     QCC_DbgTrace(("ARDP_GetConnPending(handle=%p, conn=%p)", handle, conn));
     if (!IsConnValid(handle, conn)) {
         QCC_LogError(ER_ARDP_INVALID_CONNECTION, ("ARDP_GetConnPending(handle=%p), context = %p", handle, handle->context));
         QCC_ASSERT(false && "Connection not found");
-        printf("Exit ARDP_GetConnPending. return 0\n");
         return 0;
     }
-    printf("Exit ARDP_GetConnPending\n. Return conn -> snd.pending");
     return conn->snd.pending;
 }
 
 QStatus ARDP_GetRemoteIPEndpointFromConn(ArdpHandle* handle, ArdpConnRecord* conn, qcc::IPEndpoint& endpoint)
 {
-    printf("Enter ARDP_GetRemoteIPEndpointFromConn\n");
     QCC_DbgTrace(("ARDP_GetRemoteIpAddrPortFromConn(handle=%p, conn=%p)", handle, conn));
     if (!IsConnValid(handle, conn)) {
         QCC_LogError(ER_ARDP_INVALID_CONNECTION, ("ARDP_GetRemoteIpAddrPortFromConn(handle=%p), context = %p", handle, handle->context));
-        printf("Exit ARDP_GetRemoteIPEndpointFromConn. Return ER_ARDP_INVALID_CONNECTION\n");
         return ER_ARDP_INVALID_CONNECTION;
     }
 
     endpoint.addr = conn->ipAddr;
     endpoint.port = conn->ipPort;
-    printf("Exit ARDP_GetRemoteIPEndpointFromConn. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus ARDP_GetLocalIPEndpointFromConn(ArdpHandle* handle, ArdpConnRecord* conn, qcc::IPEndpoint& endpoint)
 {
-    printf("Enter ARDP_GetLocalIPEndpointFromConn\n");
     QCC_DbgTrace(("ARDP_GetLocalIpAddrPortFromConn(handle=%p, conn=%p)", handle, conn));
     if (!IsConnValid(handle, conn)) {
         QCC_LogError(ER_ARDP_INVALID_CONNECTION, ("ARDP_GetLocalIpAddrPortFromConn(handle=%p), context = %p", handle, handle->context));
-        printf("Exit ARDP_GetLocalIPEndpointFromConn. Return ER_ARDP_INVALID_CONNECTION\n");
         return ER_ARDP_INVALID_CONNECTION;
     }
 
     QStatus status = qcc::GetLocalAddress(conn->sock, endpoint.addr, endpoint.port);
     if (status != ER_OK) {
         QCC_LogError(status, ("ARDP_GetLocalIpAddrFromConn(handle=%p), context = %p", handle, handle->context));
-        printf("Exit ARDP_GetLocalIPEndpointFromConn. Return status\n");
         return status;
     }
-    
-    printf("Exit ARDP_GetLocalIPEndpointFromConn. Return ER_OK\n");
+
     return ER_OK;
 }
 
@@ -1721,19 +1571,16 @@ QStatus ARDP_GetLocalIPEndpointFromConn(ArdpHandle* handle, ArdpConnRecord* conn
  */
 uint32_t ARDP_GetDataTimeout(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter ARDP_GetDataTimeout\n");
     if (!IsConnValid(handle, conn)) {
         QCC_LogError(ER_ARDP_INVALID_CONNECTION, ("ARDP_GetIpPortFromConn(handle=%p), context = %p", handle, handle->context));
-        printf("Exit ARDP_GetDataTimeout. Return something big\n");
         return handle->config.totalDataRetryTimeout + 2 * handle->config.initialDataTimeout;
     }
-    printf("Exit ARDP_GetDataTimeout. Return somthing big\n");
+
     return (GetDataTimeout(handle, conn) + 2 * handle->config.initialDataTimeout);
 }
 
 static ArdpConnRecord* NewConnRecord(void)
 {
-    printf("Enter NewConnRecord\n");
     QCC_DbgTrace(("NewConnRecord()"));
     ArdpConnRecord* conn = new ArdpConnRecord();
     memset(conn, 0, sizeof(ArdpConnRecord));
@@ -1742,20 +1589,17 @@ static ArdpConnRecord* NewConnRecord(void)
     } while (conn->id == ARDP_CONN_ID_INVALID);
     QCC_DbgTrace(("NewConnRecord(): conn %p, id %u", conn, conn->id));
     SetEmpty(&conn->list);
-    printf("Exit NewConnRecord. Return conn\n");
     return conn;
 }
 
 static QStatus InitRcv(ArdpConnRecord* conn, uint32_t segmax, uint32_t segbmax)
 {
-    printf("Enter InitRcv\n");
     conn->rcv.SEGMAX = segmax;     /* The maximum number of outstanding segments that we can buffer (we will tell other side) */
     conn->rcv.SEGBMAX = segbmax;   /* The largest buffer that can be received on this connection (our buffer size) */
 
     conn->rcv.buf = (ArdpRcvBuf*) malloc(segmax * sizeof(ArdpRcvBuf));
     if (conn->rcv.buf == NULL) {
         QCC_DbgPrintf(("InitRcv: Failed to allocate space for receive structure"));
-        printf("Exit InitRcv. Return ER_OUT_OF_MEMORY\n");
         return ER_OUT_OF_MEMORY;
     }
 
@@ -1763,24 +1607,20 @@ static QStatus InitRcv(ArdpConnRecord* conn, uint32_t segmax, uint32_t segbmax)
     for (uint32_t i = 0; i < segmax; i++) {
         conn->rcv.buf[i].next = &conn->rcv.buf[((i + 1) % segmax)];
     }
-    printf("Exit InitRcv. Return ER_OK\n");
     return ER_OK;
 }
 
 /* Extra Initialization after connection has been established */
 static void PostInitRcv(ArdpConnRecord* conn)
 {
-    printf("Enter IPostInitRcv\n");
     conn->rcv.LCS = conn->rcv.CUR;
     for (uint16_t i = 0; i < conn->rcv.SEGMAX; i++) {
         conn->rcv.buf[i].seq = conn->rcv.IRS;
     }
-    printf("Exit IPostInitRcv\n");
 }
 
 static QStatus InitConnRecord(ArdpHandle* handle, ArdpConnRecord* conn, qcc::SocketFd sock, qcc::IPAddress ipAddr, uint16_t ipPort, uint16_t foreign)
 {
-    printf("Enter InitConnRecord\n");
     QCC_DbgTrace(("InitConnRecord(handle=%p, conn=%p, sock=%d, ipAddr=\"%s\", ipPort=%d, foreign=%d)",
                   handle, conn, sock, ipAddr.ToString().c_str(), ipPort, foreign));
     uint16_t local;
@@ -1796,7 +1636,6 @@ static QStatus InitConnRecord(ArdpHandle* handle, ArdpConnRecord* conn, qcc::Soc
         if (count == 65535) {
             /* Really? We exhausted all the connections?! */
             QCC_LogError(ER_FAIL, ("InitConnRecord: Cannot get a new connection record. Too many connections?"));
-            printf("Exit InitConnRecord. Return ER_FAIL\n");
             return ER_FAIL;
         }
     }
@@ -1823,24 +1662,21 @@ static QStatus InitConnRecord(ArdpHandle* handle, ArdpConnRecord* conn, qcc::Soc
     conn->rttMeanVar = 0;
 
     conn->backoff = 0;
-    printf("Exit InitConnRecord. Return ER_OK\n");
+
     return ER_OK;
 }
 
 static void ProtocolDemux(uint8_t* buf, uint16_t len, uint16_t* local, uint16_t* foreign)
 {
-    printf("Enter ProtocolDemux\n");
     QCC_UNUSED(len);
     QCC_DbgTrace(("ProtocolDemux(buf=%p, len=%d, local*=%p, foreign*=%p)", buf, len, local, foreign));
     *local = ntohs(*reinterpret_cast<uint16_t*>(buf + DST_OFFSET));
     *foreign = ntohs(*reinterpret_cast<uint16_t*>(buf + SRC_OFFSET));
     QCC_DbgTrace(("ProtocolDemux(): local %d, foreign %d", *local, *foreign));
-    printf("Exit ProtocolDemux\n");
 }
 
 static ArdpConnRecord* FindConn(ArdpHandle* handle, uint16_t local, uint16_t foreign)
 {
-    printf("Enter FindConn\n");
     QCC_DbgTrace(("FindConn(handle=%p, local=%d, foreign=%d)", handle, local, foreign));
 
     for (ListNode* ln = &handle->conns; (ln = ln->fwd) != &handle->conns;) {
@@ -1848,17 +1684,14 @@ static ArdpConnRecord* FindConn(ArdpHandle* handle, uint16_t local, uint16_t for
         QCC_DbgPrintf(("FindConn(): conn %p local = %d, foreign = %d", conn, conn->local, conn->foreign));
         if (conn->local == local && conn->foreign == foreign) {
             QCC_DbgPrintf(("FindConn(): Found conn %p", conn));
-            printf("Exit FindConn. Return conn\n");
             return conn;
         }
     }
-    printf("Exit FindConn. Return NULL\n");
     return NULL;
 }
 
 static QStatus SendData(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, uint32_t len, uint32_t ttl)
 {
-    printf("Enter SendData\n");
     QStatus status = ER_OK;
     uint32_t timeout = handle->config.initialDataTimeout;
     uint16_t fcnt;
@@ -1891,7 +1724,6 @@ static QStatus SendData(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, 
     /* Check if receiver's window is wide enough to accept FCNT number of segments */
     if (fcnt > conn->window) {
         QCC_DbgPrintf(("SendData(): number of fragments %u exceeds the window size %u", fcnt, conn->window));
-        printf("Exit SendData. Return ER_ARDP_BACKPRESSURE\n");
         return ER_ARDP_BACKPRESSURE;
     }
 
@@ -1899,7 +1731,6 @@ static QStatus SendData(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, 
     if (fcnt > (conn->snd.SEGMAX - conn->snd.pending)) {
         QCC_DbgPrintf(("SendData(): number of fragments %u exceeds the send queue depth %u",
                        fcnt, conn->snd.SEGMAX - conn->snd.pending));
-        printf("Exit SendData. Return ER_ARDP_BACKPRESSURE\n");
         return ER_ARDP_BACKPRESSURE;
     }
 
@@ -1918,7 +1749,6 @@ static QStatus SendData(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, 
             QCC_DbgPrintf(("SendMsgData(): Dropping expired message (conn=0x%p, buf=0x%p, len=%d, ttl=%u, dack=%u, rttMean=%u)",
                            conn, sBuf->data, sBuf->datalen, ttl, conn->snd.DACKT, conn->rttMean >> 1));
 
-            printf("Exit SendData. Return ER_ARDP_TTL_EXPIRED\n");
             return ER_ARDP_TTL_EXPIRED;
         }
 
@@ -2015,13 +1845,12 @@ static QStatus SendData(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, 
         segData += segLen;
         sBuf = sBuf->next;
     }
-    printf("Exit SendData. Return status\n");
+
     return status;
 }
 
 static QStatus DoSendSyn(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, uint16_t len)
 {
-    printf("Enter DoSendSyn\n");
     QCC_UNUSED(buf);
     ArdpSynHeader hSyn;
     qcc::ScatterGatherList msgSG;
@@ -2073,19 +1902,17 @@ static QStatus DoSendSyn(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf,
 #if ARDP_STATS
     ++handle->stats.synSends;
 #endif
-    printf("Exit DoSendSyn. Return qcc::SendToSG\n");
+
     return qcc::SendToSG(conn->sock, conn->ipAddr, conn->ipPort, msgSG, sent);
 }
 
 static QStatus SendSyn(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, uint16_t len)
 {
-    printf("Enter SendSyn\n");
     QStatus status;
 
     QCC_DbgTrace(("SendSyn(handle=%p, conn=%p, buf=%p, len=%d)", handle, conn, buf, len));
     conn->synData.buf = (uint8_t*) malloc(len);
     if (conn->synData.buf == NULL) {
-        printf("Exit SendSyn. Return ER_OUT_OF_MEMORY\n");
         return ER_OUT_OF_MEMORY;
     }
 
@@ -2101,13 +1928,11 @@ static QStatus SendSyn(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, u
         InitTimer(handle, conn, &conn->connectTimer, ConnectTimerHandler, NULL, handle->config.connectTimeout, handle->config.connectRetries + 1);
         QCC_DbgPrintf(("SendSyn(): timer=%p, retries=%u", conn->connectTimer, conn->connectTimer.retry));
     }
-    printf("Enter SendSyn. Return status\n");
     return status;
 }
 
 static QStatus SendRst(ArdpHandle* handle, qcc::SocketFd sock, qcc::IPAddress ipAddr, uint16_t ipPort, uint16_t local, uint16_t foreign)
 {
-    printf("Enter SendRst\n");
     QCC_DbgTrace(("SendRst(handle=%p, sock=%d., ipAddr=\"%s\", ipPort=%d., local=%d., foreign=%d.)",
                   handle, sock, ipAddr.ToString().c_str(), ipPort, local, foreign));
 
@@ -2139,12 +1964,10 @@ static QStatus SendRst(ArdpHandle* handle, qcc::SocketFd sock, qcc::IPAddress ip
 #endif
 
     size_t sent;
-    printf("Exit SendRst. Return qcc::SendTo\n");
     return qcc::SendTo(sock, ipAddr, ipPort, &h, ARDP_FIXED_HEADER_LEN, sent);
 }
 
 static QStatus UpdateSndSegments(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t ack, uint32_t lcs) {
-    printf("Enter UpdateSndSegments\n");
     QCC_DbgTrace(("UpdateSndSegments(): handle=%p, conn=%p, ack=%u, lcs=%u", handle, conn, ack, lcs));
     uint16_t index = ack % conn->snd.SEGMAX;
     ArdpSndBuf* sBuf = &conn->snd.buf[index];
@@ -2153,7 +1976,6 @@ static QStatus UpdateSndSegments(ArdpHandle* handle, ArdpConnRecord* conn, uint3
     /* Nothing to clean up */
     if (conn->snd.pending == 0) {
         conn->snd.LCS = lcs;
-        printf("Exit UpdateSndSegments. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -2178,7 +2000,6 @@ static QStatus UpdateSndSegments(ArdpHandle* handle, ArdpConnRecord* conn, uint3
         if (!(sBuf->inUse) || (SEQ32_LT(ack, seq))) {
             QCC_LogError(ER_ARDP_INVALID_RESPONSE, ("Bad update: %s SND %u ACK %u",
                                                     (sBuf->inUse) ? "full" : "empty", seq, ack));
-            printf("Exit UpdateSndSegments. Return ER_ARDP_INVALID_RESPONSE\n");
             return ER_ARDP_INVALID_RESPONSE;
         }
 
@@ -2232,13 +2053,11 @@ static QStatus UpdateSndSegments(ArdpHandle* handle, ArdpConnRecord* conn, uint3
     /* Update the counter on our SND side */
     conn->snd.LCS = lcs;
 
-    printf("Exit UpdateSndSegments. Return ER_OK\n");
     return ER_OK;
 }
 
 static void FastRetransmit(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBuf* sBuf)
 {
-    printf("Enter FastRetransmit\n");
     QCC_UNUSED(conn);
     /*
      * Fast retransmit to fill the gap. Schedule only for those segments that haven't been
@@ -2249,11 +2068,9 @@ static void FastRetransmit(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSndBuf*
         sBuf->timer.when = TimeNow(handle->tbase);
     }
     sBuf->fastRT++;
-    printf("Exit FastRetransmit\n");
 }
 
 static void CancelEackedSegments(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t ack, uint32_t* bitMask) {
-    printf("Enter CancelEackedSegments\n");
     QCC_DbgHLPrintf(("CancelEackedSegments(): handle=%p, conn=%p, bitMask=%p, ack=%u (snd.Una %u)",
                      handle, conn, bitMask, ack, conn->snd.UNA));
     uint32_t start = ack + 1;
@@ -2298,16 +2115,13 @@ static void CancelEackedSegments(ArdpHandle* handle, ArdpConnRecord* conn, uint3
             sBuf = sBuf->next;
         }
     }
-    printf("Exit CancelEackedSegments\n");
 }
 
 static void ShiftRcvMsk(ArdpConnRecord* conn)
 {
-    printf("Enter ShiftRcvMsk\n");
     QCC_DbgPrintf(("ShiftRcvMsk"));
     if (conn->rcv.eack.sz == 0) {
         /* No EACKS */
-        printf("Exit ShiftRcvMsk\n");
         return;
     }
 
@@ -2343,12 +2157,10 @@ static void ShiftRcvMsk(ArdpConnRecord* conn)
 #ifndef NDEBUG
     DumpBitMask(conn, conn->rcv.eack.mask, conn->rcv.eack.fixedSz >> 2, false);
 #endif
-    printf("Exit ShiftRcvMsk\n");
 }
 
 static void AddRcvMsk(ArdpConnRecord* conn, uint32_t delta)
 {
-    printf("Enter AddRcvMsk\n");
     QCC_DbgPrintf(("AddRcvMsk: delta = %d", delta));
     /* First bit represents rcv.CUR + 2 */
     uint32_t bin32 = (delta - 1) / 32;
@@ -2365,13 +2177,11 @@ static void AddRcvMsk(ArdpConnRecord* conn, uint32_t delta)
 #ifndef NDEBUG
     DumpBitMask(conn, conn->rcv.eack.mask, conn->rcv.eack.fixedSz >> 2, false);
 #endif
-    printf("Exit AddRcvMsk\n");
 
 }
 
 static void DumpRcvQueue(ArdpConnRecord* conn)
 {
-    printf("Enter DumpRcvQueue\n");
     uint32_t i;
     for (i = 0; i < conn->rcv.SEGMAX; i++) {
         QCC_LogError(ER_OK, ("%d: %s, %s seq %u, som %u, fcnt %d ttl %x", i,
@@ -2380,12 +2190,10 @@ static void DumpRcvQueue(ArdpConnRecord* conn)
                              conn->rcv.buf[i].seq, conn->rcv.buf[i].som, conn->rcv.buf[i].fcnt, conn->rcv.buf[i].ttl));
 
     }
-    printf("Exit DumpRcvQueue\n");
 }
 
 static QStatus ReleaseRcvBuffers(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t seq, uint16_t fcnt, QStatus reason)
 {
-    printf("Enter ReleaseRcvBuffers\n");
     uint16_t index = seq % conn->rcv.SEGMAX;
     ArdpRcvBuf* consumed = &conn->rcv.buf[index];
     uint32_t count = fcnt;
@@ -2396,20 +2204,17 @@ static QStatus ReleaseRcvBuffers(ArdpHandle* handle, ArdpConnRecord* conn, uint3
     if (fcnt == 0) {
         QCC_DbgHLPrintf(("Invalid fragment count %u", fcnt));
         QCC_ASSERT((fcnt > 0) && "fcnt cannot be zero");
-        printf("Exit ReleaseRcvBuffers. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
     if (seq != (conn->rcv.LCS + 1)) {
         if (reason == ER_ARDP_TTL_EXPIRED) {
             QCC_DbgPrintf(("Expired segment %u is not first in rcv queue (%u)", seq, conn->rcv.LCS + 1));
-            printf("Exit ER_OK\n");
             return ER_OK;
         } else {
             QCC_LogError(ER_OK, ("conn %p, Consumed message %u is not first in rcv queue (%u)", conn, seq, conn->rcv.LCS + 1));
             DumpRcvQueue(conn);
             QCC_ASSERT(0 && "Consumed message is not first in rcv queue");
-            printf("Exit ER_FAIL\n");
             return ER_FAIL;
         }
     }
@@ -2419,7 +2224,6 @@ static QStatus ReleaseRcvBuffers(ArdpHandle* handle, ArdpConnRecord* conn, uint3
         if (conn->rcv.buf[index].seq != seq) {
             QCC_DbgHLPrintf(("ReleaseRcvBuffers: released buffer seq=%u does not match rcv %u", seq, conn->rcv.buf[index].seq));
             QCC_ASSERT(0 && "ReleaseRcvBuffers: Buffer sequence validation failed");
-            printf("Exit ER_FAIL\n");
             return ER_FAIL;
         }
     }
@@ -2465,13 +2269,12 @@ static QStatus ReleaseRcvBuffers(ArdpHandle* handle, ArdpConnRecord* conn, uint3
                          conn->rcv.CUR, conn->rcv.LCS));
         UpdateTimer(handle, conn, &conn->ackTimer, handle->config.delayedAckTimeout, 1);
     }
-    printf("Exit ReleaseRcvBuffers. Return ER_OK\n");
+
     return ER_OK;
 }
 
 static void AdvanceRcvQueue(ArdpHandle* handle, ArdpConnRecord* conn, ArdpRcvBuf* current)
 {
-    printf("Enter AdvanceRcvQueue\n");
     uint32_t seq = current->seq;
     bool isExpiring = false;
     ArdpRcvBuf* startFrag;
@@ -2562,12 +2365,10 @@ static void AdvanceRcvQueue(ArdpHandle* handle, ArdpConnRecord* conn, ArdpRcvBuf
     }
 
     QCC_DbgHLPrintf(("AdvanceRcvQueue: rcv.CUR = %u, rcv.LCS = %u", conn->rcv.CUR, conn->rcv.LCS));
-    printf("Exit AdvanceRcvQueue\n");
 }
 
 static void FlushExpiredRcvMessages(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t acknxt)
 {
-    printf("Enter FlushExpiredRcvMessages\n");
     uint16_t index = (conn->rcv.CUR) % conn->rcv.SEGMAX;
     ArdpRcvBuf* current = &conn->rcv.buf[index];
     uint32_t startSeq;
@@ -2593,7 +2394,6 @@ static void FlushExpiredRcvMessages(ArdpHandle* handle, ArdpConnRecord* conn, ui
                                  conn->rcv.CUR, conn->rcv.LCS));
                 UpdateTimer(handle, conn, &conn->ackTimer, handle->config.delayedAckTimeout, 1);
             }
-            printf("Exit FlushExpiredRcvMessages\n");
             return;
         }
 
@@ -2647,12 +2447,10 @@ static void FlushExpiredRcvMessages(ArdpHandle* handle, ArdpConnRecord* conn, ui
     }
 
     QCC_DbgPrintf(("FlushExpiredRcvMessages(UPDATE rcv.CUR = %u, rcv.LCS = %u, acknxt = %u", conn->rcv.CUR, conn->rcv.LCS, acknxt));
-    printf("Exit FlushExpiredRcvMessages\n");
 }
 
 static QStatus AddRcvBuffer(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSeg* seg, uint8_t* buf, uint16_t len, bool ordered)
 {
-    printf("Enter AddRcvBuffer\n");
     QCC_UNUSED(len);
     uint16_t index = seg->SEQ % conn->rcv.SEGMAX;
     ArdpRcvBuf* current = &conn->rcv.buf[index];
@@ -2665,7 +2463,6 @@ static QStatus AddRcvBuffer(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSeg* s
 
     if (current->seq == seg->SEQ) {
         QCC_DbgPrintf(("AddRcvBuffer: duplicate segment %u, acknowledge", seg->SEQ));
-        printf("Exit AddRcvBuffer. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -2674,7 +2471,6 @@ static QStatus AddRcvBuffer(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSeg* s
                          current->seq, seg->SEQ));
         QCC_ASSERT(!(current->flags & ARDP_BUFFER_IN_USE) &&
                    "AddRcvBuffer: attempt to overwrite buffer that has not been released");
-        printf("Exit AddRcvBuffer. ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -2682,7 +2478,6 @@ static QStatus AddRcvBuffer(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSeg* s
     current->data = (uint8_t*) malloc((((seg->DLEN + 1023) >> 10) << 10) * sizeof(uint8_t));
     if (current->data == NULL) {
         QCC_LogError(ER_OUT_OF_MEMORY, ("Failed to allocate rcv data buffer"));
-        printf("Enter AddRcvBuffer. Return ER_OUT_OF_MEMORY\n");
         return ER_OUT_OF_MEMORY;
     }
 
@@ -2708,41 +2503,35 @@ static QStatus AddRcvBuffer(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSeg* s
         AddRcvMsk(conn, (seg->SEQ - (conn->rcv.CUR + 1)));
     }
 
-    printf("Exit AddRcvBuffer. Return ER_OK\n");
     return ER_OK;
 }
 
 static bool CheckConfigValid(uint16_t segmax, uint16_t segbmax, uint16_t window, bool isSimpleMode = false)
 {
-    printf("Enter CheckConfigValid\n");
     uint32_t ackMaskSize = isSimpleMode ? 0 : (window + 31) >> 5;
     uint8_t hlen = ARDP_FIXED_HEADER_LEN + ackMaskSize * sizeof(uint32_t);
     uint32_t maxPayload = segbmax - (UDP_HEADER_SIZE + hlen);
 
     if (segmax > ARDP_MAX_WINDOW_SIZE) {
         QCC_LogError(ER_INVALID_CONFIG, ("SEGMAX %u exceeds ARDP maximum window size %u", segmax, ARDP_MAX_WINDOW_SIZE));
-        printf("Exit CheckConfigValid. Return false\n");
         return false;
     }
 
     if (segbmax <= (UDP_HEADER_SIZE + hlen)) {
         QCC_LogError(ER_FAIL, ("SEGBMAX too small %u (need at least %u)", segbmax, (UDP_HEADER_SIZE + hlen)));
-        printf("Exit CheckConfigValid. Return false\n");
         return false;
     }
 
     if ((maxPayload * segmax) < (uint32_t) (ALLJOYN_MAX_PACKET_LEN)) {
         QCC_LogError(ER_INVALID_CONFIG, ("SEGMAX %u and SEGBMAX %u cannot fit max Alljoyn message %u", segmax, segbmax, ALLJOYN_MAX_PACKET_LEN));
-        printf("Exit CheckConfigValid. Return false\n");
         return false;
     }
-    printf("Exit CheckConfigValid. Return true\n");
+
     return true;
 }
 
 static QStatus InitSnd(ArdpHandle* handle, ArdpConnRecord* conn)
 {
-    printf("Enter InitSnd\n");
     uint8_t* buffer;
     uint32_t ackMaskSize = (conn->rcv.SEGMAX + 31) >> 5;
     uint8_t hlen = ARDP_FIXED_HEADER_LEN + ackMaskSize * sizeof(uint32_t);
@@ -2756,7 +2545,6 @@ static QStatus InitSnd(ArdpHandle* handle, ArdpConnRecord* conn)
         conn->snd.SEGMAX = (ALLJOYN_MAX_PACKET_LEN + conn->snd.maxDlen - 1) / conn->snd.maxDlen;
     }
     if (!CheckConfigValid(conn->snd.SEGMAX, conn->snd.SEGBMAX, conn->rcv.SEGMAX, conn->modeSimple)) {
-        printf("Exit InitSnd. Return ER_FAIL\n");
         return ER_FAIL;
     }
 
@@ -2764,7 +2552,6 @@ static QStatus InitSnd(ArdpHandle* handle, ArdpConnRecord* conn)
     conn->snd.buf = (ArdpSndBuf*) malloc(conn->snd.SEGMAX * sizeof(ArdpSndBuf));
     if (conn->snd.buf == NULL) {
         QCC_DbgPrintf(("InitSnd(): Failed to allocate send buffer info"));
-        printf("Exit InitSnd. Return ER_OUT_OF_MEMORY\n");
         return ER_OUT_OF_MEMORY;
     }
     memset(conn->snd.buf, 0, conn->snd.SEGMAX * sizeof(ArdpSndBuf));
@@ -2775,7 +2562,6 @@ static QStatus InitSnd(ArdpHandle* handle, ArdpConnRecord* conn)
     if (buffer == NULL) {
         QCC_DbgPrintf(("InitSnd(): Failed to allocate send buffer headers"));
         free(conn->snd.buf);
-        printf("Exit InitSnd. Return ER_OUT_OF_MEMORY\n");
         return ER_OUT_OF_MEMORY;
     }
     memset(buffer, 0, conn->snd.SEGMAX * ARDP_FIXED_HEADER_LEN);
@@ -2787,13 +2573,12 @@ static QStatus InitSnd(ArdpHandle* handle, ArdpConnRecord* conn)
         conn->snd.buf[i].hdr = buffer;
         buffer += ARDP_FIXED_HEADER_LEN;
     }
-    printf("Exit InitSnd. Return ER_OK\n");
+
     return ER_OK;
 }
 
 static void ArdpMachine(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSeg* seg, uint8_t* buf, uint16_t len)
 {
-    printf("Enter ArdpMachine\n");
     QStatus status;
 
     QCC_DbgTrace(("ArdpMachine(handle=%p, conn=%p, seg=%p, buf=%p, len=%d)", handle, conn, seg, buf, len));
@@ -3283,22 +3068,18 @@ static void ArdpMachine(ArdpHandle* handle, ArdpConnRecord* conn, ArdpSeg* seg, 
         QCC_ASSERT(0 && "ArdpMachine(): unexpected conn->state %d");
         break;
     }
-    printf("Exit ArdpMachine\n");
 
 }
 
 QStatus ARDP_StartPassive(ArdpHandle* handle)
 {
-    printf("Enter ARDP_StartPassive\n");
     QCC_DbgTrace(("ARDP_StartPassive(handle=%p)", handle));
     handle->accepting = true;
-    printf("Exit ARDP_StartPassive. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus ARDP_Connect(ArdpHandle* handle, qcc::SocketFd sock, qcc::IPAddress ipAddr, uint16_t ipPort, uint16_t segmax, uint16_t segbmax, ArdpConnRecord**pConn, uint8_t* buf, uint16_t len, void* context)
 {
-    printf("Enter ARDP_Connect\n");
     QCC_DbgTrace(("ARDP_Connect(handle=%p, sock=%d, ipAddr=\"%s\", ipPort=%d, segmax=%d, segbmax=%d, pConn=%p, buf=%p, len=%d, context=%p)",
                   handle, sock, ipAddr.ToString().c_str(), ipPort, segmax, segbmax, pConn, buf, len, context));
 
@@ -3308,7 +3089,6 @@ QStatus ARDP_Connect(ArdpHandle* handle, qcc::SocketFd sock, qcc::IPAddress ipAd
     *pConn = NULL;
 
     if (!CheckConfigValid(segmax, segbmax, ARDP_MAX_WINDOW_SIZE)) {
-        printf("Exit ARDP_Connect. Return ER_INVALID_CONFIG\n");
         return ER_INVALID_CONFIG;
     }
 
@@ -3317,7 +3097,6 @@ QStatus ARDP_Connect(ArdpHandle* handle, qcc::SocketFd sock, qcc::IPAddress ipAd
     status = InitConnRecord(handle, conn, sock, ipAddr, ipPort, 0);
     if (status != ER_OK) {
         delete conn;
-        printf("Exit ARDP_Connect. Return status\n");
         return status;
     }
 
@@ -3336,18 +3115,16 @@ QStatus ARDP_Connect(ArdpHandle* handle, qcc::SocketFd sock, qcc::IPAddress ipAd
         SetState(conn, SYN_SENT);
         *pConn = conn;
     }
-    printf("Enter ARDP_Connect. Return status\n");
+
     return status;
 }
 
 QStatus ARDP_Accept(ArdpHandle* handle, ArdpConnRecord* conn, uint16_t segmax, uint16_t segbmax, uint8_t* buf, uint16_t len)
 {
-    printf("Enter ARDP_Accept\n");
     QCC_DbgTrace(("ARDP_Accept(handle=%p, conn=%p, segmax=%d, segbmax=%d, buf=%p (%s), len=%d)",
                   handle, conn, segmax, segbmax, buf, buf, len));
     QStatus status = ER_OK;
     if (!IsConnValid(handle, conn)) {
-        printf("Exit ARDP_Accept. Return ER_ARDP_INVALID_CONNECTION\n");
         return ER_ARDP_INVALID_CONNECTION;
     }
 
@@ -3377,7 +3154,7 @@ QStatus ARDP_Accept(ArdpHandle* handle, ArdpConnRecord* conn, uint16_t segmax, u
          * in transport layer. If this is ever to change (i.e., ARDP_Accept() is moved outside AcceptCb(),
          * then connection state should be set to CLOSED and connection record is removed here.
          */
-	printf("Exit ARDP_Accept. Return status\n");
+
         return status;
     }
 
@@ -3394,34 +3171,28 @@ QStatus ARDP_Accept(ArdpHandle* handle, ArdpConnRecord* conn, uint16_t segmax, u
      *     then connection state should be set to CLOSED and connection record is removed here.
      * }
      */
-    printf("Exit ARDP_Accept. Return status\n");
+
     return status;
 }
 
 QStatus ARDP_Disconnect(ArdpHandle* handle, ArdpConnRecord* conn, uint32_t connId)
 {
-    printf("Enter ARDP_Disconnect\n");
     QCC_DbgTrace(("ARDP_Disconnect(handle=%p, conn=%p)", handle, conn, connId));
     if (!IsConnValid(handle, conn, connId)) {
-        printf("Exit ARDP_Disconnect. ER_ARDP_INVALID_CONNECTION\n");
         return ER_ARDP_INVALID_CONNECTION;
     }
-    printf("Exit ARDP_Disconnect. Return Disconnect(handle, conn, ER_OK)\n");
     return Disconnect(handle, conn, ER_OK);
 }
 
 QStatus ARDP_RecvReady(ArdpHandle* handle, ArdpConnRecord* conn, ArdpRcvBuf* rcv)
 {
-    printf("Enter ARDP_RecvReady\n");
     QCC_DbgTrace(("ARDP_RecvReady(handle=%p, conn=%p, rcv=%p)", handle, conn, rcv));
     QCC_ASSERT(rcv != NULL);
     if (!IsConnValid(handle, conn)) {
-        printf("Exit ARDP_RecvReady. Return ER_ARDP_INVALID_CONNECTION\n");
         return ER_ARDP_INVALID_CONNECTION;
     }
 
     if (conn->state == OPEN) {
-        printf("Exit ARDP_RecvReady. Return ReleaseRcvBuffers(***)\n");
         return ReleaseRcvBuffers(handle, conn, rcv->seq, rcv->fcnt, ER_OK);
     } else if ((conn->state == CLOSED) || (conn->state == CLOSE_WAIT)) {
         uint32_t i;
@@ -3436,47 +3207,38 @@ QStatus ARDP_RecvReady(ArdpHandle* handle, ArdpConnRecord* conn, ArdpRcvBuf* rcv
             }
             rcv = rcv->next;
         }
-        printf("Exit ARDP_RecvReady. Return ER_OK\n");
         return ER_OK;
     } else {
-        printf("Exit ARDP_RecvReady. Return ER_ARDP_INVALID_STATE\n");
         return ER_ARDP_INVALID_STATE;
     }
 }
 
 QStatus ARDP_Send(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* buf, uint32_t len, uint32_t ttl)
 {
-    printf("Enter ARDP_Send\n");
     QCC_DbgTrace(("ARDP_Send(handle=%p, conn=%p, buf=%p, len=%d., ttl=%d.)", handle, conn, buf, len, ttl));
     if (!IsConnValid(handle, conn)) {
-        printf("Exit ARDP_Send. Return ER_ARDP_INVALID_CONNECTION\n");
         return ER_ARDP_INVALID_CONNECTION;
     }
 
     if (conn->state != OPEN) {
-        printf("Exit ARDP_Send. Return ER_ARDP_INVALID_STATE\n");
         return ER_ARDP_INVALID_STATE;
     }
 
     if (buf == NULL || len == 0) {
-        printf("Exit ARDP_Send. Return ER_INVALID_DATA\n");
         return ER_INVALID_DATA;
     }
 
     QCC_DbgPrintf(("NXT=%u, UNA=%u", conn->snd.NXT, conn->snd.UNA));
     if ((conn->window == 0)  || (conn->snd.NXT - conn->snd.UNA) >= conn->snd.SEGMAX) {
         QCC_DbgPrintf(("NXT - UNA=%u, window=%u", conn->snd.NXT - conn->snd.UNA, conn->window));
-        printf("Exit ARDP_Send. Return ER_ARDP_BACKPRESSURE\n");
         return ER_ARDP_BACKPRESSURE;
     } else {
-        printf("Exit ARDP_Send. Return SendData(***)\n");
         return SendData(handle, conn, buf, len, ttl);
     }
 }
 
 static QStatus Receive(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* rxbuf, uint16_t len)
 {
-    printf("Enter Receive\n");
     QCC_DbgTrace(("Receive(handle=%p, conn=%p, rxbuf=%p, len=%d)", handle, conn, rxbuf, len));
     ArdpSeg seg;
     uint8_t hdrSz;
@@ -3488,7 +3250,6 @@ static QStatus Receive(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* rxbuf,
 
         /* This is a disconnect from the remote, no checks are needed */
         ArdpMachine(handle, conn, &seg, rxbuf, len);
-        printf("Exit Receive. Return ER_OK\n");
         return ER_OK;
     }
 
@@ -3500,7 +3261,6 @@ static QStatus Receive(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* rxbuf,
     if (((seg.HLEN * 2) < hdrSz) || (len < hdrSz) || (seg.DLEN + (seg.HLEN * 2)) != len) {
         QCC_LogError(ER_ARDP_INVALID_RESPONSE, ("Receive: length check failed len = %u, seg.hlen = %u, seg.dlen = %u",
                                                 len, (seg.HLEN * 2), seg.DLEN));
-        printf("Exit Receive. Return ER_ARDP_INVALID_RESPONSE\n");
         return ER_ARDP_INVALID_RESPONSE;
     }
 
@@ -3532,13 +3292,11 @@ static QStatus Receive(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* rxbuf,
         /* Perform sequence validation checks */
         if (SEQ32_LT(conn->snd.NXT, seg.ACK)) {
             QCC_LogError(ER_ARDP_INVALID_RESPONSE, ("Receive: ack %u ahead of SND>NXT %u", seg.ACK, conn->snd.NXT));
-            printf("Exit Receive. Return ER_ARDP_INVALID_RESPONSE\n");
             return ER_ARDP_INVALID_RESPONSE;
         }
 
         if (SEQ32_LT(seg.ACK, seg.LCS)) {
             QCC_LogError(ER_ARDP_INVALID_RESPONSE, ("Receive: lcs %u and ack %u out of order", seg.LCS, seg.ACK));
-            printf("Exit Receive. Return ER_ARDP_INVALID_REPSONE\n");
             return ER_ARDP_INVALID_RESPONSE;
         }
 
@@ -3550,7 +3308,6 @@ static QStatus Receive(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* rxbuf,
             ((seg.DLEN != 0) && ((seg.SEQ - seg.ACKNXT) == conn->rcv.SEGMAX))) {
             QCC_LogError(ER_ARDP_INVALID_RESPONSE, ("Receive: incorrect sequence numbers seg.seq = %u, seg.acknxt = %u",
                                                     seg.SEQ, seg.ACKNXT));
-            printf("Exit Receive. Return ER_ARDP_INVALID_REPSONE\n");
             return ER_ARDP_INVALID_RESPONSE;
         }
 
@@ -3559,59 +3316,50 @@ static QStatus Receive(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* rxbuf,
             if ((seg.FCNT == 0) || (seg.FCNT > conn->rcv.SEGMAX) || ((seg.SEQ - seg.SOM) >= seg.FCNT)) {
                 QCC_LogError(ER_ARDP_INVALID_RESPONSE, ("Receive: incorrect data segment seq = %u, som = %u,  fcnt = %u",
                                                         seg.SEQ, seg.SOM, seg.FCNT));
-                printf("Exit Receive. Return ER_ARDP_INVALID_REPSONE\n");
                 return ER_ARDP_INVALID_RESPONSE;
             }
         }
     }
 
     ArdpMachine(handle, conn, &seg, rxbuf, len);
-    printf("Exit Receive. Return ER_OK\n");
     return ER_OK;
 }
 
 QStatus Accept(ArdpHandle* handle, ArdpConnRecord* conn, uint8_t* rxbuf, uint16_t len)
 {
-    printf("Enter Accept\n");
     QCC_DbgTrace(("Accept(handle=%p, conn=%p, buf=%p, len=%d)", handle, conn, rxbuf, len));
     QCC_ASSERT(conn->state == CLOSED && "Accept(): ConnRecord in invalid state");
 
     if (!(rxbuf[FLAGS_OFFSET] & ARDP_FLAG_SYN) || (rxbuf[FLAGS_OFFSET] & ARDP_FLAG_RST)) {
-        printf("Exit Accept. Return ER_ARDP_INVALID_CONNECTION\n");
         return ER_ARDP_INVALID_CONNECTION;
     }
 
     if ((rxbuf[FLAGS_OFFSET] & ARDP_VERSION_BITS) != ARDP_FLAG_VER) {
         QCC_DbgHLPrintf(("Accept(): Unsupported protocol version 0x%x",
                          rxbuf[FLAGS_OFFSET] & ARDP_VERSION_BITS));
-        printf("Exit Accept. Return ER_ARDP_VERSION_NOT_SUPPORTED\n");
         return ER_ARDP_VERSION_NOT_SUPPORTED;
     }
 
     conn->state = LISTEN;                      /* The call to Accept() implies a jump to LISTEN */
     conn->passive = true;                      /* This connection is (will be) the result of a passive open */
-    printf("Exit Accept. Return Receive(***)\n");
+
     return Receive(handle, conn, rxbuf, len);
 }
 
 static bool IsDuplicateConnRequest(ArdpHandle* handle, uint16_t foreign, qcc::IPAddress address)
 {
-    printf("Enter IsDuplicateConnRequest\n");
     for (ListNode* ln = &handle->conns; (ln = ln->fwd) != &handle->conns;) {
         ArdpConnRecord* conn = (ArdpConnRecord*)ln;
         if ((conn->foreign == foreign) && (conn->ipAddr == address)) {
             QCC_DbgPrintf(("isDuplicateConnRequest(): Found conn %p, foreign %u", conn, foreign));
-            printf("Exit IsDuplicateConnRequest. Return true\n");
             return true;
         }
     }
-    printf("Exit IsDuplicateConnRequest. Return false\n");
     return false;
 }
 
 QStatus ARDP_Run(ArdpHandle* handle, qcc::SocketFd sock, bool sockRead, bool sockWrite, uint32_t* ms)
 {
-    printf("Enter ARDP_Run\n");
     const size_t bufferSize = 65536;      /* UDP packet can be up to 64K long */
     uint32_t buf32[bufferSize >> 2];
     uint8_t* buf = reinterpret_cast<uint8_t*>(buf32);
@@ -3714,7 +3462,7 @@ QStatus ARDP_Run(ArdpHandle* handle, qcc::SocketFd sock, bool sockRead, bool soc
         status = (QStatus) ER_ARDP_WRITE_BLOCKED;
         //QCC_DbgPrintf(("ARDP_Run(): ER_ARDP_WRITE_BLOCKED"));
     }
-    printf("Exit ARDP_Run. Return status\n");
+
     return status;
 }
 

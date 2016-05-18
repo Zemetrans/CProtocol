@@ -680,10 +680,14 @@ QStatus SecurityApplicationProxy::MsgArgToCertificateIds(const MsgArg& arg, qcc:
             return ER_INVALID_DATA;
         }
         qcc::ECCPublicKey publicKey;
-        publicKey.Import(xCoord, publicKey.GetCoordinateSize(), yCoord, publicKey.GetCoordinateSize());
+        status = publicKey.Import(xCoord, publicKey.GetCoordinateSize(), yCoord, publicKey.GetCoordinateSize());
+        if (status != ER_OK) {
+            QCC_LogError(status, ("%s Failed to import public key", __FUNCTION__));
+            return status;
+        }
         issuerKeyInfos[cnt].SetPublicKey(&publicKey);
         issuerKeyInfos[cnt].SetKeyId(akiVal, akiLen);
-        serials[cnt].assign((const char*) serialVal, serialLen);
+        serials[cnt].assign_std((const char*) serialVal, serialLen);
     }
     return status;
 }
@@ -837,14 +841,18 @@ QStatus SecurityApplicationProxy::GetIdentityCertificateId(qcc::String& serial, 
             return ER_INVALID_DATA;
         }
         qcc::ECCPublicKey publicKey;
-        publicKey.Import(xCoord, publicKey.GetCoordinateSize(), yCoord, publicKey.GetCoordinateSize());
+        status = publicKey.Import(xCoord, publicKey.GetCoordinateSize(), yCoord, publicKey.GetCoordinateSize());
+        if (status != ER_OK) {
+            QCC_LogError(status, ("%s Failed to import public key", __FUNCTION__));
+            return status;
+        }
         issuerKeyInfo.SetPublicKey(&publicKey);
         issuerKeyInfo.SetKeyId(akiVal, akiLen);
 
         if (serialLen == 0) {
             serial = qcc::String::Empty;
         } else {
-            serial.assign((const char*)serialVal, serialLen);
+            serial.assign_std((const char*)serialVal, serialLen);
         }
     }
 
