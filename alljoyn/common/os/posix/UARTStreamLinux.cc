@@ -225,7 +225,7 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
     //int ret = open(devName.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
     
     struct sockaddr_can addr;
-	struct can_frame frame;
+	//struct can_frame frame;
 	struct ifreq ifr;
 	
 	int ret = socket(PF_CAN, SOCK_RAW, CAN_RAW);
@@ -245,12 +245,12 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
 		perror("Error in socket bind");
 		goto error;
 	}
-	
-	//Write Just for test. It will be delete later
-	frame.can_id = 0xFFB;
-	frame.can_dlc = 1;
-	frame.data[0] = 0xFF;
-	write(fd, &frame, sizeof(struct can_frame));
+	printf("SocketCan create and bind seccess\n");
+	//Write Just for test. It will be deleted later
+	//frame.can_id = 0xFFB;
+	//frame.can_dlc = 1;
+	//frame.data[0] = 0xFF;
+	//write(fd, &frame, sizeof(struct can_frame));
 	
 	
     /* Lock this FD, to ensure exclusive access to this serial port. */
@@ -319,8 +319,23 @@ QStatus UARTStream::PullBytes(void* buf, size_t numBytes, size_t& actualBytes, u
 {
     QCC_UNUSED(timeout);
     QStatus status = ER_OK;
-    int ret = read(fd, buf, numBytes);
-    if (ret == -1) {
+    struct can_frame frame;
+    //int ret = read(fd, buf, numBytes);
+    printf("UARTStream::PullBytes. Want to get %lu bytes\n", numBytes);
+    size_t i;
+    int offset = 0;
+    int ret = -1;
+    for (i = 0; i < numBytes; ++i) {
+        ret = read(fd, (char *)&frame, sizeof(struct can_frame));
+        if (ret == -1) {
+            printf("Error in PullBytes\n");
+            status = ER_OS_ERROR;
+            break;
+        }
+        memcpy((char *)buf + offset, frame.data, 1);   
+    }
+    actualBytes = numBytes;
+    /*if (ret == -1) {
         if (errno == EAGAIN) {
             status = ER_WOULDBLOCK;
         } else {
@@ -329,7 +344,7 @@ QStatus UARTStream::PullBytes(void* buf, size_t numBytes, size_t& actualBytes, u
         }
     } else {
         actualBytes = ret;
-    }
+    }*/
     return status;
 }
 
@@ -346,9 +361,25 @@ void UARTStream::Close()
 
 QStatus UARTStream::PushBytes(const void* buf, size_t numBytes, size_t& actualBytes)
 {
+
+    struct can_frame frame;
+    printf("UARTStream::PushBytes. Want to send %lu bytes\n", numBytes);
     QStatus status = ER_OK;
-    int ret = write(fd, buf, numBytes);
-    if (ret == -1) {
+    //int ret = write(fd, buf, numBytes);
+    int offset = 0;
+    int ret = -1;
+    size_t i;
+    for (i = 0; i < numBytes; ++i) {
+        memcpy(frame.data, (char *)buf + offset, 1);
+        ret = write(fd, (char *)&frame, sizeof(struct can_frame));
+        if (ret == -1) {
+            printf("Error in PullBytes\n");
+            status = ER_OS_ERROR;
+            break;
+        }   
+    }
+    actualBytes = numBytes;
+    /*if (ret == -1) {
         if (errno == EAGAIN) {
             status = ER_WOULDBLOCK;
         } else {
@@ -357,7 +388,7 @@ QStatus UARTStream::PushBytes(const void* buf, size_t numBytes, size_t& actualBy
         }
     } else {
         actualBytes = ret;
-    }
+    }*/
     return status;
 }
 

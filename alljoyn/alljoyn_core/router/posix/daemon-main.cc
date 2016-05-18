@@ -158,8 +158,6 @@ static const char internalConfig[] =
 #if defined(QCC_OS_DARWIN)
     "  <listen>launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET</listen>"
 #endif
-    "  <listen>tcp:iface=*,port=9955</listen>"
-    "  <listen>udp:iface=*,port=9955</listen>"
     "  <listen>slap:type=uart,dev=/dev/ttyUSB0,baud=115200</listen>"
     "</busconfig>";
 

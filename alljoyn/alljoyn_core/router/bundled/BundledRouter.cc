@@ -54,8 +54,7 @@ namespace ajn {
 static const char bundledConfig[] =
     "<busconfig>"
     "  <type>alljoyn_bundled</type>"
-    "  <listen>tcp:iface=*,port=0</listen>"
-    "  <listen>udp:iface=*,port=0</listen>"
+    "  <listen>slap:type=uart,dev=/dev/ttyUSB0,baud=115200</listen>"
     "  <limit name=\"auth_timeout\">20000</limit>"
     "  <limit name=\"max_incomplete_connections\">48</limit>"
     "  <limit name=\"max_completed_connections\">64</limit>"
