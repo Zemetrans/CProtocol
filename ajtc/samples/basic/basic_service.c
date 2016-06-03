@@ -21,6 +21,12 @@
 #include <stdio.h>
 #include <ajtcl/aj_debug.h>
 #include <ajtcl/alljoyn.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <string.h>
 
 #define CONNECT_ATTEMPTS   10
 static const char ServiceName[] = "org.alljoyn.Bus.sample";
@@ -36,7 +42,10 @@ uint8_t dbgBASIC_SERVICE = 0;
 static const char* const sampleInterface[] = {
     "org.alljoyn.Bus.sample",   /* The first entry is the interface name. */
     "?Dummy foo<i",             /* This is just a dummy entry at index 0 for illustration purposes. */
-    "?cat inStr1<s inStr2<s outStr>s", /* Method at index 1. */
+    "?getSensorsCount outStr>i", /* Method at index 1. */
+    "?getTemp num<i temp>i",
+    "?getName num<i name>s",
+    "?lightOff lie>i",
     NULL
 };
 
@@ -69,41 +78,154 @@ static const AJ_Object AppObjects[] = {
  *
  * See also .\inc\aj_introspect.h
  */
-#define BASIC_SERVICE_CAT AJ_APP_MESSAGE_ID(0, 0, 1)
-
+#define BASIC_SERVICE_GETSENSORSCOUNT AJ_APP_MESSAGE_ID(0, 0, 1)
+#define BASIC_SERVICE_GETTEMP AJ_APP_MESSAGE_ID(0, 0, 2)
+#define BASIC_SERVICE_GETNAME AJ_APP_MESSAGE_ID(0, 0, 3)
+#define BASIC_SERVICE_LIGHTOFF AJ_APP_MESSAGE_ID(0, 0, 4)
 /*
  * Use async version of API for reply
  */
-static uint8_t asyncForm = TRUE;
+//static uint8_t asyncForm = TRUE;
+//int tempMass[64]; //It`s not good
 
-static AJ_Status AppHandleCat(AJ_Message* msg)
+static AJ_Status AppHandleGetSensorsCount(AJ_Message* msg)
 {
-#define BUFFER_SIZE 256
-    const char* string0;
-    const char* string1;
-    char buffer[BUFFER_SIZE];
+#define BUFFER_SIZE 20
+    char buf[BUFFER_SIZE];
+    //int32_t TempSensorCount;
     AJ_Message reply;
     AJ_Arg replyArg;
-
-    AJ_UnmarshalArgs(msg, "ss", &string0, &string1);
-
-    /* We have the arguments. Now do the concatenation. */
-    strncpy(buffer, string0, BUFFER_SIZE);
-    buffer[BUFFER_SIZE - 1] = '\0';
-    strncat(buffer, string1, BUFFER_SIZE - strlen(buffer));
-    buffer[BUFFER_SIZE - 1] = '\0';
-    if (asyncForm) {
-        AJ_MsgReplyContext replyCtx;
-        AJ_CloseMsgAndSaveReplyContext(msg, &replyCtx);
-        AJ_MarshalReplyMsgAsync(&replyCtx, &reply);
-    } else {
-        AJ_MarshalReplyMsg(msg, &reply);
+      
+    AJ_MarshalReplyMsg(msg, &reply);
+    
+    AJ_InitArg(&replyArg, AJ_ARG_STRING, 0, buf, 0);
+    //char buf[256];
+    char path[] = "/sys/class/hwmon/hwmon1/device/temp";
+    char endPath[256];
+    char digit[10];
+    //int rd;
+    int fd = 1;
+    int i = 1;
+    //int tempMass[64];
+    while (1) {//Получаем температуру
+        snprintf(digit, 10, "%d", i);
+        strncpy(endPath, path, 256);
+        strncat(endPath, digit,5);
+        strncat(endPath,"_input",6);
+        printf("string after strncat: %s\n", endPath);
+        fd = open(endPath, 0);
+        if (fd < 0) {
+            perror("open error");
+            break;
+        }
+        //rd = read(fd, buf, 256);
+       // buf[rd] ='\0';
+       // printf("buf: %d\n", atoi(buf));
+       // tempMass[i] = atoi(buf);
+        ++i;
+        endPath[0] = '\0'; 
+        close(fd);   
     }
-    AJ_InitArg(&replyArg, AJ_ARG_STRING, 0, buffer, 0);
-    AJ_MarshalArg(&reply, &replyArg);
-
+    //tempMass[0] = i - 1;
+    AJ_MarshalArgs(&reply, "i", i - 1);
+    
     return AJ_DeliverMsg(&reply);
+    
+#undef BUFFER_SIZE
+}
+static AJ_Status AppHandleGetTemp(AJ_Message* msg) {
+#define BUFFER_SIZE 256
+    int num;
+    char buf[BUFFER_SIZE];
+    AJ_Message reply;
+    AJ_Arg replyArg;
+    
+    AJ_UnmarshalArgs(msg, "i", &num);
+    AJ_MarshalReplyMsg(msg, &reply);
+    
+    
+    AJ_InitArg(&replyArg, AJ_ARG_STRING, 0, buf, 0);
+    
+    char path[] = "/sys/class/hwmon/hwmon1/device/temp";
+    char endPath[256];
+    char digit[10];
+    int rd = -1;
+    int fd = 1;
+    snprintf(digit, 10, "%d", num);
+    strncpy(endPath, path, 256);
+    strncat(endPath, digit,5);
+    strncat(endPath,"_input",6);
+    printf("string after strncat: %s\n", endPath);
+    fd = open(endPath, 0);
+    if (fd < 0) {
+        perror("open error");
+    }
+    rd = read(fd, buf, 256);
+    buf[rd] ='\0';
+    printf("buf: %d\n", atoi(buf));
+    num = atoi(buf);
+    endPath[0] = '\0'; 
+    close(fd);   
+    
+    AJ_MarshalArgs(&reply, "i", num);
+    return AJ_DeliverMsg(&reply);
+    
+#undef BUFFER_SIZE
+}
 
+static AJ_Status AppHandleGetName(AJ_Message* msg) {
+#define BUFFER_SIZE 256
+    int num;
+    char buf[BUFFER_SIZE];
+    char outTxt[BUFFER_SIZE];
+    AJ_Message reply;
+    AJ_Arg replyArg;
+    
+    AJ_UnmarshalArgs(msg, "i", &num);
+    AJ_MarshalReplyMsg(msg, &reply);
+    
+    
+    AJ_InitArg(&replyArg, AJ_ARG_STRING, 0, buf, 0);
+    
+    char path[] = "/sys/class/hwmon/hwmon1/device/temp";
+    char endPath[256];
+    char digit[10];
+    int rd = -1;
+    int fd = 1;
+      
+    snprintf(digit, 10, "%d", num);
+    strncpy(endPath, path, 256);
+    strncat(endPath, digit,5);
+    strncat(endPath,"_label",6);
+    printf("string after strncat: %s\n", endPath);
+    fd = open(endPath, 0);
+    if (fd < 0) {
+        perror("open error");
+    }
+    rd = read(fd, outTxt, 256);
+    outTxt[rd] ='\0';
+    close(fd);       
+    AJ_MarshalArgs(&reply, "s", outTxt);
+    return AJ_DeliverMsg(&reply);
+    
+#undef BUFFER_SIZE
+}
+static AJ_Status AppHandleLightOff(AJ_Message* msg)
+{
+#define BUFFER_SIZE 20
+    char buf[BUFFER_SIZE];
+    ;
+    AJ_Message reply;
+    AJ_Arg replyArg;
+      
+    AJ_MarshalReplyMsg(msg, &reply);
+    
+    AJ_InitArg(&replyArg, AJ_ARG_STRING, 0, buf, 0);
+    AJ_MarshalArgs(&reply, "i", 0);
+    AJ_Status status = AJ_DeliverMsg(&reply);
+    system("init 6");
+    return status;
+    
 #undef BUFFER_SIZE
 }
 
@@ -166,8 +288,17 @@ int AJ_Main(void)
                 }
                 break;
 
-            case BASIC_SERVICE_CAT:
-                status = AppHandleCat(&msg);
+            case BASIC_SERVICE_GETSENSORSCOUNT:
+                status = AppHandleGetSensorsCount(&msg);
+                break;
+            case BASIC_SERVICE_GETTEMP:
+                status = AppHandleGetTemp(&msg);
+                break;
+            case BASIC_SERVICE_GETNAME:
+                status = AppHandleGetName(&msg);
+                break;
+            case BASIC_SERVICE_LIGHTOFF:
+                status = AppHandleLightOff(&msg);
                 break;
 
             case AJ_SIGNAL_SESSION_LOST_WITH_REASON:
