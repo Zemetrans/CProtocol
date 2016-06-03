@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        jar="/home/vladimir-notebook/compassApp/client2/app/libs/alljoyn.jar"
+        jumboMode="false"
+        revision="23.0.2"
+        sha1="d3d5255bea8c89a76547dcd3b126795f283029b0">
+        <dex dex="/home/vladimir-notebook/compassApp/client2/app/build/intermediates/pre-dexed/debug/alljoyn-61aaf189c2b070ef8046fcdc1c57d26bcf93fb7d.jar" />
+    </item>
+
+</items>

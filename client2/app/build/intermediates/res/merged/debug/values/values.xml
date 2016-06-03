@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- From: file:/home/vladimir-notebook/compassApp/client2/app/src/main/res/values/strings.xml -->
+    <eat-comment/>
+    <string name="app_name">Basic Client</string>
+    <string name="enter_message_hint">Enter message</string>
+</resources>
