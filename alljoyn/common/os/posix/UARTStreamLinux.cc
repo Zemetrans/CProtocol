@@ -29,23 +29,6 @@
 #include <sys/types.h>
 #include <sys/file.h>
 
-#include <net/if.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-
-#include <linux/can.h>
-#include <linux/can/raw.h>
-#include <linux/can/error.h>
-
-#include <linux/types.h>
-#include <inttypes.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <string.h>
-
 #define QCC_MODULE "UART"
 
 using namespace qcc;
@@ -62,6 +45,8 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
 {
     QCC_DbgTrace(("UART(devName=%s,baud=%d,databits=%d,parity=%s,stopbits=%d)",
                   devName.c_str(), baud, databits, parity.c_str(), stopbits));
+    printf("UART(devName=%s,baud=%d,databits=%d,parity=%s,stopbits=%d\n)",
+                  devName.c_str(), baud, databits, parity.c_str(), stopbits);
     fd = -1;
 
     /*
@@ -145,7 +130,8 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
         break;
 
     default:
-        QCC_LogError(ER_BAD_ARG_2, ("Invalid baud %d", baud));
+        QCC_LogError(ER_BAD_ARG_2, ("Invalid baud %d\n", baud));
+        printf("Invalid baud %d\n", baud);
         return ER_BAD_ARG_2;
     }
     cfsetospeed(&ttySettings, speed);
@@ -170,6 +156,7 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
 
     default:
         QCC_LogError(ER_BAD_ARG_3, ("Invalid databits %d", databits));
+        printf("Invalid databits %d\n", databits);
         return ER_BAD_ARG_3;
     }
 
@@ -205,6 +192,7 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
 
     default:
         QCC_LogError(ER_BAD_ARG_4, ("Invalid parity %s", parity.c_str()));
+        printf("Invalid parity %s\n", parity.c_str());
         return ER_BAD_ARG_4;
     }
 
@@ -219,69 +207,51 @@ QStatus UART(const qcc::String& devName, uint32_t baud, uint8_t databits, const 
 
     default:
         QCC_LogError(ER_BAD_ARG_5, ("Invalid stopbits %d", stopbits));
+        printf("Invalid stopbits %d\n", stopbits);
         return ER_BAD_ARG_5;
     }
 
-    //int ret = open(devName.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
-    
-    struct sockaddr_can addr;
-	struct can_frame frame;
-	struct ifreq ifr;
-	
-	int ret = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    int ret = open(devName.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (ret == -1) {
         QCC_LogError(ER_OS_ERROR, ("failed to open serial device %s. ret = %d, %d - %s", devName.c_str(), ret, errno, strerror(errno)));
+        printf("failed to open serial device %s. ret = %d, %d - %s\n", devName.c_str(), ret, errno, strerror(errno));
         goto error;
     }
     fd = ret;
-    
-    strcpy(ifr.ifr_name, "vcan0");
-	ioctl(fd, SIOCGIFINDEX, &ifr);
-	
-    addr.can_family  = AF_CAN;
-	addr.can_ifindex = ifr.ifr_ifindex;
-	
-	if(bind(fd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-		perror("Error in socket bind");
-		goto error;
-	}
-	
-	//Write Just for test. It will be delete later
-	frame.can_id = 0xFFB;
-	frame.can_dlc = 1;
-	frame.data[0] = 0xFF;
-	write(fd, &frame, sizeof(struct can_frame));
-	
-	
+
     /* Lock this FD, to ensure exclusive access to this serial port. */
-    /*ret = flock(fd, LOCK_EX | LOCK_NB);
+    ret = flock(fd, LOCK_EX | LOCK_NB);
     if (ret) {
         QCC_LogError(ER_OS_ERROR, ("Lock fd %d failed with '%s'", fd, strerror(errno)));
+        printf("Lock fd %d failed with '%s'\n", fd, strerror(errno));
         goto error;
     }
 
     QCC_DbgPrintf(("opened serial device %s successfully. ret = %d", devName.c_str(), ret));
-
+    printf("opened serial device %s successfully. ret = %d\n", devName.c_str(), ret);
     ret = tcflush(fd, TCIOFLUSH);
     if (ret) {
         QCC_LogError(ER_OS_ERROR, ("Flush fd %d failed with '%s'", fd, strerror(errno)));
+        printf("Flush fd %d failed with '%s'\n", fd, strerror(errno));
         goto error;
-    }*/
+    }
 
     /**
      * Set the new options on the port
      */
-    /*ret = tcsetattr(fd, TCSANOW, &ttySettings);
+    ret = tcsetattr(fd, TCSANOW, &ttySettings);
     if (ret) {
         QCC_LogError(ER_OS_ERROR, ("Set parameters fd %d failed with '%s'", fd, strerror(errno)));
+        printf("Set parameters fd %d failed with '%s'\n", fd, strerror(errno));
         goto error;
     }
 
     ret = tcflush(fd, TCIOFLUSH);
     if (ret) {
         QCC_LogError(ER_OS_ERROR, ("Flush fd %d failed with '%s'", fd, strerror(errno)));
+        printf("Flush fd %d failed with '%s'", fd, strerror(errno));
         goto error;
-    }*/
+    }
 
     return ER_OK;
 
@@ -317,6 +287,7 @@ static uint8_t RxBuffer[RX_BUFSIZE];
 
 QStatus UARTStream::PullBytes(void* buf, size_t numBytes, size_t& actualBytes, uint32_t timeout)
 {
+    printf("Enter UARTStram::PullBytes\n");
     QCC_UNUSED(timeout);
     QStatus status = ER_OK;
     int ret = read(fd, buf, numBytes);
@@ -326,6 +297,7 @@ QStatus UARTStream::PullBytes(void* buf, size_t numBytes, size_t& actualBytes, u
         } else {
             status = ER_OS_ERROR;
             QCC_DbgHLPrintf(("UARTStream::PullBytes (fd = %u): %d - %s", fd, errno, strerror(errno)));
+            printf("UARTStream::PullBytes (fd = %u): %d - %s", fd, errno, strerror(errno));
         }
     } else {
         actualBytes = ret;
@@ -336,6 +308,7 @@ QStatus UARTStream::PullBytes(void* buf, size_t numBytes, size_t& actualBytes, u
 void UARTStream::Close()
 {
     QCC_DbgPrintf(("Uart::close()"));
+    printf("Uart::close()\n");
     if (fd != -1) {
         /* Release the lock on this FD */
         flock(fd, LOCK_UN);
@@ -346,6 +319,7 @@ void UARTStream::Close()
 
 QStatus UARTStream::PushBytes(const void* buf, size_t numBytes, size_t& actualBytes)
 {
+    printf("Enter UARTStram::PushBytes\n");
     QStatus status = ER_OK;
     int ret = write(fd, buf, numBytes);
     if (ret == -1) {
@@ -354,6 +328,7 @@ QStatus UARTStream::PushBytes(const void* buf, size_t numBytes, size_t& actualBy
         } else {
             status = ER_OS_ERROR;
             QCC_DbgHLPrintf(("UARTStream::PushBytes (fd = %u): %d - %s", fd, errno, strerror(errno)));
+            printf("UARTStream::PushBytes (fd = %u): %d - %s\n", fd, errno, strerror(errno));
         }
     } else {
         actualBytes = ret;
@@ -364,28 +339,34 @@ QStatus UARTStream::PushBytes(const void* buf, size_t numBytes, size_t& actualBy
 UARTController::UARTController(UARTStream* uartStream, IODispatch& iodispatch, UARTReadListener* readListener) :
     m_uartStream(uartStream), m_iodispatch(iodispatch), m_readListener(readListener), exitCount(0)
 {
+    printf("Enter and exit UARTController::UARTController");
 }
 
 QStatus UARTController::Start()
 {
+    printf("Enter and exit UARTController::Start");
     return m_iodispatch.StartStream(m_uartStream, this, NULL, this, true, false);
 }
 
 QStatus UARTController::Stop()
 {
+    printf("Enter and exit UARTController::Stop");
     return m_iodispatch.StopStream(m_uartStream);
 }
 
 QStatus UARTController::Join()
 {
+    printf("Enter UARTController::Join");
     while (!exitCount) {
         qcc::Sleep(100);
     }
+    printf("Exit UARTController::Join. ER_OK");
     return ER_OK;
 }
 
 QStatus UARTController::ReadCallback(Source& source, bool isTimedOut)
 {
+    printf("Enter UARTController::ReadCallback\n");
     QCC_UNUSED(source);
     QCC_UNUSED(isTimedOut);
     size_t actual;
@@ -393,13 +374,16 @@ QStatus UARTController::ReadCallback(Source& source, bool isTimedOut)
     QCC_ASSERT(status == ER_OK);
     m_readListener->ReadEventTriggered(RxBuffer, actual);
     m_iodispatch.EnableReadCallback(m_uartStream);
+    printf("Exit UARTController::ReadCallback\n");
     return status;
 }
 
 void UARTController::ExitCallback()
 {
+    printf("Enter UARTController::ExitCallback");
     m_uartStream->Close();
     exitCount = 1;
+    printf("Exit UARTController::ExitCallback");
 }
 
 #endif

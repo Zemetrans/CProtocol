@@ -384,6 +384,7 @@ void AllJoynObj::BindSessionPort(const InterfaceDescription::Member* member, Mes
         if ((opts.traffic == SessionOpts::TRAFFIC_RAW_UNRELIABLE) ||
             ((opts.traffic == SessionOpts::TRAFFIC_RAW_RELIABLE) && opts.isMultipoint)) {
             replyCode = ALLJOYN_BINDSESSIONPORT_REPLY_INVALID_OPTS;
+            QCC_LogError(status, ("Fall to TRAFFIC_RAW_UNRELIABLE"));
         }
     }
 
@@ -414,7 +415,8 @@ void AllJoynObj::BindSessionPort(const InterfaceDescription::Member* member, Mes
             }
         }
         if (supports == false) {
-            replyCode = ALLJOYN_BINDSESSIONPORT_REPLY_INVALID_OPTS;
+            QCC_LogError(status, ("Fall to !SupportsOptions"));
+            //dea:DEBUG!!!!! replyCode = ALLJOYN_BINDSESSIONPORT_REPLY_INVALID_OPTS;
         }
     }
 

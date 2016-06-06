@@ -155,12 +155,14 @@ static const char internalConfig[] =
     "<busconfig>"
     "  <type>alljoyn</type>"
     "  <listen>unix:abstract=alljoyn</listen>"
+    //"  <listen>udp:iface=lo,port=9955</listen>" 
+    //"  <listen>udp:iface=eth0,port=9955</listen>"
+    "  <listen>slap:type=uart,dev=/dev/ttyUSB1,baud=115200</listen> "
 #if defined(QCC_OS_DARWIN)
-    "  <listen>launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET</listen>"
+//    "  <listen>launchd:env=DBUS_LAUNCHD_SESSION_BUS_SOCKET</listen>"
 #endif
     "  <listen>tcp:iface=*,port=9955</listen>"
     "  <listen>udp:iface=*,port=9955</listen>"
-    "  <listen>slap:type=uart,dev=/dev/ttyUSB0,baud=115200</listen>"
     "</busconfig>";
 
 static const char versionPreamble[] =

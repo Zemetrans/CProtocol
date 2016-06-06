@@ -78,10 +78,11 @@ class _DaemonSLAPEndpoint : public _RemoteEndpoint {
         m_stream(&m_rawStream, m_timer, packetSize, 4, baudrate),
         m_uartController(&m_rawStream, bus.GetInternal().GetIODispatch(), &m_stream)
     {
+         printf("Enter and exit DaemonSLAPEndpoint\n");
     }
 
-    EndpointState GetEpState(void) { return m_epState; }
-    ~_DaemonSLAPEndpoint() { }
+    EndpointState GetEpState(void) { printf("Enter and exit GetEpState\n"); return m_epState; }
+    ~_DaemonSLAPEndpoint() {printf("Enter and exit ~DaemonSLAPEndpoint\n"); }
 
     QStatus Authenticate(void);
     void AuthStop(void);
@@ -89,33 +90,43 @@ class _DaemonSLAPEndpoint : public _RemoteEndpoint {
 
     void SetEpFailed(void)
     {
+        printf("Enter SetEpFailed\n");
         m_epState = EP_FAILED;
+        printf("Exit SetEpFailed\n");
     }
 
     void SetEpStarting(void)
     {
+        printf("Enter SetEpStarting\n");
         m_epState = EP_STARTING;
+        printf("Exit SetEpStarting\n");
     }
 
     void SetEpStarted(void)
     {
+        printf("Enter SetEpStarted\n");
         m_epState = EP_STARTED;
+        printf("Exit SetEpStarted\n");
     }
 
     void SetEpStopping(void)
     {
+        printf("Enter SetEpStopping\n");
         QCC_ASSERT(m_epState == EP_STARTING || m_epState == EP_STARTED || m_epState == EP_STOPPING);
         m_epState = EP_STOPPING;
+        printf("Exit SetEpStopping\n");
     }
 
     void SetEpDone(void)
     {
+        printf("Enter SetEpDone\n");
         QCC_ASSERT(m_epState == EP_FAILED || m_epState == EP_STOPPING);
         m_epState = EP_DONE;
+        printf("Exit SetEpDone\n");
     }
-    AuthState GetAuthState(void) { return m_authState; }
+    AuthState GetAuthState(void) { printf("Enter and Exit GetAuthState\n");return m_authState; }
 
-    UARTFd GetFd() { return m_fd; }
+    UARTFd GetFd() { printf("Enter and exit GetFd\n");return m_fd; }
 
     QStatus Stop();
     QStatus Join();
@@ -124,6 +135,7 @@ class _DaemonSLAPEndpoint : public _RemoteEndpoint {
 
     QStatus SetIdleTimeouts(uint32_t& reqIdleTimeout, uint32_t& reqProbeTimeout)
     {
+        printf("Enter SetIdleTimeouts. reqIdleTimeout: %u, reqProbeTimeout: %u\n", reqIdleTimeout, reqProbeTimeout);
         uint32_t maxIdleProbes = m_transport->m_numHbeatProbes;
 
         /* If reqProbeTimeout == 0, Make no change to Probe timeout. */
@@ -148,7 +160,7 @@ class _DaemonSLAPEndpoint : public _RemoteEndpoint {
         if (reqIdleTimeout > m_transport->m_maxHbeatIdleTimeout) {
             reqIdleTimeout = m_transport->m_maxHbeatIdleTimeout;
         }
-
+        printf("Exit SetIdleTimeouts. Return _RemoteEndpoint::SetIdleTimeouts\n");
         return _RemoteEndpoint::SetIdleTimeouts(reqIdleTimeout, reqProbeTimeout, maxIdleProbes);
     }
 
@@ -175,17 +187,20 @@ class _DaemonSLAPEndpoint : public _RemoteEndpoint {
 
 void _DaemonSLAPEndpoint::ThreadExit(qcc::Thread* thread)
 {
+    printf("Enter DaemonSLAPEndpoint::ThreadExit\n");
     if (thread == &m_authThread) {
         if (m_authState == AUTH_INITIALIZED) {
             m_authState = AUTH_FAILED;
         }
         m_transport->Alert();
     }
+    printf("Exit DaemonSLAPEndpoint::ThreadExit\n");
     _RemoteEndpoint::ThreadExit(thread);
 }
 
 QStatus _DaemonSLAPEndpoint::Authenticate(void)
 {
+    printf("Enter DaemonSLAPEndpoint::Authenticate\n");
     QCC_DbgTrace(("DaemonSLAPEndpoint::Authenticate()"));
     m_timer.Start();
 
@@ -200,17 +215,19 @@ QStatus _DaemonSLAPEndpoint::Authenticate(void)
     }
     if (status != ER_OK) {
         QCC_DbgPrintf(("DaemonSLAPEndpoint::Authenticate() Failed to authenticate endpoint"));
+        printf("DaemonSLAPEndpoint::Authenticate() Failed to authenticate endpoint\n");
         m_authState = AUTH_FAILED;
         /* Alert the Run() thread to refresh the list of com ports to listen on. */
         m_transport->Alert();
     }
+    printf("Exit DaemonSLAPEndpoint::Authenticate\n");
     return status;
 }
 
 void _DaemonSLAPEndpoint::AuthStop(void)
 {
     QCC_DbgTrace(("DaemonSLAPEndpoint::AuthStop()"));
-
+    printf("Enter DaemonSLAPEndpoint::AuthStop()\n");
     /* Stop the controller only if Authentication failed */
     if (m_authState != AUTH_SUCCEEDED) {
         m_timer.Stop();
@@ -227,11 +244,13 @@ void _DaemonSLAPEndpoint::AuthStop(void)
      * that this is a lazy cleanup of the endpoint.
      */
     m_authThread.Stop();
+    printf("Exit DaemonSLAPEndpoint::AuthStop()\n");
 }
 
 void _DaemonSLAPEndpoint::AuthJoin(void)
 {
     QCC_DbgTrace(("DaemonSLAPEndpoint::AuthJoin()"));
+    printf("DaemonSLAPEndpoint::AuthJoin()\n");
     /* Join the controller only if Authentication failed */
     if (m_authState != AUTH_SUCCEEDED) {
         m_timer.Join();
@@ -245,32 +264,37 @@ void _DaemonSLAPEndpoint::AuthJoin(void)
      * cleanup every time through the loop.
      */
     m_authThread.Join();
+    printf("Exit DaemonSLAPEndpoint::AuthJoin()\n");
 }
 QStatus _DaemonSLAPEndpoint::Stop(void)
 {
     QCC_DbgTrace(("DaemonSLAPEndpoint::Stop()"));
+    printf("Enter DaemonSLAPEndpoint::Stop()\n");
     m_timer.Stop();
     m_uartController.Stop();
     QStatus status = _RemoteEndpoint::Stop();
-
+    printf("Exit DaemonSLAPEndpoint::Stop()\n");
     return status;
 }
 
 QStatus _DaemonSLAPEndpoint::Join(void)
 {
     QCC_DbgTrace(("DaemonSLAPEndpoint::Join()"));
+    printf("Enter DaemonSLAPEndpoint::Join()\n");
     m_timer.Join();
     m_uartController.Join();
     QStatus status = _RemoteEndpoint::Join();
+    printf("Exit DaemonSLAPEndpoint::Join()\n");
     return status;
 }
 
 void* _DaemonSLAPEndpoint::AuthThread::Run(void* arg)
 {
+    printf("Enter DaemonSLAPEndpoint::AuthThread::Run()\n");
     QCC_UNUSED(arg);
 
     QCC_DbgPrintf(("DaemonSLAPEndpoint::AuthThread::Run()"));
-
+    
     m_endpoint->m_authState = AUTH_AUTHENTICATING;
 
     /*
@@ -285,6 +309,7 @@ void* _DaemonSLAPEndpoint::AuthThread::Run(void* arg)
     uint8_t byte;
     size_t nbytes;
     QCC_DbgPrintf(("DaemonSLAPEndpoint::AuthThread::Run() calling pullbytes"));
+    printf("DaemonSLAPEndpoint::AuthThread::Run() calling pullbytes\n");
     /*
      * Eat the first byte of the stream.  This is required to be zero by the
      * DBus protocol.  It is used in the Unix socket implementation to carry
@@ -294,7 +319,7 @@ void* _DaemonSLAPEndpoint::AuthThread::Run(void* arg)
     QStatus status = m_endpoint->m_stream.PullBytes(&byte, 1, nbytes);
     if ((status != ER_OK) || (nbytes != 1) || (byte != 0)) {
         QCC_LogError(status, ("Failed to read first byte from stream %d %d", nbytes, byte));
-
+        printf("Failed to read first byte from stream %lu %d\n", nbytes, byte);
         /*
          * Management of the resources used by the authentication thread is done
          * in one place, by the server Accept loop.  The authentication thread
@@ -314,6 +339,7 @@ void* _DaemonSLAPEndpoint::AuthThread::Run(void* arg)
         m_endpoint->m_authState = AUTH_FAILED;
         /* Alert the Run() thread to refresh the list of com ports to listen on. */
         m_endpoint->m_transport->Alert();
+        printf("Exit DaemonSLAPEndpoint::AuthThread::Run()\n");
         return (void*)ER_FAIL;
     }
     /* Initialized the features for this endpoint */
@@ -336,6 +362,7 @@ void* _DaemonSLAPEndpoint::AuthThread::Run(void* arg)
     status = m_endpoint->Establish("ANONYMOUS", authName, redirection, authListener);
     if (status != ER_OK) {
         QCC_LogError(status, ("Failed to establish SLAP endpoint"));
+        printf("Failed to establish SLAP endpoint\n");
 
         /*
          * Management of the resources used by the authentication thread is done
@@ -356,6 +383,7 @@ void* _DaemonSLAPEndpoint::AuthThread::Run(void* arg)
         m_endpoint->m_authState = AUTH_FAILED;
         /* Alert the Run() thread to refresh the list of com ports to listen on. */
         m_endpoint->m_transport->Alert();
+        printf("Exit DaemonSLAPEndpoint::AuthThread::Run\n");
         return (void*)status;
     }
 
@@ -367,6 +395,7 @@ void* _DaemonSLAPEndpoint::AuthThread::Run(void* arg)
     m_endpoint->m_transport->Authenticated(dEp);
 
     QCC_DbgPrintf(("DaemonSLAPEndpoint::AuthThread::Run(): Returning"));
+    printf("DaemonSLAPEndpoint::AuthThread::Run(): Returning\n");
 
     /*
      * We are now done with the authentication process.  We have succeeded doing
@@ -385,6 +414,7 @@ void* _DaemonSLAPEndpoint::AuthThread::Run(void* arg)
      * without being worried about blocking since the next thing we do is exit.
      */
     m_endpoint->m_authState = AUTH_SUCCEEDED;
+    printf("Exit DaemonSLAPEndpoint::AuthThread::Run()\n");
     return (void*)status;
 }
 
@@ -395,18 +425,23 @@ DaemonSLAPTransport::DaemonSLAPTransport(BusAttachment& bus)
      * We know we are daemon code, so we'd better be running with a daemon
      * router.  This is assumed elsewhere.
      */
+    printf("Enter DaemonSLAPTransport::DaemonSLAPTransport\n");
     QCC_ASSERT(bus.GetInternal().GetRouter().IsDaemon());
+    printf("Exit DaemonSLAPTransport::DaemonSLAPTransport\n");
 }
 
 
 DaemonSLAPTransport::~DaemonSLAPTransport()
 {
+    printf("Enter DaemonSLAPTransport::~DaemonSLAPTransport\n");
     Stop();
     Join();
+    printf("Exit DaemonSLAPTransport::~DaemonSLAPTransport\n");
 }
 
 QStatus DaemonSLAPTransport::Start()
 {
+    printf("Enter DaemonSLAPTransport::Start\n");
     stopping = false;
     ConfigDB* config = ConfigDB::GetConfigDB();
     m_minHbeatIdleTimeout = config->GetLimit("slap_min_idle_timeout", MIN_HEARTBEAT_IDLE_TIMEOUT_DEFAULT);
@@ -418,12 +453,14 @@ QStatus DaemonSLAPTransport::Start()
     m_defaultHbeatProbeTimeout = config->GetLimit("slap_default_probe_timeout", DEFAULT_HEARTBEAT_PROBE_TIMEOUT_DEFAULT);
 
     QCC_DbgPrintf(("DaemonSLAPTransport: Using m_minHbeatIdleTimeout=%u, m_maxHbeatIdleTimeout=%u, m_numHbeatProbes=%u, m_defaultHbeatProbeTimeout=%u m_maxHbeatProbeTimeout=%u", m_minHbeatIdleTimeout, m_maxHbeatIdleTimeout, m_numHbeatProbes, m_defaultHbeatProbeTimeout, m_maxHbeatProbeTimeout));
-
+    printf("DaemonSLAPTransport: Using m_minHbeatIdleTimeout=%u, m_maxHbeatIdleTimeout=%u, m_numHbeatProbes=%u, m_defaultHbeatProbeTimeout=%u m_maxHbeatProbeTimeout=%u\n", m_minHbeatIdleTimeout, m_maxHbeatIdleTimeout, m_numHbeatProbes, m_defaultHbeatProbeTimeout, m_maxHbeatProbeTimeout);
+    printf("Exit DaemonSLAPTransport::Start\n");
     return Thread::Start();
 }
 
 QStatus DaemonSLAPTransport::Stop()
 {
+    printf("Enter DaemonSLAPTransport::Stop\n");
     stopping = true;
     /*
      * Tell the DaemonSLAPTransport::Run thread to shut down.
@@ -431,6 +468,7 @@ QStatus DaemonSLAPTransport::Stop()
     QStatus status = Thread::Stop();
     if (status != ER_OK) {
         QCC_LogError(status, ("DaemonSLAPTransport::Stop(): Failed to Stop() main thread"));
+        printf("DaemonSLAPTransport::Stop(): Failed to Stop() main thread\n");
     }
 
     m_lock.Lock(MUTEX_CONTEXT);
@@ -451,7 +489,7 @@ QStatus DaemonSLAPTransport::Stop()
     }
 
     m_lock.Unlock(MUTEX_CONTEXT);
-
+    printf("Exit DaemonSLAPTransport::Stop\n");
     return ER_OK;
 
 }
@@ -461,9 +499,12 @@ QStatus DaemonSLAPTransport::Join()
     /*
      * Wait for the DaemonSLAPTransport::Run thread to exit.
      */
+    printf("Enter DaemonSLAPTransport::Join\n");    
     QStatus status = Thread::Join();
     if (status != ER_OK) {
         QCC_LogError(status, ("DaemonSLAPTransport::Join(): Failed to Join() main thread"));
+        printf("DaemonSLAPTransport::Join(): Failed to Join() main thread\n");
+        printf("Exit DaemonSLAPTransport::Join\n");
         return status;
     }
 
@@ -503,12 +544,14 @@ QStatus DaemonSLAPTransport::Join()
     stopping = false;
     m_lock.Unlock(MUTEX_CONTEXT);
 
+    printf("Exit DaemonSLAPTransport::Join\n");
     return ER_OK;
 
 }
 
 QStatus DaemonSLAPTransport::NormalizeTransportSpec(const char* inSpec, qcc::String& outSpec, std::map<qcc::String, qcc::String>& argMap) const
 {
+    printf("Enter DaemonSLAPTransport::NormalizeTransportSpec\n"); 
     QStatus status = ParseArguments(DaemonSLAPTransport::TransportName, inSpec, argMap);
     qcc::String type = Trim(argMap["type"]);
     qcc::String dev = Trim(argMap["dev"]);
@@ -549,12 +592,13 @@ QStatus DaemonSLAPTransport::NormalizeTransportSpec(const char* inSpec, qcc::Str
             status = ER_BUS_BAD_TRANSPORT_ARGS;
         }
     }
-
+    printf("Exit DaemonSLAPTransport::NormalizeTransportSpec\n");
     return status;
 }
 
 QStatus DaemonSLAPTransport::StartListen(const char* listenSpec)
 {
+    printf("Enter DaemonSLAPTransport::StartListen\n");
     if (stopping == true) {
         return ER_BUS_TRANSPORT_NOT_STARTED;
     }
@@ -566,6 +610,7 @@ QStatus DaemonSLAPTransport::StartListen(const char* listenSpec)
     status = NormalizeTransportSpec(listenSpec, normSpec, serverArgs);
     if (status != ER_OK) {
         QCC_LogError(status, ("DaemonTransport::StartListen(): Invalid SLAP listen spec \"%s\"", listenSpec));
+        printf("DaemonTransport::StartListen(): Invalid SLAP listen spec \"%s\"\n", listenSpec);
         return status;
     }
     m_lock.Lock(MUTEX_CONTEXT);
@@ -582,14 +627,16 @@ QStatus DaemonSLAPTransport::StartListen(const char* listenSpec)
     }
     m_lock.Unlock(MUTEX_CONTEXT);
     Thread::Alert();
-
+    printf("Exit DaemonSLAPTransport::StartListen\n");
     return ER_OK;
 
 }
 
 QStatus DaemonSLAPTransport::StopListen(const char* listenSpec)
 {
+    printf("Enter DaemonSLAPTransport::StopListen\n");
     QCC_UNUSED(listenSpec);
+    printf("Exit DaemonSLAPTransport::StopListen\n");
     return ER_OK;
 }
 
@@ -601,19 +648,23 @@ void DaemonSLAPTransport::EndpointExit(RemoteEndpoint& ep)
      * either of the threads (transmit or receive) of one of our endpoints exits
      * for some reason, we get called back here.
      */
+    printf("Enter DaemonSLAPTransport::EndpointExit\n");
     QCC_DbgPrintf(("DaemonSLAPTransport::EndpointExit()"));
     DaemonSLAPEndpoint dEp = DaemonSLAPEndpoint::cast(ep);
     /* Remove the dead endpoint from the live endpoint list */
     m_lock.Lock(MUTEX_CONTEXT);
     QCC_DbgPrintf(("DaemonSLAPTransport::EndpointExit()setting stopping"));
+    printf("Enter DaemonSLAPTransport::EndpointExit()setting stopping\n");
     dEp->SetEpStopping();
     Thread::Alert();
     m_lock.Unlock(MUTEX_CONTEXT);
     ep->Invalidate();
+    printf("Exit DaemonSLAPTransport::EndpointExit\n");
 }
 
 void* DaemonSLAPTransport::Run(void* arg)
 {
+    printf("Enter DaemonSLAPTransport::Run\n");
     QCC_UNUSED(arg);
 
     QStatus status = ER_OK;
@@ -629,7 +680,8 @@ void* DaemonSLAPTransport::Run(void* arg)
          * Set reload to true to indicate that the set of events has been reloaded.
          */
         QCC_DbgPrintf(("DaemonSLAPTransport::Run()"));
-
+        printf("DaemonSLAPTransport::Run()\n");
+        
         UARTFd uartFd = (UARTFd) - 1;
 
         {
@@ -647,6 +699,7 @@ void* DaemonSLAPTransport::Run(void* arg)
                      * as we Join() the (failed) authentication thread.
                      */
                     QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Scavenging failed authenticator"));
+                    printf("DaemonSLAPTransport::Run(): Scavenging failed authenticator\n");
                     m_authList.erase(i);
                     uartFd = ep->GetFd();
                     m_lock.Unlock(MUTEX_CONTEXT);
@@ -658,6 +711,7 @@ void* DaemonSLAPTransport::Run(void* arg)
 
                         if (it->listenFd == uartFd) {
                             QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Reenabling %s in the listenEvents", it->args["port"].c_str()));
+                            printf("DaemonSLAPTransport::Run(): Reenabling %s in the listenEvents\n", it->args["port"].c_str());
                             it->listenFd = (UARTFd) - 1;
                             it->endpointStarted = false;
                             Thread::Alert();
@@ -716,6 +770,7 @@ void* DaemonSLAPTransport::Run(void* arg)
 
                         if (it->listenFd == uartFd) {
                             QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Reenabling back %s in the listenEvents", it->args["port"].c_str()));
+                            printf("DaemonSLAPTransport::Run(): Reenabling back %s in the listenEvents\n", it->args["port"].c_str());
                             it->listenFd = (UARTFd) - 1;
                             it->endpointStarted = false;
                             break;
@@ -741,6 +796,7 @@ void* DaemonSLAPTransport::Run(void* arg)
                     it->listenFd = listenFd;
                     checkEvents.push_back(new Event(it->listenFd, Event::IO_READ));
                     QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Adding checkevent for %s to list of events", it->args["dev"].c_str()));
+                    printf("DaemonSLAPTransport::Run(): Adding checkevent for %s to list of events\n", it->args["dev"].c_str());
                 } else {
                     QCC_LogError(uartStatus, ("DaemonSLAPTransport::Run(): Failed to open for %s", it->args["dev"].c_str()));
                     m_listenList.erase(it++);
@@ -748,6 +804,7 @@ void* DaemonSLAPTransport::Run(void* arg)
             } else if (!it->endpointStarted) {
                 checkEvents.push_back(new Event(it->listenFd, Event::IO_READ));
                 QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Adding checkevent for %s to list of events", it->args["dev"].c_str()));
+                printf("DaemonSLAPTransport::Run(): Adding checkevent for %s to list of events\n", it->args["dev"].c_str());
             }
         }
 
@@ -767,6 +824,7 @@ void* DaemonSLAPTransport::Run(void* arg)
             } else {
                 Event* e = *i;
                 QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Accepting connection "));
+                printf("DaemonSLAPTransport::Run(): Accepting connection\n");
                 for (list<ListenEntry>::iterator listenListIt = m_listenList.begin(); listenListIt != m_listenList.end(); listenListIt++) {
                     if (listenListIt->listenFd == e->GetFD()) {
                         listenListIt->endpointStarted = true;
@@ -774,9 +832,10 @@ void* DaemonSLAPTransport::Run(void* arg)
                         DaemonSLAPTransport* ptr = this;
                         uint32_t packetSize = SLAP_DEFAULT_PACKET_SIZE;
                         uint32_t baudrate = StringToU32(listenListIt->args["baud"]);
-                        QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Creating endpoint for %s",  listenListIt->args["dev"].c_str()));
+                        QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Creating endpoint for %s",  listenListIt->args["dev"].c_str()));                    
+                        printf("DaemonSLAPTransport::Run(): Creating endpoint for %s\n",  listenListIt->args["dev"].c_str());
                         DaemonSLAPEndpoint conn(ptr, m_bus, truthiness, "slap", listenListIt->listenFd, packetSize, baudrate);
-                        QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Authenticating endpoint for %s",  listenListIt->args["dev"].c_str()));
+                        QCC_DbgPrintf(("DaemonSLAPTransport::Run(): Authenticating endpoint for %s\n",  listenListIt->args["dev"].c_str()));
 
                         status = conn->Authenticate();
                         if (status == ER_OK) {
@@ -796,11 +855,13 @@ void* DaemonSLAPTransport::Run(void* arg)
     }
     m_lock.Unlock(MUTEX_CONTEXT);
     QCC_DbgPrintf(("DaemonSLAPTransport::Run() is exiting. status = %s", QCC_StatusText(status)));
+    printf("DaemonSLAPTransport::Run() is exiting. status = %s\n", QCC_StatusText(status));
     return (void*) status;
 }
 void DaemonSLAPTransport::Authenticated(DaemonSLAPEndpoint& conn)
 {
     QCC_DbgPrintf(("DaemonSLAPTransport::Authenticated()"));
+    printf("Enter DaemonSLAPTransport::Authenticated()\n");
     /*
      * If the transport is stopping, dont start the Tx and RxThreads.
      */
@@ -840,6 +901,7 @@ void DaemonSLAPTransport::Authenticated(DaemonSLAPEndpoint& conn)
     QStatus status = conn->Start(m_defaultHbeatIdleTimeout, m_defaultHbeatProbeTimeout, m_numHbeatProbes, m_maxHbeatProbeTimeout);
     if (status != ER_OK) {
         QCC_LogError(status, ("DaemonSLAPTransport::Authenticated(): Failed to start DaemonSLAPEndpoint"));
+        printf("DaemonSLAPTransport::Authenticated(): Failed to start DaemonSLAPEndpoint\n");
         /*
          * We were unable to start up the endpoint for some reason.  As soon as
          * we set this state to EP_FAILED, we are telling the server accept loop
@@ -864,6 +926,7 @@ void DaemonSLAPTransport::Authenticated(DaemonSLAPEndpoint& conn)
     }
 }
 QStatus DaemonSLAPTransport::UntrustedClientStart() {
+    printf("Enter and exit DaemonSLAPTransport::UntrustedClientStart()");
     /** Since UART implies physical security, always allow clients with ANONYMOUS authentication to connect. */
     return ER_OK;
 }

@@ -77,6 +77,7 @@ QStatus ClientRouter::RegisterEndpoint(BusEndpoint& endpoint)
     bool hadNonLocal = nonLocalEndpoint->IsValid();
 
     QCC_DbgHLPrintf(("ClientRouter::RegisterEndpoint"));
+    QCC_DbgTrace(("ClientRouter::RegisterEndpoint"));
 
     /* Keep track of local and (at least one) non-local endpoint */
     if (isLocal) {

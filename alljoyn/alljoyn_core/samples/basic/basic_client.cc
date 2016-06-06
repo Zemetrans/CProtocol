@@ -212,6 +212,10 @@ QStatus MakeMethodCall(void)
     return status;
 }
 
+// dea: DEBUG
+#undef ROUTER
+
+
 /** Main entry point */
 int CDECL_CALL main(int argc, char** argv, char** envArg)
 {

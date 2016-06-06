@@ -43,6 +43,8 @@
 #include "Transport.h"
 #include "TCPTransport.h"
 #include "UDPTransport.h"
+#include "DaemonSLAPTransport.h"
+#include "DaemonTransport.h"
 
 #define QCC_MODULE "ALLJOYN_ROUTER"
 
@@ -51,11 +53,19 @@ using namespace std;
 
 namespace ajn {
 
+
+   // "  <listen>tcp:iface=lo,port=9956</listen>"
+   // "  <listen>udp:iface=lo,port=9955</listen>"
+   // "  <listen>slap:type=uart,dev=/dev/ttyUSB1,baud=115200</listen> "
+   // "  <listen>unix:abstract=alljoyn</listen>"
+   // "  <listen>udp:iface=*,port=0</listen>"
+
 static const char bundledConfig[] =
     "<busconfig>"
     "  <type>alljoyn_bundled</type>"
-    "  <listen>tcp:iface=*,port=0</listen>"
-    "  <listen>udp:iface=*,port=0</listen>"
+    "  <listen>unix:abstract=alljoyn</listen>"
+    "  <listen>tcp:iface=*,port=9955</listen>"
+    "  <listen>udp:iface=*,port=9955</listen>"
     "  <limit name=\"auth_timeout\">20000</limit>"
     "  <limit name=\"max_incomplete_connections\">48</limit>"
     "  <limit name=\"max_completed_connections\">64</limit>"
@@ -265,9 +275,12 @@ QStatus BundledRouter::Start(NullTransport* nullTransport)
         /*
          * Register the transport factories - this is a one time operation
          */
+        //TransportFactoryContainer cntr;
         if (!transportsInitialized) {
-            Add(new TransportFactory<TCPTransport>(TCPTransport::TransportName, false));
-            Add(new TransportFactory<UDPTransport>(UDPTransport::TransportName, false));
+            Add(new TransportFactory<DaemonTransport>(DaemonTransport::TransportName, true)); 
+//            Add(new TransportFactory<TCPTransport>(TCPTransport::TransportName, false));
+//            Add(new TransportFactory<UDPTransport>(UDPTransport::TransportName, false));
+//            Add(new TransportFactory<DaemonSLAPTransport>(DaemonSLAPTransport::TransportName, true));
             transportsInitialized = true;
         }
         QCC_DbgPrintf(("Starting bundled router bus attachment"));
